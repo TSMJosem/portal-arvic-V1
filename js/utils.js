@@ -6,17 +6,17 @@
 // === FORMATEO DE FECHAS ===
 const DateUtils = {
     formatDate(date, locale = 'es-MX') {
-        if (!date) return 'N/A';
-        
-        const dateObj = new Date(date);
-        if (isNaN(dateObj.getTime())) return 'Fecha inválida';
-        
-        return dateObj.toLocaleDateString(locale, {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-    },
+    if (!date) return 'N/A';
+    
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) return 'Fecha inválida';
+    
+    return dateObj.toLocaleDateString(locale, {
+        year: 'numeric',
+        month: 'short', // 'short' para abreviar el mes
+        day: 'numeric'
+    });
+},
 
     formatDateTime(date, locale = 'es-MX') {
         if (!date) return 'N/A';
@@ -51,6 +51,18 @@ const DateUtils = {
         return this.formatDate(date);
     },
 
+    formatTime(date, locale = 'es-MX') {
+    if (!date) return 'N/A';
+    
+    const dateObj = new Date(date);
+    if (isNaN(dateObj.getTime())) return 'Hora inválida';
+    
+    return dateObj.toLocaleTimeString(locale, {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+},
+
     isToday(date) {
         if (!date) return false;
         
@@ -61,15 +73,23 @@ const DateUtils = {
     },
 
     isThisWeek(date) {
-        if (!date) return false;
-        
-        const dateObj = new Date(date);
-        const today = new Date();
-        const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
-        const weekEnd = new Date(today.setDate(today.getDate() - today.getDay() + 6));
-        
-        return dateObj >= weekStart && dateObj <= weekEnd;
-    }
+    if (!date) return false;
+    
+    const dateObj = new Date(date);
+    const today = new Date();
+    
+    // Obtener el inicio de la semana (domingo)
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    
+    // Obtener el final de la semana (sábado)
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    return dateObj >= weekStart && dateObj <= weekEnd;
+}
 };
 
 // === VALIDACIONES ===

@@ -20,26 +20,11 @@
                 </div>
             </div>
             <div class="nav-center">
-                <ul class="nav-menu">
-                    <li><a class="nav-link active" href="#" onclick="showSection('home')" data-section="home">
-                        🏠 <span data-es="Inicio" data-en="Home">Inicio</span>
-                    </a></li>
-                    <li><a class="nav-link" href="#" onclick="showSection('reports')" data-section="reports">
-                        📝 <span data-es="Reportes" data-en="Reports">Reportes</span>
-                    </a></li>
-                    <li><a class="nav-link" href="#" onclick="showSection('tasks')" data-section="tasks">
-                        ✅ <span data-es="Tareas" data-en="Tasks">Tareas</span>
-                    </a></li>
-                </ul>
+                <h2 style="color: #2c3e50; margin: 0;">Portal de Consultor</h2>
             </div>
             <div class="nav-right">
                 <div class="user-menu">
                     <span class="user-name" id="consultorUserName">Cargando...</span>
-                    <div class="language-selector">
-                        <button class="lang-btn active" onclick="toggleLanguage()">
-                            <span id="langText">Español (MX) ▼</span>
-                        </button>
-                    </div>
                     <button class="btn btn-danger" onclick="logout()">Cerrar Sesión</button>
                 </div>
             </div>
@@ -57,291 +42,39 @@
     <main class="main-content" id="mainContent">
         <div class="container">
             <div class="content-wrapper">
-                <!-- Sidebar -->
+                <!-- Sidebar Simplificado -->
                 <div class="sidebar consultor-sidebar">
-                    <h2 class="sidebar-title" data-es="Mi Panel" data-en="My Dashboard">Mi Panel</h2>
+                    <h2 class="sidebar-title">📋 Mis Asignaciones</h2>
                     <div class="sidebar-menu">
-                        <div class="menu-item active" onclick="showSection('home')" data-section="home">
-                            <span class="menu-text" data-es="Resumen" data-en="Overview">Resumen</span>
-                            <span class="menu-badge">📊</span>
-                        </div>
-                        <div class="menu-item" onclick="showSection('reports')" data-section="reports">
-                            <span class="menu-text" data-es="Mis Reportes" data-en="My Reports">Mis Reportes</span>
-                            <span class="menu-badge" id="reportsCount">0</span>
-                        </div>
-                        <div class="menu-item" onclick="showSection('tasks')" data-section="tasks">
-                            <span class="menu-text" data-es="Tareas Pendientes" data-en="Pending Tasks">Tareas Pendientes</span>
-                            <span class="menu-badge" id="tasksCount">3</span>
+                        <div class="menu-item active">
+                            <span class="menu-text">Asignaciones Activas</span>
+                            <span class="menu-badge" id="assignmentsCount">0</span>
                         </div>
                     </div>
                 </div>
 
                 <!-- Panel Principal -->
                 <div class="main-panel consultor-main">
-                    <!-- Sección de Inicio -->
-                    <div id="home-section" class="content-section active">
-                        <div class="welcome-section">
-                            <h1 class="welcome-title" data-es="Bienvenido a tu Portal" data-en="Welcome to your Portal">
-                                Bienvenido a tu Portal
-                            </h1>
-                            <p class="welcome-subtitle" data-es="Gestiona tus reportes y tareas de manera eficiente" data-en="Manage your reports and tasks efficiently">
-                                Gestiona tus reportes y tareas de manera eficiente
-                            </p>
-                        </div>
+                    <!-- Sección de Asignaciones -->
+                    <div class="content-section active">
+                        <h2 class="section-title">🎯 Mis Asignaciones y Reportes</h2>
                         
-                        <div class="assignment-info">
-                            <h3 data-es="Información de Asignación" data-en="Assignment Information">
-                                Información de Asignación
-                            </h3>
-                            <div class="info-grid">
-                                <div class="info-item">
-                                    <div class="info-label" data-es="Empresa Asignada" data-en="Assigned Company">
-                                        Empresa Asignada
-                                    </div>
-                                    <div class="info-value" id="assignedCompany">Cargando...</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label" data-es="Proyecto Actual" data-en="Current Project">
-                                        Proyecto Actual
-                                    </div>
-                                    <div class="info-value" id="assignedProject">Cargando...</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label" data-es="Tipo de Reporte" data-en="Report Type">
-                                        Tipo de Reporte
-                                    </div>
-                                    <div class="info-value" id="reportType">Cargando...</div>
-                                </div>
-                                <div class="info-item">
-                                    <div class="info-label" data-es="Estado" data-en="Status">Estado</div>
-                                    <div class="info-value">
-                                        <span class="custom-badge badge-success">✅ Activo</span>
-                                    </div>
-                                </div>
+                        <!-- Información del Usuario -->
+                        <div class="user-info-card">
+                            <h3>👤 Información del Consultor</h3>
+                            <div class="user-details">
+                                <p><strong>Nombre:</strong> <span id="userNameDisplay">Cargando...</span></p>
+                                <p><strong>ID:</strong> <span id="userIdDisplay">Cargando...</span></p>
+                                <p><strong>Estado:</strong> <span class="custom-badge badge-success">✅ Activo</span></p>
                             </div>
                         </div>
 
-                        <div class="quick-actions">
-                            <div class="action-card" onclick="showSection('reports')">
-                                <div class="action-icon">📝</div>
-                                <div class="action-title" data-es="Crear Reporte" data-en="Create Report">
-                                    Crear Reporte
-                                </div>
-                                <div class="action-desc" data-es="Generar un nuevo reporte de progreso" data-en="Generate a new progress report">
-                                    Generar un nuevo reporte de progreso
-                                </div>
-                            </div>
-                            <div class="action-card" onclick="showSection('tasks')">
-                                <div class="action-icon">✅</div>
-                                <div class="action-title" data-es="Ver Tareas" data-en="View Tasks">
-                                    Ver Tareas
-                                </div>
-                                <div class="action-desc" data-es="Revisar tareas pendientes y completadas" data-en="Review pending and completed tasks">
-                                    Revisar tareas pendientes y completadas
-                                </div>
-                            </div>
-                            <div class="action-card" onclick="viewReportHistory()">
-                                <div class="action-icon">📊</div>
-                                <div class="action-title" data-es="Historial" data-en="History">
-                                    Historial
-                                </div>
-                                <div class="action-desc" data-es="Ver historial de reportes enviados" data-en="View history of submitted reports">
-                                    Ver historial de reportes enviados
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sección de Reportes -->
-                    <div id="reports-section" class="content-section">
-                        <h2 class="section-title" data-es="Gestión de Reportes" data-en="Report Management">
-                            Gestión de Reportes
-                        </h2>
-
-                        <div class="report-form">
-                            <h3 data-es="Crear Nuevo Reporte" data-en="Create New Report">
-                                Crear Nuevo Reporte
-                            </h3>
-                            <form id="reportForm">
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="reportTitle" data-es="Título del Reporte" data-en="Report Title">
-                                            Título del Reporte *
-                                        </label>
-                                        <input type="text" id="reportTitle" placeholder="Ej: Reporte Semanal - Desarrollo de Módulo" required>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="reportDate" data-es="Fecha del Reporte" data-en="Report Date">
-                                            Fecha del Reporte *
-                                        </label>
-                                        <input type="date" id="reportDate" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-group">
-                                    <label for="reportContent" data-es="Contenido del Reporte" data-en="Report Content">
-                                        Contenido del Reporte *
-                                    </label>
-                                    <textarea id="reportContent" rows="8" 
-                                              placeholder="Describe el progreso, logros, obstáculos y próximos pasos..." 
-                                              required></textarea>
-                                </div>
-
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label for="reportProgress" data-es="Progreso (%)" data-en="Progress (%)">
-                                            Progreso (%)
-                                        </label>
-                                        <input type="range" id="reportProgress" min="0" max="100" value="0" 
-                                               oninput="updateProgressDisplay(this.value)">
-                                        <div style="text-align: center; margin-top: 5px;">
-                                            <span id="progressDisplay">0%</span>
-                                        </div>
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="reportPriority" data-es="Prioridad" data-en="Priority">
-                                            Prioridad
-                                        </label>
-                                        <select id="reportPriority">
-                                            <option value="Baja">🟢 Baja</option>
-                                            <option value="Media" selected>🟡 Media</option>
-                                            <option value="Alta">🔴 Alta</option>
-                                        </select>
-                                    </div>
-                                </div>
-
-                                <div class="form-group">
-                                    <button type="submit" class="submit-btn">
-                                        📤 <span data-es="Enviar Reporte" data-en="Submit Report">Enviar Reporte</span>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div class="reports-list">
-                            <h3 data-es="Mis Reportes Enviados" data-en="My Submitted Reports">
-                                Mis Reportes Enviados
-                            </h3>
-                            <div id="reportsList">
-                                <div class="empty-state">
-                                    <div class="empty-state-icon">📋</div>
-                                    <div class="empty-state-title" data-es="No hay reportes" data-en="No reports">
-                                        No hay reportes
-                                    </div>
-                                    <div class="empty-state-desc" data-es="Los reportes que envíes aparecerán aquí" data-en="Reports you submit will appear here">
-                                        Los reportes que envíes aparecerán aquí
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Sección de Tareas -->
-                    <div id="tasks-section" class="content-section">
-                        <h2 class="section-title" data-es="Gestión de Tareas" data-en="Task Management">
-                            Gestión de Tareas
-                        </h2>
-
-                        <div class="tasks-section">
-                            <div class="task-item">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                    <div style="flex: 1;">
-                                        <h4 style="color: #2c3e50; margin-bottom: 8px;">
-                                            📋 Completar documentación técnica
-                                        </h4>
-                                        <p style="color: #666; margin-bottom: 10px;">
-                                            Finalizar la documentación del módulo de usuarios y permisos del sistema.
-                                        </p>
-                                        <div style="display: flex; gap: 10px; align-items: center;">
-                                            <span class="task-priority priority-high">Alta</span>
-                                            <span style="font-size: 12px; color: #666;">
-                                                📅 Vence: 15 Jul 2025
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-success" onclick="completeTask(1)">
-                                        ✅ Completar
-                                    </button>
-                                </div>
-                                <div class="progress-bar" style="margin-top: 15px;">
-                                    <div class="progress-fill" style="width: 75%;"></div>
-                                </div>
-                            </div>
-
-                            <div class="task-item">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                    <div style="flex: 1;">
-                                        <h4 style="color: #2c3e50; margin-bottom: 8px;">
-                                            🔧 Pruebas de integración API
-                                        </h4>
-                                        <p style="color: #666; margin-bottom: 10px;">
-                                            Realizar pruebas exhaustivas de los endpoints de la API REST.
-                                        </p>
-                                        <div style="display: flex; gap: 10px; align-items: center;">
-                                            <span class="task-priority priority-medium">Media</span>
-                                            <span style="font-size: 12px; color: #666;">
-                                                📅 Vence: 18 Jul 2025
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-success" onclick="completeTask(2)">
-                                        ✅ Completar
-                                    </button>
-                                </div>
-                                <div class="progress-bar" style="margin-top: 15px;">
-                                    <div class="progress-fill" style="width: 45%;"></div>
-                                </div>
-                            </div>
-
-                            <div class="task-item">
-                                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                    <div style="flex: 1;">
-                                        <h4 style="color: #2c3e50; margin-bottom: 8px;">
-                                            📱 Optimización interfaz móvil
-                                        </h4>
-                                        <p style="color: #666; margin-bottom: 10px;">
-                                            Mejorar la responsividad y experiencia de usuario en dispositivos móviles.
-                                        </p>
-                                        <div style="display: flex; gap: 10px; align-items: center;">
-                                            <span class="task-priority priority-low">Baja</span>
-                                            <span style="font-size: 12px; color: #666;">
-                                                📅 Vence: 25 Jul 2025
-                                            </span>
-                                        </div>
-                                    </div>
-                                    <button class="btn btn-success" onclick="completeTask(3)">
-                                        ✅ Completar
-                                    </button>
-                                </div>
-                                <div class="progress-bar" style="margin-top: 15px;">
-                                    <div class="progress-fill" style="width: 20%;"></div>
-                                </div>
-                            </div>
-
-                            <!-- Tareas Completadas -->
-                            <div style="margin-top: 40px;">
-                                <h3 style="color: #27ae60; margin-bottom: 20px;">
-                                    ✅ <span data-es="Tareas Completadas Recientemente" data-en="Recently Completed Tasks">
-                                        Tareas Completadas Recientemente
-                                    </span>
-                                </h3>
-                                
-                                <div class="task-item" style="opacity: 0.7; border-left-color: #27ae60;">
-                                    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                                        <div style="flex: 1;">
-                                            <h4 style="color: #27ae60; margin-bottom: 8px;">
-                                                ✅ Configuración base de datos
-                                            </h4>
-                                            <p style="color: #666; margin-bottom: 10px;">
-                                                Configuración inicial de la base de datos y tablas principales.
-                                            </p>
-                                            <span style="font-size: 12px; color: #27ae60;">
-                                                ✅ Completada el 10 Jul 2025
-                                            </span>
-                                        </div>
-                                        <span class="custom-badge badge-success">Completada</span>
-                                    </div>
-                                </div>
+                        <!-- Lista de Asignaciones -->
+                        <div id="assignmentsList" class="assignments-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-title">No hay asignaciones</div>
+                                <div class="empty-state-desc">Las asignaciones del administrador aparecerán aquí</div>
                             </div>
                         </div>
                     </div>
@@ -350,76 +83,82 @@
         </div>
     </main>
 
-    <!-- Modal de Confirmación para Tareas -->
-    <div id="taskModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">✅ Confirmar Finalización</h2>
-                <button class="close" onclick="closeModal('taskModal')">&times;</button>
-            </div>
-            <div class="p-3">
-                <p id="taskConfirmText">¿Está seguro de marcar esta tarea como completada?</p>
-                <div style="margin-top: 20px;">
-                    <label for="taskNotes" style="display: block; margin-bottom: 8px; font-weight: 500;">
-                        Notas adicionales (opcional):
-                    </label>
-                    <textarea id="taskNotes" rows="3" placeholder="Agregue comentarios sobre la finalización..."></textarea>
+<!-- Modal para Crear Reporte - ESTRUCTURA MEJORADA -->
+<div id="createReportModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">📝 Crear Reporte de Horas</h2>
+            <button class="close" onclick="closeModal('createReportModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="reportForm">
+                <div class="form-group">
+                    <label>Asignación:</label>
+                    <div id="selectedAssignmentInfo" class="assignment-info-display">
+                        <!-- Se llena dinámicamente -->
+                    </div>
                 </div>
-                <div style="margin-top: 20px; text-align: right;">
-                    <button class="btn btn-secondary" onclick="closeModal('taskModal')" style="margin-right: 10px;">
+                
+                <div class="form-group">
+                    <label for="reportTitle">Título del Reporte *</label>
+                    <input type="text" id="reportTitle" placeholder="Ej: Reporte Semanal - Desarrollo Módulo X" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="reportDescription">Descripción del Trabajo Realizado *</label>
+                    <textarea id="reportDescription" rows="5" 
+                              placeholder="Describe detalladamente el trabajo realizado, logros y observaciones..." 
+                              required></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="reportHours">Horas Trabajadas *</label>
+                        <input type="number" id="reportHours" min="0.5" max="24" step="0.5" placeholder="8.0" required>
+                        <small class="form-text">Ingrese las horas en formato decimal (ej: 8.5)</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="reportDate">Fecha del Reporte *</label>
+                        <input type="date" id="reportDate" required>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="text-align: center; margin-top: 25px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('createReportModal')" style="margin-right: 10px;">
                         Cancelar
                     </button>
-                    <button class="btn btn-success" onclick="confirmTaskCompletion()">
-                        ✅ Confirmar
+                    <button type="submit" class="submit-btn">
+                        📤 Enviar Reporte
                     </button>
                 </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Reportes de Asignación - ESTRUCTURA MEJORADA -->
+<div id="viewReportsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">📊 Reportes de Asignación</h2>
+            <button class="close" onclick="closeModal('viewReportsModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="assignmentReportsInfo">
+                <!-- Información de la asignación -->
+            </div>
+            <div id="reportsList">
+                <!-- Lista de reportes -->
             </div>
         </div>
     </div>
-
-    <!-- Modal de Detalle de Reporte -->
-    <div id="reportDetailModal" class="modal">
-        <div class="modal-content" style="max-width: 700px;">
-            <div class="modal-header">
-                <h2 class="modal-title">📄 Detalle del Reporte</h2>
-                <button class="close" onclick="closeModal('reportDetailModal')">&times;</button>
-            </div>
-            <div class="p-3" id="reportDetailContent">
-                <!-- Contenido dinámico del reporte -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Botón flotante para acciones rápidas -->
-    <button class="float-btn" onclick="showQuickActions()" title="Acciones rápidas">
-        ⚡
-    </button>
+</div>
 
     <!-- Error Message Container -->
     <div id="errorContainer" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff6b6b; color: white; padding: 15px 25px; border-radius: 8px; z-index: 10000; max-width: 500px;">
         <span id="errorText"></span>
         <button onclick="hideError()" style="background: none; border: none; color: white; margin-left: 15px; cursor: pointer;">&times;</button>
     </div>
-
-    <style>
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        @media (max-width: 768px) {
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
 
     <!-- Scripts en orden correcto -->
     <script src="../js/database.js"></script>

@@ -1,13 +1,12 @@
 /**
- * === LÓGICA DEL PANEL DE CONSULTOR CORREGIDA ===
- * Maneja todas las funciones del consultor con manejo de errores mejorado
+ * === PANEL DE CONSULTOR SIMPLIFICADO ===
+ * Solo maneja asignaciones y reportes de horas
  */
 
 // Variables globales
 let currentUser = null;
-let currentLanguage = 'es';
-let userReports = [];
-let currentTaskId = null;
+let userAssignments = [];
+let currentAssignmentId = null;
 let isInitialized = false;
 
 // === MANEJO DE ERRORES ===
@@ -20,7 +19,6 @@ function showError(message) {
         errorText.textContent = message;
         errorContainer.style.display = 'block';
         
-        // Auto-hide después de 5 segundos
         setTimeout(() => {
             hideError();
         }, 5000);
@@ -50,7 +48,7 @@ function hideLoadingSpinner() {
 
 // === VERIFICACIÓN DE DEPENDENCIAS ===
 function checkDependencies() {
-    const requiredObjects = ['PortalDB', 'AuthSys', 'NotificationUtils', 'TextUtils', 'DateUtils', 'ModalUtils', 'StorageUtils'];
+    const requiredObjects = ['PortalDB', 'AuthSys', 'NotificationUtils', 'DateUtils', 'ModalUtils'];
     const missing = [];
     
     for (const obj of requiredObjects) {
@@ -67,12 +65,11 @@ function checkDependencies() {
     return true;
 }
 
-// === INICIALIZACIÓN SEGURA ===
+// === INICIALIZACIÓN ===
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Iniciando panel de consultor...');
+    console.log('🚀 Iniciando panel de consultor simplificado...');
     
     try {
-        // Verificar dependencias con retry
         let retries = 0;
         const maxRetries = 10;
         
@@ -131,12 +128,11 @@ function initializeConsultor() {
         
         console.log('✅ Usuario autenticado como consultor:', currentUser.name);
         
-        // Inicializar componentes
-        initializeConsultorPanel();
+        // Inicializar panel
+        setupConsultorPanel();
         setupEventListeners();
-        loadUserData();
+        loadUserAssignments();
         
-        // Ocultar spinner y mostrar contenido
         hideLoadingSpinner();
         isInitialized = true;
         
@@ -148,37 +144,37 @@ function initializeConsultor() {
     }
 }
 
-// === INICIALIZACIÓN DEL PANEL ===
-function initializeConsultorPanel() {
+function setupConsultorPanel() {
     try {
-        if (!currentUser) {
-            throw new Error('currentUser no está definido');
-        }
-        
-        // Actualizar nombre de usuario
+        // Actualizar información del usuario
         const userNameElement = document.getElementById('consultorUserName');
+        const userNameDisplay = document.getElementById('userNameDisplay');
+        const userIdDisplay = document.getElementById('userIdDisplay');
+        
         if (userNameElement) {
             userNameElement.textContent = currentUser.name;
         }
+        if (userNameDisplay) {
+            userNameDisplay.textContent = currentUser.name;
+        }
+        if (userIdDisplay) {
+            userIdDisplay.textContent = currentUser.id;
+        }
         
-        // Configurar fecha actual
+        // Configurar fecha actual en el modal
         const reportDateElement = document.getElementById('reportDate');
         if (reportDateElement) {
             const today = new Date().toISOString().split('T')[0];
             reportDateElement.value = today;
         }
         
-        // Cargar asignaciones
-        loadUserAssignments();
-        
-        // Mensaje de bienvenida
         if (window.NotificationUtils) {
             window.NotificationUtils.success(`¡Bienvenido ${currentUser.name}!`, 3000);
         }
         
     } catch (error) {
-        console.error('Error en initializeConsultorPanel:', error);
-        showError('Error al inicializar panel: ' + error.message);
+        console.error('Error en setupConsultorPanel:', error);
+        showError('Error al configurar panel: ' + error.message);
     }
 }
 
@@ -187,16 +183,13 @@ function setupEventListeners() {
         // Formulario de reportes
         const reportForm = document.getElementById('reportForm');
         if (reportForm) {
-            reportForm.addEventListener('submit', handleSubmitReport);
+            reportForm.addEventListener('submit', handleCreateReport);
         }
         
-        // Navegación de secciones
-        setupSectionNavigation();
-        
-        // Auto-guardar reportes cada 30 segundos
+        // Auto-refresh cada 30 segundos
         setInterval(() => {
             if (isInitialized) {
-                autoSaveReport();
+                loadUserAssignments();
             }
         }, 30000);
         
@@ -206,135 +199,18 @@ function setupEventListeners() {
     }
 }
 
-function setupSectionNavigation() {
-    try {
-        // Agregar listeners a todos los enlaces de navegación
-        document.querySelectorAll('[data-section]').forEach(link => {
-            link.addEventListener('click', function(e) {
-                e.preventDefault();
-                const section = this.getAttribute('data-section');
-                if (section) {
-                    showSection(section);
-                }
-            });
-        });
-        
-        // También agregar listeners a elementos con onclick
-        document.querySelectorAll('[onclick*="showSection"]').forEach(element => {
-            element.addEventListener('click', function(e) {
-                e.preventDefault();
-                const match = this.getAttribute('onclick').match(/showSection\('(\w+)'\)/);
-                if (match && match[1]) {
-                    showSection(match[1]);
-                }
-            });
-        });
-        
-    } catch (error) {
-        console.error('Error en setupSectionNavigation:', error);
-    }
-}
-
-// === GESTIÓN DE SECCIONES ===
-function showSection(sectionName) {
-    try {
-        console.log('Cambiando a sección:', sectionName);
-        
-        // Ocultar todas las secciones
-        document.querySelectorAll('.content-section').forEach(section => {
-            section.classList.remove('active');
-        });
-
-        // Mostrar sección seleccionada
-        const targetSection = document.getElementById(`${sectionName}-section`);
-        if (targetSection) {
-            targetSection.classList.add('active');
-        } else {
-            console.warn('Sección no encontrada:', `${sectionName}-section`);
-        }
-
-        // Actualizar navegación activa
-        updateActiveNavigation(sectionName);
-
-        // Cargar datos específicos de la sección
-        switch(sectionName) {
-            case 'reports':
-                loadUserReports();
-                break;
-            case 'tasks':
-                loadUserTasks();
-                break;
-            case 'home':
-                refreshDashboardData();
-                break;
-        }
-        
-    } catch (error) {
-        console.error('Error en showSection:', error);
-        showError('Error al cambiar sección: ' + error.message);
-    }
-}
-
-function updateActiveNavigation(activeSection) {
-    try {
-        // Actualizar menú superior
-        document.querySelectorAll('.nav-link').forEach(link => {
-            link.classList.remove('active');
-            if (link.getAttribute('data-section') === activeSection) {
-                link.classList.add('active');
-            }
-        });
-
-        // Actualizar sidebar
-        document.querySelectorAll('.menu-item').forEach(item => {
-            item.classList.remove('active');
-            if (item.getAttribute('data-section') === activeSection) {
-                item.classList.add('active');
-            }
-        });
-        
-    } catch (error) {
-        console.error('Error en updateActiveNavigation:', error);
-    }
-}
-
 // === GESTIÓN DE ASIGNACIONES ===
 function loadUserAssignments() {
     try {
-        if (!currentUser) {
-            console.warn('currentUser no disponible para cargar asignaciones');
+        if (!currentUser || !window.PortalDB) {
             return;
         }
         
-        const assignedCompanyElement = document.getElementById('assignedCompany');
-        const assignedProjectElement = document.getElementById('assignedProject');
-        const reportTypeElement = document.getElementById('reportType');
+        // Obtener TODAS las asignaciones activas del usuario
+        userAssignments = window.PortalDB.getUserAssignments(currentUser.id);
         
-        if (!currentUser.assignedCompany || !currentUser.assignedProject) {
-            if (assignedCompanyElement) assignedCompanyElement.textContent = 'No asignada';
-            if (assignedProjectElement) assignedProjectElement.textContent = 'No asignado';
-            if (reportTypeElement) reportTypeElement.textContent = 'No definido';
-            return;
-        }
-
-        // Cargar datos de empresa y proyecto
-        let company = null;
-        let project = null;
-        
-        if (window.PortalDB) {
-            company = window.PortalDB.getCompany(currentUser.assignedCompany);
-            project = window.PortalDB.getProject(currentUser.assignedProject);
-        }
-
-        if (assignedCompanyElement) {
-            assignedCompanyElement.textContent = company ? company.name : 'No encontrada';
-        }
-        if (assignedProjectElement) {
-            assignedProjectElement.textContent = project ? project.name : 'No encontrado';
-        }
-        if (reportTypeElement) {
-            reportTypeElement.textContent = currentUser.reportType || 'No definido';
-        }
+        updateAssignmentsList();
+        updateAssignmentsCount();
         
     } catch (error) {
         console.error('Error en loadUserAssignments:', error);
@@ -342,667 +218,317 @@ function loadUserAssignments() {
     }
 }
 
+function updateAssignmentsList() {
+    try {
+        const container = document.getElementById('assignmentsList');
+        if (!container) return;
+        
+        if (userAssignments.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">🎯</div>
+                    <div class="empty-state-title">No hay asignaciones</div>
+                    <div class="empty-state-desc">Las asignaciones del administrador aparecerán aquí</div>
+                </div>
+            `;
+            return;
+        }
+        
+        container.innerHTML = '';
+        
+        userAssignments.forEach(assignment => {
+            const company = window.PortalDB.getCompany(assignment.companyId);
+            const project = window.PortalDB.getProject(assignment.projectId);
+            const task = window.PortalDB.getTask(assignment.taskId);
+            const module = window.PortalDB.getModule(assignment.moduleId);
+            
+            // Obtener reportes de esta asignación
+            const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
+            const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+            
+            const assignmentDiv = document.createElement('div');
+            assignmentDiv.className = 'assignment-card';
+            assignmentDiv.innerHTML = `
+                <div class="assignment-header">
+                    <h3 style="margin: 0; color: #2c3e50;">🏢 ${company?.name || 'Empresa no encontrada'}</h3>
+                    <span class="assignment-id">${assignment.id.slice(-6)}</span>
+                </div>
+                
+                <div class="assignment-details">
+                    <p><strong>📋 Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
+                    <p><strong>✅ Tarea:</strong> ${task?.name || 'Tarea no encontrada'}</p>
+                    <p><strong>🧩 Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                    <p><strong>📊 Reportes:</strong> ${assignmentReports.length} reportes | <strong>⏰ Total:</strong> ${totalHours.toFixed(1)} hrs</p>
+                    <p><small>📅 Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
+                </div>
+                
+                <div class="assignment-actions">
+                    <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.id}')">
+                        📝 Crear Reporte
+                    </button>
+                    <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
+                        📊 Ver Reportes (${assignmentReports.length})
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(assignmentDiv);
+        });
+        
+    } catch (error) {
+        console.error('Error en updateAssignmentsList:', error);
+        showError('Error al actualizar lista de asignaciones: ' + error.message);
+    }
+}
+
+function updateAssignmentsCount() {
+    try {
+        const countElement = document.getElementById('assignmentsCount');
+        if (countElement) {
+            countElement.textContent = userAssignments.length;
+        }
+    } catch (error) {
+        console.error('Error en updateAssignmentsCount:', error);
+    }
+}
+
 // === GESTIÓN DE REPORTES ===
-function handleSubmitReport(e) {
+function openCreateReportModal(assignmentId) {
+    try {
+        currentAssignmentId = assignmentId;
+        const assignment = userAssignments.find(a => a.id === assignmentId);
+        
+        if (!assignment) {
+            showError('Asignación no encontrada');
+            return;
+        }
+        
+        const company = window.PortalDB.getCompany(assignment.companyId);
+        const project = window.PortalDB.getProject(assignment.projectId);
+        const task = window.PortalDB.getTask(assignment.taskId);
+        const module = window.PortalDB.getModule(assignment.moduleId);
+        
+        // Mostrar información de la asignación seleccionada
+        const assignmentInfoElement = document.getElementById('selectedAssignmentInfo');
+        if (assignmentInfoElement) {
+            assignmentInfoElement.innerHTML = `
+                <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📋 Información de la Asignación</h4>
+                <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                <p><strong>📋 Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
+                <p><strong>✅ Tarea:</strong> ${task?.name || 'No encontrada'}</p>
+                <p style="margin-bottom: 0;"><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+            `;
+        }
+        
+        // Limpiar formulario
+        document.getElementById('reportForm').reset();
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('reportDate').value = today;
+        
+        // Abrir modal con función mejorada
+        openModal('createReportModal');
+        
+    } catch (error) {
+        console.error('Error en openCreateReportModal:', error);
+        showError('Error al abrir modal de reporte: ' + error.message);
+    }
+}
+
+function handleCreateReport(e) {
     try {
         e.preventDefault();
         
-        if (!isInitialized) {
-            showError('El sistema aún se está inicializando. Espera un momento.');
+        if (!currentAssignmentId) {
+            showError('No se ha seleccionado una asignación');
             return;
         }
-
-        const titleElement = document.getElementById('reportTitle');
-        const dateElement = document.getElementById('reportDate');
-        const contentElement = document.getElementById('reportContent');
-        const progressElement = document.getElementById('reportProgress');
-        const priorityElement = document.getElementById('reportPriority');
         
-        if (!titleElement || !dateElement || !contentElement || !progressElement || !priorityElement) {
-            showError('Error: No se encontraron todos los campos del formulario');
+        const title = document.getElementById('reportTitle').value.trim();
+        const description = document.getElementById('reportDescription').value.trim();
+        const hours = parseFloat(document.getElementById('reportHours').value);
+        const reportDate = document.getElementById('reportDate').value;
+        
+        if (!title || !description || !hours || !reportDate) {
+            showError('Todos los campos son obligatorios');
             return;
         }
-
-        const title = titleElement.value.trim();
-        const date = dateElement.value;
-        const content = contentElement.value.trim();
-        const progress = progressElement.value;
-        const priority = priorityElement.value;
-
-        if (!title || !date || !content) {
-            showError('Todos los campos obligatorios deben completarse');
+        
+        if (hours <= 0 || hours > 24) {
+            showError('Las horas deben estar entre 0.5 y 24');
             return;
         }
-
-        if (!currentUser || !currentUser.assignedCompany || !currentUser.assignedProject) {
-            showError('No tienes asignaciones activas. Contacta al administrador.');
-            return;
-        }
-
+        
         const reportData = {
             userId: currentUser.id,
+            assignmentId: currentAssignmentId,
             title: title,
-            content: content,
-            reportDate: date,
-            progress: parseInt(progress),
-            priority: priority,
-            reportType: currentUser.reportType || 'General',
-            companyId: currentUser.assignedCompany,
-            projectId: currentUser.assignedProject
+            description: description,
+            hours: hours,
+            reportDate: reportDate
         };
-
-        if (!window.PortalDB) {
-            showError('Error: Base de datos no disponible');
-            return;
-        }
-
+        
         const result = window.PortalDB.createReport(reportData);
-
+        
         if (result.success) {
-            if (window.NotificationUtils) {
-                window.NotificationUtils.success('¡Reporte enviado exitosamente!');
-            }
+            window.NotificationUtils.success('¡Reporte creado exitosamente!');
             
-            // Limpiar formulario
-            const form = document.getElementById('reportForm');
-            if (form) {
-                form.reset();
-            }
-            if (dateElement) {
-                dateElement.value = new Date().toISOString().split('T')[0];
-            }
-            if (progressElement) {
-                progressElement.value = 0;
-            }
-            updateProgressDisplay(0);
-            
-            // Actualizar lista de reportes
-            loadUserReports();
-            
-            // Limpiar auto-guardado
-            clearAutoSave();
+            // Cerrar modal y actualizar datos
+            closeModal('createReportModal');
+            loadUserAssignments();
             
         } else {
-            showError('Error al enviar reporte: ' + result.message);
+            showError('Error al crear reporte: ' + result.message);
         }
         
     } catch (error) {
-        console.error('Error en handleSubmitReport:', error);
-        showError('Error al enviar reporte: ' + error.message);
+        console.error('Error en handleCreateReport:', error);
+        showError('Error al crear reporte: ' + error.message);
     }
 }
 
-function loadUserReports() {
+function viewAssignmentReports(assignmentId) {
     try {
-        if (!currentUser || !window.PortalDB) {
-            return;
-        }
-
-        userReports = window.PortalDB.getReportsByUser(currentUser.id) || [];
-        updateReportsList();
-        updateReportsCount();
-        
-    } catch (error) {
-        console.error('Error en loadUserReports:', error);
-        showError('Error al cargar reportes: ' + error.message);
-    }
-}
-
-function updateReportsList() {
-    try {
-        const container = document.getElementById('reportsList');
-        if (!container) {
-            console.warn('Container reportsList no encontrado');
+        const assignment = userAssignments.find(a => a.id === assignmentId);
+        if (!assignment) {
+            showError('Asignación no encontrada');
             return;
         }
         
-        if (userReports.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">📋</div>
-                    <div class="empty-state-title">No hay reportes</div>
-                    <div class="empty-state-desc">Los reportes que envíes aparecerán aquí</div>
+        const company = window.PortalDB.getCompany(assignment.companyId);
+        const project = window.PortalDB.getProject(assignment.projectId);
+        const task = window.PortalDB.getTask(assignment.taskId);
+        const module = window.PortalDB.getModule(assignment.moduleId);
+        
+        const reports = window.PortalDB.getReportsByAssignment(assignmentId);
+        
+        // Mostrar información de la asignación
+        const assignmentInfoElement = document.getElementById('assignmentReportsInfo');
+        if (assignmentInfoElement) {
+            assignmentInfoElement.innerHTML = `
+                <div class="assignment-info-display">
+                    <h4>📋 Información de la Asignación</h4>
+                    <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                    <p><strong>📋 Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
+                    <p><strong>✅ Tarea:</strong> ${task?.name || 'No encontrada'}</p>
+                    <p><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
                 </div>
             `;
-            return;
         }
-
-        container.innerHTML = '';
         
-        // Ordenar reportes por fecha (más recientes primero)
-        const sortedReports = [...userReports].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
-        sortedReports.forEach(report => {
-            const reportDiv = document.createElement('div');
-            reportDiv.className = 'report-item hover-lift';
-            
-            const statusClass = {
-                'Pendiente': 'status-pending',
-                'Aprobado': 'status-approved',
-                'Rechazado': 'status-rejected'
-            }[report.status] || 'status-pending';
-
-            const priorityIcon = {
-                'Alta': '🔴',
-                'Media': '🟡',
-                'Baja': '🟢'
-            }[report.priority] || '🟡';
-
-            const truncatedContent = window.TextUtils ? 
-                window.TextUtils.truncate(report.content, 80) : 
-                report.content.substring(0, 80) + '...';
+        // Mostrar lista de reportes
+        const reportsListElement = document.getElementById('reportsList');
+        if (reportsListElement) {
+            if (reports.length === 0) {
+                reportsListElement.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <div class="empty-state-title">No hay reportes</div>
+                        <div class="empty-state-desc">No has creado reportes para esta asignación</div>
+                    </div>
+                `;
+            } else {
+                reportsListElement.innerHTML = '<h4>📊 Reportes Enviados</h4>';
                 
-            const formattedDate = window.DateUtils ? 
-                window.DateUtils.formatDate(report.reportDate) : 
-                new Date(report.reportDate).toLocaleDateString();
-
-            reportDiv.innerHTML = `
-                <div class="report-content" style="flex: 1; cursor: pointer;" onclick="showReportDetail('${report.id}')">
-                    <h4 style="color: #2c3e50; margin-bottom: 5px;">
-                        ${priorityIcon} ${report.title}
-                    </h4>
-                    <p style="color: #666; font-size: 14px; margin-bottom: 8px;">
-                        ${truncatedContent}
-                    </p>
-                    <div class="report-meta">
-                        <span class="report-date">
-                            📅 ${formattedDate}
-                        </span>
-                        ${report.progress !== undefined ? `
-                            <span class="custom-badge badge-info">
-                                📊 ${report.progress}%
-                            </span>
+                // Ordenar reportes por fecha (más recientes primero)
+                const sortedReports = reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                
+                sortedReports.forEach(report => {
+                    const reportDiv = document.createElement('div');
+                    reportDiv.className = 'report-item';
+                    reportDiv.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+                            <div style="flex: 1;">
+                                <h5 style="margin: 0 0 5px 0; color: #2c3e50;">${report.title}</h5>
+                                <p style="margin: 5px 0; color: #666; font-size: 14px;">${report.description}</p>
+                                <div style="display: flex; gap: 15px; font-size: 12px; color: #888;">
+                                    <span>⏰ ${report.hours} hrs</span>
+                                    <span>📅 ${window.DateUtils.formatDate(report.reportDate)}</span>
+                                    <span>🕒 Enviado: ${window.DateUtils.formatRelativeTime(report.createdAt)}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="report-status status-${report.status.toLowerCase()}">
+                                    ${report.status}
+                                </span>
+                            </div>
+                        </div>
+                        ${report.status === 'Rechazado' && report.feedback ? `
+                            <div style="background: #fff5f5; padding: 10px; border-radius: 6px; border-left: 3px solid #e74c3c; margin-top: 10px;">
+                                <strong style="color: #e74c3c;">Comentarios de revisión:</strong>
+                                <p style="margin: 5px 0 0 0; color: #666;">${report.feedback}</p>
+                            </div>
                         ` : ''}
-                    </div>
-                </div>
-                <div>
-                    <span class="report-status ${statusClass}">
-                        ${report.status || 'Pendiente'}
-                    </span>
-                </div>
-            `;
-            
-            container.appendChild(reportDiv);
-        });
-        
-    } catch (error) {
-        console.error('Error en updateReportsList:', error);
-        showError('Error al actualizar lista de reportes: ' + error.message);
-    }
-}
-
-function updateReportsCount() {
-    try {
-        const count = userReports.length;
-        const countElement = document.getElementById('reportsCount');
-        if (countElement) {
-            countElement.textContent = count;
-        }
-    } catch (error) {
-        console.error('Error en updateReportsCount:', error);
-    }
-}
-
-function showReportDetail(reportId) {
-    try {
-        const report = userReports.find(r => r.id === reportId);
-        if (!report) {
-            showError('Reporte no encontrado');
-            return;
-        }
-
-        let company = null;
-        let project = null;
-        
-        if (window.PortalDB) {
-            company = window.PortalDB.getCompany(report.companyId);
-            project = window.PortalDB.getProject(report.projectId);
-        }
-
-        const priorityIcon = {
-            'Alta': '🔴',
-            'Media': '🟡',
-            'Baja': '🟢'
-        }[report.priority] || '🟡';
-
-        const statusClass = {
-            'Pendiente': 'status-pending',
-            'Aprobado': 'status-approved',
-            'Rechazado': 'status-rejected'
-        }[report.status] || 'status-pending';
-
-        const formatDate = (date) => window.DateUtils ? 
-            window.DateUtils.formatDate(date) : 
-            new Date(date).toLocaleDateString();
-            
-        const formatDateTime = (date) => window.DateUtils ? 
-            window.DateUtils.formatDateTime(date) : 
-            new Date(date).toLocaleString();
-
-        const detailHTML = `
-            <div style="margin-bottom: 20px;">
-                <h3 style="color: #2c3e50; margin-bottom: 10px;">
-                    ${priorityIcon} ${report.title}
-                </h3>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
-                    <div>
-                        <strong>📅 Fecha del Reporte:</strong><br>
-                        ${formatDate(report.reportDate)}
-                    </div>
-                    <div>
-                        <strong>⏰ Enviado:</strong><br>
-                        ${formatDateTime(report.createdAt)}
-                    </div>
-                    <div>
-                        <strong>🏢 Empresa:</strong><br>
-                        ${company ? company.name : 'No disponible'}
-                    </div>
-                    <div>
-                        <strong>📋 Proyecto:</strong><br>
-                        ${project ? project.name : 'No disponible'}
-                    </div>
-                    <div>
-                        <strong>📊 Progreso:</strong><br>
-                        ${report.progress !== undefined ? `${report.progress}%` : 'No especificado'}
-                    </div>
-                    <div>
-                        <strong>🎯 Estado:</strong><br>
-                        <span class="report-status ${statusClass}">
-                            ${report.status || 'Pendiente'}
-                        </span>
-                    </div>
-                </div>
-            </div>
-            
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #1cb5e0;">
-                <h4 style="margin-bottom: 15px; color: #2c3e50;">📝 Contenido del Reporte:</h4>
-                <div style="white-space: pre-wrap; line-height: 1.6; color: #555;">
-                    ${report.content}
-                </div>
-            </div>
-            
-            ${report.status === 'Rechazado' && report.feedback ? `
-                <div style="background: #fff5f5; padding: 15px; border-radius: 8px; border-left: 4px solid #e74c3c; margin-top: 20px;">
-                    <h4 style="color: #e74c3c; margin-bottom: 10px;">❌ Comentarios de Revisión:</h4>
-                    <p style="color: #666;">${report.feedback}</p>
-                </div>
-            ` : ''}
-        `;
-
-        const detailContainer = document.getElementById('reportDetailContent');
-        if (detailContainer) {
-            detailContainer.innerHTML = detailHTML;
-            if (window.ModalUtils) {
-                window.ModalUtils.open('reportDetailModal');
+                    `;
+                    reportsListElement.appendChild(reportDiv);
+                });
             }
-        }
-        
-    } catch (error) {
-        console.error('Error en showReportDetail:', error);
-        showError('Error al mostrar detalle del reporte: ' + error.message);
-    }
-}
-
-// === GESTIÓN DE TAREAS ===
-function loadUserTasks() {
-    try {
-        updateTasksCount();
-    } catch (error) {
-        console.error('Error en loadUserTasks:', error);
-    }
-}
-
-function updateTasksCount() {
-    try {
-        const pendingTasks = document.querySelectorAll('.task-item:not([style*="opacity: 0.7"])').length;
-        const countElement = document.getElementById('tasksCount');
-        if (countElement) {
-            countElement.textContent = pendingTasks;
-        }
-    } catch (error) {
-        console.error('Error en updateTasksCount:', error);
-    }
-}
-
-function completeTask(taskId) {
-    try {
-        currentTaskId = taskId;
-        const taskElements = document.querySelectorAll('.task-item h4');
-        const taskElement = taskElements[taskId - 1];
-        const taskTitle = taskElement ? taskElement.textContent.trim() : 'Tarea';
-        
-        const confirmElement = document.getElementById('taskConfirmText');
-        if (confirmElement) {
-            confirmElement.textContent = `¿Está seguro de marcar "${taskTitle}" como completada?`;
         }
         
         if (window.ModalUtils) {
-            window.ModalUtils.open('taskModal');
+            window.ModalUtils.open('viewReportsModal');
         }
         
     } catch (error) {
-        console.error('Error en completeTask:', error);
-        showError('Error al completar tarea: ' + error.message);
+        console.error('Error en viewAssignmentReports:', error);
+        showError('Error al ver reportes: ' + error.message);
     }
 }
 
-function confirmTaskCompletion() {
-    try {
-        const notesElement = document.getElementById('taskNotes');
-        const notes = notesElement ? notesElement.value.trim() : '';
-        
-        if (window.NotificationUtils) {
-            window.NotificationUtils.success('¡Tarea marcada como completada!');
-        }
-        
-        // Mover tarea a completadas (simulación visual)
-        setTimeout(() => {
-            const taskItems = document.querySelectorAll('.task-item:not([style*="opacity: 0.7"])');
-            if (taskItems[currentTaskId - 1]) {
-                const taskItem = taskItems[currentTaskId - 1];
-                taskItem.style.opacity = '0.7';
-                taskItem.style.borderLeftColor = '#27ae60';
-                
-                const title = taskItem.querySelector('h4');
-                if (title) {
-                    title.style.color = '#27ae60';
-                    title.innerHTML = '✅ ' + title.textContent.replace(/^[📋🔧📱]\s*/, '');
-                }
-                
-                const button = taskItem.querySelector('button');
-                if (button) {
-                    button.innerHTML = '✅ Completada';
-                    button.disabled = true;
-                    button.style.background = '#27ae60';
-                }
-            }
-            
-            updateTasksCount();
-        }, 500);
-        
-        closeModal('taskModal');
-        if (notesElement) {
-            notesElement.value = '';
-        }
-        
-    } catch (error) {
-        console.error('Error en confirmTaskCompletion:', error);
-        showError('Error al confirmar tarea: ' + error.message);
-    }
-}
-
-// === AUTO-GUARDADO ===
-function autoSaveReport() {
-    try {
-        if (!currentUser) return;
-        
-        const titleElement = document.getElementById('reportTitle');
-        const contentElement = document.getElementById('reportContent');
-        
-        if (!titleElement || !contentElement) return;
-        
-        const title = titleElement.value.trim();
-        const content = contentElement.value.trim();
-        
-        if (title || content) {
-            const autoSaveData = {
-                title: title,
-                content: content,
-                date: document.getElementById('reportDate')?.value,
-                progress: document.getElementById('reportProgress')?.value,
-                priority: document.getElementById('reportPriority')?.value,
-                timestamp: new Date().toISOString()
-            };
-            
-            if (window.StorageUtils) {
-                window.StorageUtils.set(`autosave_report_${currentUser.id}`, autoSaveData, new Date(Date.now() + 24 * 60 * 60 * 1000));
-                showAutoSaveIndicator();
-            }
-        }
-        
-    } catch (error) {
-        console.error('Error en autoSaveReport:', error);
-    }
-}
-
-function loadAutoSavedReport() {
-    try {
-        if (!currentUser || !window.StorageUtils) return;
-        
-        const autoSaved = window.StorageUtils.get(`autosave_report_${currentUser.id}`);
-        
-        if (autoSaved) {
-            if (confirm('Se encontró un reporte auto-guardado. ¿Desea recuperarlo?')) {
-                const titleElement = document.getElementById('reportTitle');
-                const contentElement = document.getElementById('reportContent');
-                const dateElement = document.getElementById('reportDate');
-                const progressElement = document.getElementById('reportProgress');
-                const priorityElement = document.getElementById('reportPriority');
-                
-                if (titleElement) titleElement.value = autoSaved.title || '';
-                if (contentElement) contentElement.value = autoSaved.content || '';
-                if (dateElement) dateElement.value = autoSaved.date || '';
-                if (progressElement) progressElement.value = autoSaved.progress || 0;
-                if (priorityElement) priorityElement.value = autoSaved.priority || 'Media';
-                
-                updateProgressDisplay(autoSaved.progress || 0);
-                
-                if (window.NotificationUtils) {
-                    window.NotificationUtils.info('Reporte auto-guardado recuperado');
-                }
-            } else {
-                clearAutoSave();
-            }
-        }
-        
-    } catch (error) {
-        console.error('Error en loadAutoSavedReport:', error);
-    }
-}
-
-function clearAutoSave() {
-    try {
-        if (currentUser && window.StorageUtils) {
-            window.StorageUtils.remove(`autosave_report_${currentUser.id}`);
-        }
-    } catch (error) {
-        console.error('Error en clearAutoSave:', error);
-    }
-}
-
-function showAutoSaveIndicator() {
-    try {
-        const indicator = document.getElementById('autoSaveIndicator') || (() => {
-            const div = document.createElement('div');
-            div.id = 'autoSaveIndicator';
-            div.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: #2ecc71;
-                color: white;
-                padding: 8px 16px;
-                border-radius: 20px;
-                font-size: 12px;
-                z-index: 1001;
-                opacity: 0;
-                transition: opacity 0.3s;
-            `;
-            div.textContent = '💾 Auto-guardado';
-            document.body.appendChild(div);
-            return div;
-        })();
-        
-        indicator.style.opacity = '1';
-        setTimeout(() => {
-            indicator.style.opacity = '0';
-        }, 2000);
-        
-    } catch (error) {
-        console.error('Error en showAutoSaveIndicator:', error);
-    }
-}
-
-// === UTILIDADES ===
-function updateProgressDisplay(value) {
-    try {
-        const progressElement = document.getElementById('progressDisplay');
-        if (progressElement) {
-            progressElement.textContent = `${value}%`;
-            
-            // Actualizar color según progreso
-            if (value < 30) {
-                progressElement.style.color = '#e74c3c';
-            } else if (value < 70) {
-                progressElement.style.color = '#f39c12';
-            } else {
-                progressElement.style.color = '#27ae60';
-            }
-        }
-    } catch (error) {
-        console.error('Error en updateProgressDisplay:', error);
-    }
-}
-
-function toggleLanguage() {
-    try {
-        currentLanguage = currentLanguage === 'es' ? 'en' : 'es';
-        updateLanguage();
-        
-        const langBtn = document.getElementById('langText');
-        if (langBtn) {
-            langBtn.textContent = currentLanguage === 'es' ? 'Español (MX) ▼' : 'English (US) ▼';
-        }
-        
-        if (window.NotificationUtils) {
-            window.NotificationUtils.info(
-                currentLanguage === 'es' ? 'Idioma cambiado a Español' : 'Language changed to English'
-            );
-        }
-    } catch (error) {
-        console.error('Error en toggleLanguage:', error);
-    }
-}
-
-function updateLanguage() {
-    try {
-        document.querySelectorAll('[data-es][data-en]').forEach(element => {
-            const text = element.getAttribute(`data-${currentLanguage}`);
-            if (text) {
-                element.textContent = text;
-            }
-        });
-    } catch (error) {
-        console.error('Error en updateLanguage:', error);
-    }
-}
-
-function refreshDashboardData() {
-    try {
-        loadUserAssignments();
-        loadUserReports();
-        updateReportsCount();
-        updateTasksCount();
-    } catch (error) {
-        console.error('Error en refreshDashboardData:', error);
-    }
-}
-
-function viewReportHistory() {
-    try {
-        showSection('reports');
-        if (window.NotificationUtils) {
-            window.NotificationUtils.info('Mostrando historial de reportes');
-        }
-    } catch (error) {
-        console.error('Error en viewReportHistory:', error);
-    }
-}
-
-function showQuickActions() {
-    try {
-        const actions = [
-            { text: '📝 Nuevo Reporte', action: () => showSection('reports') },
-            { text: '✅ Ver Tareas', action: () => showSection('tasks') },
-            { text: '🏠 Inicio', action: () => showSection('home') },
-            { text: '🔄 Actualizar', action: refreshDashboardData }
-        ];
-        
-        const existingMenu = document.getElementById('quickActionsMenu');
-        if (existingMenu) {
-            existingMenu.remove();
-            return;
-        }
-        
-        const menu = document.createElement('div');
-        menu.id = 'quickActionsMenu';
-        menu.style.cssText = `
-            position: fixed;
-            bottom: 100px;
-            right: 30px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-            padding: 10px;
-            z-index: 1001;
-            min-width: 200px;
-        `;
-        
-        actions.forEach(action => {
-            const button = document.createElement('button');
-            button.textContent = action.text;
-            button.style.cssText = `
-                width: 100%;
-                padding: 12px 15px;
-                border: none;
-                background: white;
-                text-align: left;
-                cursor: pointer;
-                border-radius: 5px;
-                margin: 2px 0;
-                transition: background 0.3s;
-            `;
-            
-            button.onmouseover = () => button.style.background = '#f8f9fa';
-            button.onmouseout = () => button.style.background = 'white';
-            button.onclick = () => {
-                action.action();
-                menu.remove();
-            };
-            
-            menu.appendChild(button);
-        });
-        
-        document.body.appendChild(menu);
-        
-        setTimeout(() => {
-            document.addEventListener('click', function closeMenu(e) {
-                if (!menu.contains(e.target) && !e.target.classList.contains('float-btn')) {
-                    menu.remove();
-                    document.removeEventListener('click', closeMenu);
-                }
-            });
-        }, 100);
-        
-    } catch (error) {
-        console.error('Error en showQuickActions:', error);
-    }
-}
-
+// === UTILIDADES MEJORADAS PARA MODALES ===
 function closeModal(modalId) {
     try {
-        if (window.ModalUtils) {
-            window.ModalUtils.close(modalId);
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            // Animación de salida
+            modal.style.animation = 'fadeOut 0.3s ease';
+            
+            setTimeout(() => {
+                modal.style.display = 'none';
+                modal.style.animation = '';
+                
+                // Restaurar scroll del body
+                document.body.style.overflow = 'auto';
+                
+                // Limpiar formularios
+                const forms = modal.querySelectorAll('form');
+                forms.forEach(form => form.reset());
+            }, 300);
         }
+        
+        // Limpiar variables de estado
+        if (modalId === 'createReportModal') {
+            currentAssignmentId = null;
+        }
+        
     } catch (error) {
         console.error('Error en closeModal:', error);
+    }
+}
+
+// Función mejorada para abrir modales
+function openModal(modalId) {
+    try {
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'block';
+            
+            // Prevenir scroll del body cuando el modal está abierto
+            document.body.style.overflow = 'hidden';
+            
+            // Focus en el primer input del modal
+            const firstInput = modal.querySelector('input, select, textarea');
+            if (firstInput) {
+                setTimeout(() => firstInput.focus(), 100);
+            }
+        }
+    } catch (error) {
+        console.error('Error en openModal:', error);
     }
 }
 
 function logout() {
     try {
         if (confirm('¿Está seguro de cerrar sesión?')) {
-            autoSaveReport();
             if (window.AuthSys) {
                 window.AuthSys.logout();
             } else {
@@ -1015,29 +541,11 @@ function logout() {
     }
 }
 
-function loadUserData() {
-    try {
-        loadUserReports();
-        updateReportsCount();
-        updateTasksCount();
-        
-        setTimeout(loadAutoSavedReport, 1000);
-    } catch (error) {
-        console.error('Error en loadUserData:', error);
-    }
-}
-
 // === FUNCIONES EXPORTADAS GLOBALMENTE ===
-window.showSection = showSection;
-window.completeTask = completeTask;
-window.confirmTaskCompletion = confirmTaskCompletion;
-window.updateProgressDisplay = updateProgressDisplay;
-window.toggleLanguage = toggleLanguage;
-window.viewReportHistory = viewReportHistory;
-window.showQuickActions = showQuickActions;
+window.openCreateReportModal = openCreateReportModal;
+window.viewAssignmentReports = viewAssignmentReports;
 window.closeModal = closeModal;
 window.logout = logout;
-window.showReportDetail = showReportDetail;
 window.hideError = hideError;
 
 console.log('✅ Funciones del consultor exportadas globalmente');

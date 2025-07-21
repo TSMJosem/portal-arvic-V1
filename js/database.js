@@ -18,6 +18,8 @@ class PortalDatabase {
             this.setupDefaultProjects();
             this.setupDefaultTasks();
             this.setupDefaultModules();
+            this.setupDefaultAssignments();
+            this.setupDefaultReports();
             this.setData('initialized', true);
             this.setData('user_counter', 3);
             this.setData('company_counter', 4);
@@ -129,20 +131,26 @@ class PortalDatabase {
                 id: '0001',
                 name: 'Configurar base de datos inicial',
                 description: 'Crear esquema de base de datos y tablas principales',
-                createdAt: new Date(Date.now() - 86400000 * 7).toISOString(), // 7 días atrás
+                status: 'Completada',
+                priority: 'Alta',
+                createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
                 isActive: true
             },
             '0002': {
                 id: '0002',
                 name: 'Implementar autenticación de usuarios',
                 description: 'Sistema de login y manejo de sesiones',
-                createdAt: new Date(Date.now() - 86400000 * 3).toISOString(), // 3 días atrás
+                status: 'En Progreso',
+                priority: 'Alta',
+                createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
                 isActive: true
             },
             '0003': {
                 id: '0003',
                 name: 'Diseñar interfaz de usuario',
                 description: 'Crear mockups y prototipos de la interfaz',
+                status: 'Pendiente',
+                priority: 'Media',
                 createdAt: new Date().toISOString(),
                 isActive: true
             }
@@ -157,7 +165,8 @@ class PortalDatabase {
                 name: 'Módulo de Autenticación',
                 description: 'Manejo de login, logout y sesiones de usuario',
                 category: 'Backend',
-                createdAt: new Date(Date.now() - 86400000 * 10).toISOString(), // 10 días atrás
+                status: 'Completado',
+                createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
                 isActive: true
             },
             '0002': {
@@ -165,7 +174,8 @@ class PortalDatabase {
                 name: 'Panel de Administración',
                 description: 'Interfaz para gestión de usuarios y configuración',
                 category: 'Frontend',
-                createdAt: new Date(Date.now() - 86400000 * 5).toISOString(), // 5 días atrás
+                status: 'En Desarrollo',
+                createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
                 isActive: true
             },
             '0003': {
@@ -173,11 +183,66 @@ class PortalDatabase {
                 name: 'API de Reportes',
                 description: 'Endpoints para creación y gestión de reportes',
                 category: 'API',
+                status: 'Planificación',
                 createdAt: new Date().toISOString(),
                 isActive: true
             }
         };
         this.setData('modules', defaultModules);
+    }
+
+    setupDefaultAssignments() {
+        const defaultAssignments = {
+            'assign_001': {
+                id: 'assign_001',
+                userId: '0001',
+                companyId: '0001',
+                projectId: '0001',
+                taskId: '0001',
+                moduleId: '0001',
+                createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+                isActive: true
+            },
+            'assign_002': {
+                id: 'assign_002',
+                userId: '0002',
+                companyId: '0002',
+                projectId: '0002',
+                taskId: '0002',
+                moduleId: '0002',
+                createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+                isActive: true
+            }
+        };
+        this.setData('assignments', defaultAssignments);
+    }
+
+    setupDefaultReports() {
+        const defaultReports = {
+            'report_001': {
+                id: 'report_001',
+                userId: '0001',
+                title: 'Reporte de Configuración de Base de Datos',
+                description: 'Configuración inicial de la base de datos completada exitosamente. Se crearon todas las tablas necesarias.',
+                hours: 8,
+                reportDate: new Date(Date.now() - 86400000 * 2).toISOString(),
+                status: 'Aprobado',
+                createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+                updatedAt: new Date(Date.now() - 86400000 * 1).toISOString()
+            },
+            'report_002': {
+                id: 'report_002',
+                userId: '0002',
+                title: 'Avance en Interfaz de Usuario',
+                description: 'Diseño de mockups para las pantallas principales del sistema. Se completaron 5 pantallas.',
+                hours: 6,
+                reportDate: new Date(Date.now() - 86400000 * 1).toISOString(),
+                status: 'Pendiente',
+                createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
+                updatedAt: new Date(Date.now() - 86400000 * 1).toISOString()
+            }
+        };
+        this.setData('reports', defaultReports);
     }
 
     // === MÉTODOS GENERALES ===
@@ -240,11 +305,14 @@ class PortalDatabase {
         const counter = this.getData('user_counter') || 1;
         const userId = counter.toString().padStart(4, '0');
         
+        // Generar contraseña temporal
+        const tempPassword = `temp${userId}${Math.floor(Math.random() * 1000)}`;
+        
         const newUser = {
             id: userId,
             name: userData.name,
             email: userData.email || '',
-            password: userData.password || `user${userId}`,
+            password: tempPassword,
             role: userData.role || 'consultor',
             createdAt: new Date().toISOString(),
             isActive: true
@@ -270,19 +338,32 @@ class PortalDatabase {
     }
 
     deleteUser(userId) {
-        const users = this.getUsers();
-        if (!users[userId]) {
-            return { success: false, message: 'Usuario no encontrado' };
-        }
-        
-        delete users[userId];
-        this.setData('users', users);
-        
-        // Eliminar asignaciones relacionadas
-        this.deleteAssignmentsByUser(userId);
-        
-        return { success: true, message: 'Usuario eliminado correctamente' };
+    const users = this.getUsers();
+    if (!users[userId]) {
+        return { success: false, message: 'Usuario no encontrado' };
     }
+    
+    // Verificar si es el administrador
+    if (userId === 'admin') {
+        return { success: false, message: 'No se puede eliminar el usuario administrador' };
+    }
+    
+    // Desactivar en lugar de eliminar para mantener integridad
+    users[userId].isActive = false;
+    users[userId].deletedAt = new Date().toISOString();
+    this.setData('users', users);
+    
+    // Desactivar asignaciones relacionadas
+    const assignments = this.getAssignments();
+    Object.keys(assignments).forEach(assignmentId => {
+        if (assignments[assignmentId].userId === userId) {
+            assignments[assignmentId].isActive = false;
+        }
+    });
+    this.setData('assignments', assignments);
+    
+    return { success: true, message: 'Usuario desactivado correctamente' };
+}
 
     validateUser(userId, password) {
         const user = this.getUser(userId);
@@ -435,6 +516,8 @@ class PortalDatabase {
             id: taskId,
             name: taskData.name,
             description: taskData.description || '',
+            status: taskData.status || 'Pendiente',
+            priority: taskData.priority || 'Media',
             createdAt: new Date().toISOString(),
             isActive: true
         };
@@ -490,6 +573,7 @@ class PortalDatabase {
             name: moduleData.name,
             description: moduleData.description || '',
             category: moduleData.category || 'Otros',
+            status: moduleData.status || 'Planificación',
             createdAt: new Date().toISOString(),
             isActive: true
         };
@@ -535,41 +619,56 @@ class PortalDatabase {
         return assignments[assignmentId] || null;
     }
 
-    createAssignment(assignmentData) {
-        const assignments = this.getAssignments();
-        const assignmentId = Date.now().toString();
-        
-        // Verificar que existan el usuario, empresa y proyecto
-        const user = this.getUser(assignmentData.userId);
-        const company = this.getCompany(assignmentData.companyId);
-        const project = this.getProject(assignmentData.projectId);
-        
-        if (!user || !company || !project) {
-            return { success: false, message: 'Usuario, empresa o proyecto no válido' };
-        }
-        
-        const newAssignment = {
-            id: assignmentId,
-            userId: assignmentData.userId,
-            companyId: assignmentData.companyId,
-            projectId: assignmentData.projectId,
-            reportType: assignmentData.reportType,
-            createdAt: new Date().toISOString(),
-            isActive: true
-        };
-        
-        assignments[assignmentId] = newAssignment;
-        this.setData('assignments', assignments);
-        
-        // Actualizar usuario con la asignación
-        this.updateUser(assignmentData.userId, {
-            assignedCompany: assignmentData.companyId,
-            assignedProject: assignmentData.projectId,
-            reportType: assignmentData.reportType
-        });
-        
-        return { success: true, assignment: newAssignment };
+createAssignment(assignmentData) {
+    const assignments = this.getAssignments();
+    const assignmentId = `assign_${Date.now()}`;
+    
+    // Verificar que existan todas las entidades
+    const user = this.getUser(assignmentData.userId);
+    const company = this.getCompany(assignmentData.companyId);
+    const project = this.getProject(assignmentData.projectId);
+    const task = this.getTask(assignmentData.taskId);
+    const module = this.getModule(assignmentData.moduleId);
+    
+    if (!user || !company || !project || !task || !module) {
+        return { success: false, message: 'Una o más entidades no existen' };
     }
+    
+    // VERIFICAR si ya existe una asignación igual (evitar duplicados)
+    const existingAssignment = Object.values(assignments).find(a => 
+        a.userId === assignmentData.userId &&
+        a.companyId === assignmentData.companyId &&
+        a.projectId === assignmentData.projectId &&
+        a.taskId === assignmentData.taskId &&
+        a.moduleId === assignmentData.moduleId &&
+        a.isActive
+    );
+    
+    if (existingAssignment) {
+        return { success: false, message: 'Ya existe una asignación idéntica para este usuario' };
+    }
+    
+    const newAssignment = {
+        id: assignmentId,
+        userId: assignmentData.userId,
+        companyId: assignmentData.companyId,
+        projectId: assignmentData.projectId,
+        taskId: assignmentData.taskId,
+        moduleId: assignmentData.moduleId,
+        createdAt: new Date().toISOString(),
+        isActive: true
+    };
+    
+    assignments[assignmentId] = newAssignment;
+    this.setData('assignments', assignments);
+    
+    // YA NO ACTUALIZAMOS USER con assignedCompany/assignedProject
+    // porque ahora puede tener múltiples asignaciones
+    
+    return { success: true, assignment: newAssignment };
+}
+
+
 
     deleteAssignment(assignmentId) {
         const assignments = this.getAssignments();
@@ -584,8 +683,7 @@ class PortalDatabase {
         if (user) {
             this.updateUser(assignment.userId, {
                 assignedCompany: null,
-                assignedProject: null,
-                reportType: null
+                assignedProject: null
             });
         }
         
@@ -625,6 +723,7 @@ class PortalDatabase {
         this.setData('assignments', assignments);
     }
 
+
     // === GESTIÓN DE REPORTES ===
     getReports() {
         return this.getData('reports') || {};
@@ -636,30 +735,63 @@ class PortalDatabase {
     }
 
     createReport(reportData) {
-        const reports = this.getReports();
-        const reportId = Date.now().toString();
-        
-        const newReport = {
-            id: reportId,
-            userId: reportData.userId,
-            title: reportData.title,
-            content: reportData.content,
-            reportDate: reportData.reportDate,
-            progress: reportData.progress,
-            priority: reportData.priority,
-            reportType: reportData.reportType,
-            companyId: reportData.companyId,
-            projectId: reportData.projectId,
-            status: 'Pendiente',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        
-        reports[reportId] = newReport;
-        this.setData('reports', reports);
-        
-        return { success: true, report: newReport };
+    const reports = this.getReports();
+    const reportId = `report_${Date.now()}`;
+    
+    // VALIDAR que existe la asignación (OBLIGATORIO)
+    if (!reportData.assignmentId) {
+        return { success: false, message: 'El ID de asignación es requerido' };
     }
+    
+    const assignment = this.getAssignment(reportData.assignmentId);
+    if (!assignment) {
+        return { success: false, message: 'La asignación especificada no existe' };
+    }
+    
+    // VALIDAR que el usuario coincide con el de la asignación
+    if (reportData.userId !== assignment.userId) {
+        return { success: false, message: 'El usuario no coincide con la asignación' };
+    }
+    
+    const newReport = {
+        id: reportId,
+        userId: reportData.userId,
+        assignmentId: reportData.assignmentId, // CAMPO OBLIGATORIO
+        title: reportData.title,
+        description: reportData.description || '',
+        hours: reportData.hours || 0,
+        reportDate: reportData.reportDate || new Date().toISOString(),
+        status: 'Pendiente',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    
+    reports[reportId] = newReport;
+    this.setData('reports', reports);
+    
+    return { success: true, report: newReport };
+}
+
+getUserAssignments(userId) {
+    const assignments = this.getAssignments();
+    return Object.values(assignments).filter(assignment => 
+        assignment.userId === userId && assignment.isActive
+    );
+}
+
+// 4. AGREGAR función para obtener reportes por asignación
+getReportsByAssignment(assignmentId) {
+    const reports = this.getReports();
+    return Object.values(reports).filter(report => 
+        report.assignmentId === assignmentId
+    );
+}
+
+// 5. AGREGAR función para validar si un usuario puede crear reportes
+canUserCreateReport(userId) {
+    const assignments = this.getUserAssignments(userId);
+    return assignments.length > 0;
+}
 
     updateReport(reportId, updateData) {
         const reports = this.getReports();
@@ -698,16 +830,6 @@ class PortalDatabase {
         const reports = this.getReports();
         const tasks = this.getTasks();
         const modules = this.getModules();
-    }
-    // === ESTADÍSTICAS ===
-    getStats() {
-        const users = this.getUsers();
-        const companies = this.getCompanies();
-        const projects = this.getProjects();
-        const assignments = this.getAssignments();
-        const reports = this.getReports();
-        const tasks = this.getTasks();
-        const modules = this.getModules();
         
         return {
             totalUsers: Object.keys(users).length - 1, // -1 para excluir admin
@@ -719,6 +841,8 @@ class PortalDatabase {
             totalModules: Object.keys(modules).length,
             activeUsers: Object.values(users).filter(u => u.isActive && u.role === 'consultor').length,
             pendingReports: Object.values(reports).filter(r => r.status === 'Pendiente').length,
+            approvedReports: Object.values(reports).filter(r => r.status === 'Aprobado').length,
+            rejectedReports: Object.values(reports).filter(r => r.status === 'Rechazado').length,
             completedTasks: Object.values(tasks).filter(t => t.status === 'Completada').length,
             pendingTasks: Object.values(tasks).filter(t => t.status === 'Pendiente').length,
             inProgressTasks: Object.values(tasks).filter(t => t.status === 'En Progreso').length,
@@ -726,6 +850,46 @@ class PortalDatabase {
             inDevelopmentModules: Object.values(modules).filter(m => m.status === 'En Desarrollo').length,
             plannedModules: Object.values(modules).filter(m => m.status === 'Planificación').length
         };
+    }
+
+    // === UTILIDADES ===
+    generateId(type = 'general') {
+        const timestamp = Date.now();
+        const random = Math.floor(Math.random() * 1000);
+        return `${type}_${timestamp}_${random}`;
+    }
+
+    exportData() {
+        const data = {
+            users: this.getUsers(),
+            companies: this.getCompanies(),
+            projects: this.getProjects(),
+            assignments: this.getAssignments(),
+            reports: this.getReports(),
+            tasks: this.getTasks(),
+            modules: this.getModules(),
+            exportDate: new Date().toISOString(),
+            version: '2.0'
+        };
+        return JSON.stringify(data, null, 2);
+    }
+
+    importData(jsonData) {
+        try {
+            const data = JSON.parse(jsonData);
+            
+            if (data.users) this.setData('users', data.users);
+            if (data.companies) this.setData('companies', data.companies);
+            if (data.projects) this.setData('projects', data.projects);
+            if (data.assignments) this.setData('assignments', data.assignments);
+            if (data.reports) this.setData('reports', data.reports);
+            if (data.tasks) this.setData('tasks', data.tasks);
+            if (data.modules) this.setData('modules', data.modules);
+            
+            return { success: true, message: 'Datos importados correctamente' };
+        } catch (error) {
+            return { success: false, message: 'Error al importar datos: ' + error.message };
+        }
     }
 
     // === BÚSQUEDA Y FILTROS ===
@@ -773,62 +937,7 @@ class PortalDatabase {
         });
     }
 
-    // === REPORTES AVANZADOS ===
-    getModulesByCategory() {
-        const modules = Object.values(this.getModules());
-        const grouped = {};
-        
-        modules.forEach(module => {
-            if (!grouped[module.category]) {
-                grouped[module.category] = [];
-            }
-            grouped[module.category].push(module);
-        });
-        
-        return grouped;
-    }
-
-    // === UTILIDADES ===
-    generateId(type = 'general') {
-        const timestamp = Date.now();
-        const random = Math.floor(Math.random() * 1000);
-        return `${type}_${timestamp}_${random}`;
-    }
-
-    exportData() {
-        const data = {
-            users: this.getUsers(),
-            companies: this.getCompanies(),
-            projects: this.getProjects(),
-            assignments: this.getAssignments(),
-            reports: this.getReports(),
-            tasks: this.getTasks(),
-            modules: this.getModules(),
-            exportDate: new Date().toISOString(),
-            version: '2.0'
-        };
-        return JSON.stringify(data, null, 2);
-    }
-
-    importData(jsonData) {
-        try {
-            const data = JSON.parse(jsonData);
-            
-            if (data.users) this.setData('users', data.users);
-            if (data.companies) this.setData('companies', data.companies);
-            if (data.projects) this.setData('projects', data.projects);
-            if (data.assignments) this.setData('assignments', data.assignments);
-            if (data.reports) this.setData('reports', data.reports);
-            if (data.tasks) this.setData('tasks', data.tasks);
-            if (data.modules) this.setData('modules', data.modules);
-            
-            return { success: true, message: 'Datos importados correctamente' };
-        } catch (error) {
-            return { success: false, message: 'Error al importar datos: ' + error.message };
-        }
-    }
-
-    // === VALIDACIONES ADICIONALES ===
+    // === VALIDACIONES ===
     validateTaskData(taskData) {
         const errors = [];
         
@@ -839,6 +948,17 @@ class PortalDatabase {
         if (taskData.name && taskData.name.length > 100) {
             errors.push('El nombre de la tarea no puede exceder 100 caracteres');
         }
+        
+        const validStatuses = ['Pendiente', 'En Progreso', 'Completada'];
+        if (taskData.status && !validStatuses.includes(taskData.status)) {
+            errors.push('Estado de tarea no válido');
+        }
+        
+        const validPriorities = ['Baja', 'Media', 'Alta'];
+        if (taskData.priority && !validPriorities.includes(taskData.priority)) {
+            errors.push('Prioridad no válida');
+        }
+        
         return {
             isValid: errors.length === 0,
             errors: errors
@@ -861,9 +981,103 @@ class PortalDatabase {
             errors.push('Categoría no válida');
         }
         
+        const validStatuses = ['Planificación', 'En Desarrollo', 'Completado'];
+        if (moduleData.status && !validStatuses.includes(moduleData.status)) {
+            errors.push('Estado del módulo no válido');
+        }
+        
         return {
             isValid: errors.length === 0,
             errors: errors
+        };
+    }
+
+    // === REPORTES AVANZADOS ===
+    getModulesByCategory() {
+        const modules = Object.values(this.getModules());
+        const grouped = {};
+        
+        modules.forEach(module => {
+            if (!grouped[module.category]) {
+                grouped[module.category] = [];
+            }
+            grouped[module.category].push(module);
+        });
+        
+        return grouped;
+    }
+
+    getTasksByPriority() {
+        const tasks = Object.values(this.getTasks());
+        const grouped = {};
+        
+        tasks.forEach(task => {
+            if (!grouped[task.priority]) {
+                grouped[task.priority] = [];
+            }
+            grouped[task.priority].push(task);
+        });
+        
+        return grouped;
+    }
+
+    // === MÉTRICAS Y ANALYTICS ===
+    getProductivityMetrics() {
+        const tasks = Object.values(this.getTasks());
+        const modules = Object.values(this.getModules());
+        const reports = Object.values(this.getReports());
+        
+        // Calcular métricas de tareas
+        const totalTasks = tasks.length;
+        const completedTasks = tasks.filter(t => t.status === 'Completada').length;
+        const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks * 100).toFixed(1) : 0;
+        
+        // Tareas por prioridad
+        const tasksByPriority = {
+            alta: tasks.filter(t => t.priority === 'Alta').length,
+            media: tasks.filter(t => t.priority === 'Media').length,
+            baja: tasks.filter(t => t.priority === 'Baja').length
+        };
+        
+        // Calcular métricas de módulos
+        const totalModules = modules.length;
+        const completedModules = modules.filter(m => m.status === 'Completado').length;
+        const moduleCompletionRate = totalModules > 0 ? (completedModules / totalModules * 100).toFixed(1) : 0;
+        
+        // Módulos por categoría
+        const modulesByCategory = {
+            frontend: modules.filter(m => m.category === 'Frontend').length,
+            backend: modules.filter(m => m.category === 'Backend').length,
+            database: modules.filter(m => m.category === 'Base de Datos').length,
+            api: modules.filter(m => m.category === 'API').length,
+            integration: modules.filter(m => m.category === 'Integración').length,
+            others: modules.filter(m => m.category === 'Otros').length
+        };
+        
+        // Métricas de reportes
+        const totalReports = reports.length;
+        const approvedReports = reports.filter(r => r.status === 'Aprobado').length;
+        const reportApprovalRate = totalReports > 0 ? (approvedReports / totalReports * 100).toFixed(1) : 0;
+        
+        return {
+            tasks: {
+                total: totalTasks,
+                completed: completedTasks,
+                completionRate: taskCompletionRate,
+                byPriority: tasksByPriority
+            },
+            modules: {
+                total: totalModules,
+                completed: completedModules,
+                completionRate: moduleCompletionRate,
+                byCategory: modulesByCategory
+            },
+            reports: {
+                total: totalReports,
+                approved: approvedReports,
+                approvalRate: reportApprovalRate
+            },
+            generatedAt: new Date().toISOString()
         };
     }
 
@@ -980,48 +1194,208 @@ class PortalDatabase {
         return this.deleteData(backupKey.replace(this.prefix, ''));
     }
 
-    // === MÉTRICAS Y ANALYTICS ===
-    getProductivityMetrics() {
+    // === GESTIÓN DE REPORTES EXCEL GENERADOS ===
+getGeneratedReports() {
+    return this.getData('generated_reports') || {};
+}
+
+saveGeneratedReport(reportData) {
+    const generatedReports = this.getGeneratedReports();
+    const reportId = `excel_${Date.now()}`;
+    
+    const newGeneratedReport = {
+        id: reportId,
+        fileName: reportData.fileName,
+        reportType: reportData.reportType, // 'actividades' o 'pagos'
+        generatedBy: reportData.generatedBy || 'admin',
+        dateRange: reportData.dateRange,
+        recordCount: reportData.recordCount || 0,
+        totalHours: reportData.totalHours || 0,
+        totalAmount: reportData.totalAmount || 0,
+        createdAt: new Date().toISOString(),
+        downloadCount: 0
+    };
+    
+    generatedReports[reportId] = newGeneratedReport;
+    this.setData('generated_reports', generatedReports);
+    
+    return { success: true, report: newGeneratedReport };
+}
+
+incrementDownloadCount(reportId) {
+    const generatedReports = this.getGeneratedReports();
+    if (generatedReports[reportId]) {
+        generatedReports[reportId].downloadCount++;
+        generatedReports[reportId].lastDownload = new Date().toISOString();
+        this.setData('generated_reports', generatedReports);
+        return { success: true };
+    }
+    return { success: false, message: 'Reporte no encontrado' };
+}
+
+deleteGeneratedReport(reportId) {
+    const generatedReports = this.getGeneratedReports();
+    if (!generatedReports[reportId]) {
+        return { success: false, message: 'Reporte no encontrado' };
+    }
+    
+    delete generatedReports[reportId];
+    this.setData('generated_reports', generatedReports);
+    
+    return { success: true, message: 'Reporte eliminado del historial' };
+}
+
+    // === FUNCIONES ESPECÍFICAS PARA EL ADMIN ===
+    updateProjectsList() {
+        const projects = Object.values(this.getProjects());
+        return projects.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    updateTasksList() {
         const tasks = Object.values(this.getTasks());
+        return tasks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    updateModulesList() {
         const modules = Object.values(this.getModules());
+        return modules.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    updateAssignmentsList() {
+        const assignments = Object.values(this.getAssignments());
+        return assignments.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+
+    // === FUNCIONES AUXILIARES ===
+    getRecentAssignments(limit = 5) {
+        const assignments = Object.values(this.getAssignments());
+        return assignments
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, limit);
+    }
+
+    getUserAssignments(userId) {
+        const assignments = Object.values(this.getAssignments());
+        return assignments.filter(assignment => assignment.userId === userId);
+    }
+
+    getCompanyAssignments(companyId) {
+        const assignments = Object.values(this.getAssignments());
+        return assignments.filter(assignment => assignment.companyId === companyId);
+    }
+
+    getProjectAssignments(projectId) {
+        const assignments = Object.values(this.getAssignments());
+        return assignments.filter(assignment => assignment.projectId === projectId);
+    }
+
+    // === FUNCIONES DE RESET ===
+    resetToDefaults() {
+        this.clearAllData();
+        this.initializeDefaultData();
+        return { success: true, message: 'Sistema reiniciado a valores por defecto' };
+    }
+
+    // === FUNCIONES DE CONSISTENCIA ===
+    checkDataConsistency() {
+        const issues = [];
         
-        // Calcular métricas de tareas
-        const totalTasks = tasks.length;
-        const completedTasks = tasks.filter(t => t.status === 'Completada').length;
-        const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks * 100).toFixed(1) : 0;
+        // Verificar asignaciones huérfanas
+        const assignments = Object.values(this.getAssignments());
+        const users = this.getUsers();
+        const companies = this.getCompanies();
+        const projects = this.getProjects();
+        const tasks = this.getTasks();
+        const modules = this.getModules();
         
-        // Calcular métricas de módulos
-        const totalModules = modules.length;
-        const completedModules = modules.filter(m => m.status === 'Completado').length;
-        const moduleCompletionRate = totalModules > 0 ? (completedModules / totalModules * 100).toFixed(1) : 0;
+        assignments.forEach(assignment => {
+            if (!users[assignment.userId]) {
+                issues.push(`Asignación ${assignment.id} tiene usuario inexistente: ${assignment.userId}`);
+            }
+            if (!companies[assignment.companyId]) {
+                issues.push(`Asignación ${assignment.id} tiene empresa inexistente: ${assignment.companyId}`);
+            }
+            if (!projects[assignment.projectId]) {
+                issues.push(`Asignación ${assignment.id} tiene proyecto inexistente: ${assignment.projectId}`);
+            }
+            if (!tasks[assignment.taskId]) {
+                issues.push(`Asignación ${assignment.id} tiene tarea inexistente: ${assignment.taskId}`);
+            }
+            if (!modules[assignment.moduleId]) {
+                issues.push(`Asignación ${assignment.id} tiene módulo inexistente: ${assignment.moduleId}`);
+            }
+        });
         
-        // Módulos por categoría
-        const modulesByCategory = {
-            frontend: modules.filter(m => m.category === 'Frontend').length,
-            backend: modules.filter(m => m.category === 'Backend').length,
-            database: modules.filter(m => m.category === 'Base de Datos').length,
-            api: modules.filter(m => m.category === 'API').length,
-            integration: modules.filter(m => m.category === 'Integración').length,
-            others: modules.filter(m => m.category === 'Otros').length
-        };
+        // Verificar reportes huérfanos
+        const reports = Object.values(this.getReports());
+        reports.forEach(report => {
+            if (!users[report.userId]) {
+                issues.push(`Reporte ${report.id} tiene usuario inexistente: ${report.userId}`);
+            }
+        });
         
         return {
-            tasks: {
-                total: totalTasks,
-                completed: completedTasks,
-                completionRate: taskCompletionRate,
-                byPriority: tasksByPriority
-            },
-            modules: {
-                total: totalModules,
-                completed: completedModules,
-                completionRate: moduleCompletionRate,
-                byCategory: modulesByCategory
-            },
-            generatedAt: new Date().toISOString()
+            isConsistent: issues.length === 0,
+            issues: issues,
+            checkedAt: new Date().toISOString()
+        };
+    }
+
+    // === FUNCIONES DE OPTIMIZACIÓN ===
+    optimizeStorage() {
+        // Compactar datos eliminando propiedades innecesarias
+        const optimized = {
+            users: 0,
+            companies: 0,
+            projects: 0,
+            tasks: 0,
+            modules: 0,
+            assignments: 0,
+            reports: 0
+        };
+        
+        // Optimizar cada tipo de datos
+        ['users', 'companies', 'projects', 'tasks', 'modules', 'assignments', 'reports'].forEach(dataType => {
+            const data = this.getData(dataType);
+            if (data) {
+                // Contar registros antes
+                const beforeCount = Object.keys(data).length;
+                
+                // Limpiar registros inactivos muy antiguos si aplica
+                if (dataType === 'tasks' || dataType === 'modules') {
+                    const cutoffDate = new Date(Date.now() - (90 * 24 * 60 * 60 * 1000)); // 90 días
+                    Object.keys(data).forEach(id => {
+                        const item = data[id];
+                        if (!item.isActive && new Date(item.createdAt) < cutoffDate) {
+                            delete data[id];
+                        }
+                    });
+                }
+                
+                // Contar registros después
+                const afterCount = Object.keys(data).length;
+                optimized[dataType] = beforeCount - afterCount;
+                
+                // Guardar datos optimizados
+                this.setData(dataType, data);
+            }
+        });
+        
+        return {
+            success: true,
+            message: 'Almacenamiento optimizado',
+            optimized: optimized,
+            optimizedAt: new Date().toISOString()
         };
     }
 }
 
 // Crear instancia global de la base de datos
 window.PortalDB = new PortalDatabase();
+
+// Exportar para uso en módulos si es necesario
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = PortalDatabase;
+}
+
+console.log('✅ Sistema de Base de Datos Portal ARVIC inicializado correctamente');

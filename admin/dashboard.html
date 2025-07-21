@@ -6,6 +6,7 @@
     <title>Panel Administrador - GRUPO IT ARVIC</title>
     <link rel="stylesheet" href="../css/shared.css">
     <link rel="stylesheet" href="../css/admin.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 </head>
 <body class="admin-layout">
     <header class="admin-header">
@@ -18,7 +19,7 @@
                 </div>
             </div>
             <div class="user-info">
-                <span id="adminUserName">Administrador Principal</span>
+                <span id="adminUserName">Hector Perez</span>
                 <button class="btn btn-danger" onclick="logout()">Cerrar Sesión</button>
             </div>
         </nav>
@@ -26,30 +27,6 @@
 
     <main class="admin-content">
         <div class="container">
-            <div class="admin-title">
-                <h1>Panel de Administración</h1>
-                <p>Gestione usuarios, empresas, proyectos y asignaciones desde este panel centralizado</p>
-            </div>
-
-            <!-- Estadísticas -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="usersCount">0</div>
-                    <div class="stat-label">Usuarios Activos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="companiesCount">0</div>
-                    <div class="stat-label">Empresas Registradas</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="projectsCount">0</div>
-                    <div class="stat-label">Proyectos Activos</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="assignmentsCount">0</div>
-                    <div class="stat-label">Asignaciones Totales</div>
-                </div>
-            </div>
 
             <!-- Layout con Sidebar -->
             <div class="admin-layout-wrapper">
@@ -108,19 +85,24 @@
                     <div class="sidebar-section">
                         <h3 class="sidebar-section-title">📄 Reportes</h3>
                         <div class="sidebar-menu">
-                            <div class="sidebar-menu-item" data-section="todos-reportes">
+                            <div class="sidebar-menu-item" data-section="reportes-pendientes">
                                 <span class="menu-icon">📊</span>
-                                <span class="menu-text">Todos los Reportes</span>
+                                <span class="menu-text">Reportes Pendientes</span>
                                 <span class="menu-badge" id="sidebarReportsCount">0</span>
                             </div>
-                            <div class="sidebar-menu-item" data-section="reportes-pendientes">
-                                <span class="menu-icon">⏳</span>
-                                <span class="menu-text">Pendientes</span>
-                                <span class="menu-badge" id="sidebarPendingReportsCount">0</span>
+                            <div class="sidebar-menu-item" data-section="reportes-aprobados">
+                                <span class="menu-icon">✅</span>
+                                <span class="menu-text">Reportes Aprobados</span>
+                                <span class="menu-badge" id="sidebarApprovedReportsCount">0</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="generar-reporte">
                                 <span class="menu-icon">📋</span>
                                 <span class="menu-text">Generar Reporte</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="historial-reportes">
+                                <span class="menu-icon">📜</span>
+                                <span class="menu-text">Historial Generados</span>
+                                <span class="menu-badge" id="sidebarGeneratedReportsCount">0</span>
                             </div>
                         </div>
                     </div>
@@ -229,18 +211,20 @@
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="assignReportType">Tipo de Reporte</label>
-                                    <select id="assignReportType" required>
-                                        <option value="">Seleccionar frecuencia</option>
-                                        <option value="Diario">Diario</option>
-                                        <option value="Semanal">Semanal</option>
-                                        <option value="Mensual">Mensual</option>
-                                        <option value="Trimestral">Trimestral</option>
+                                    <label for="assignTask">Tarea</label>
+                                    <select id="assignTask" required>
+                                        <option value="">Seleccionar Tarea</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <button type="button" class="btn btn-primary" onclick="createAssignment()">Crear Asignación</button>
+                                    <label for="assignModule">Módulos</label>
+                                    <select id="assignModule" required>
+                                        <option value="">Seleccionar Módulo</option>
+                                    </select>
                                 </div>
+                            </div>
+                            <div class="form-group" style="text-align: center; margin-top: 20px;">
+                                <button type="button" class="btn btn-primary" onclick="createAssignment()">Crear Asignación</button>
                             </div>
                         </div>
                     </div>
@@ -274,77 +258,268 @@
                     </div>
 
                     <!-- Sección de Todos los Reportes -->
-                    <div id="todos-reportes-section" class="content-section">
+                    <div id="reportes-pendientes-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">📊 Todos los Reportes</h2>
+                            <h2 class="section-title">📊 Reportes Pendientes</h2>
                         </div>
-                        <div class="items-list" id="allReportsList">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">📄</div>
-                                <div class="empty-state-title">No hay reportes</div>
-                                <div class="empty-state-desc">Los reportes enviados por consultores aparecerán aquí</div>
-                            </div>
+                        <div class="reports-table-container">
+                            <table class="admin-table reports-table" id="reportsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID Consultor</th>
+                                        <th>Nombre Consultor</th>
+                                        <th>Cliente (Empresa)</th>
+                                        <th>Proyecto</th>
+                                        <th>Tarea</th>
+                                        <th>Módulo</th>
+                                        <th>Horas Reportadas</th>
+                                        <th>Fecha Reporte</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportsTableBody">
+                                    <tr>
+                                        <td colspan="10" class="empty-table-message">
+                                            <div class="empty-state">
+                                                <div class="empty-state-icon">📄</div>
+                                                <div class="empty-state-title">No hay reportes</div>
+                                                <div class="empty-state-desc">Los reportes enviados por consultores aparecerán aquí</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <!-- Sección de Reportes Pendientes -->
-                    <div id="reportes-pendientes-section" class="content-section">
+                    <!-- Sección de Reportes Aprobados -->
+                    <div id="reportes-aprobados-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">⏳ Reportes Pendientes de Revisión</h2>
+                            <h2 class="section-title">✅ Reportes Aprobados - Horas Acumuladas</h2>
                         </div>
-                        <div class="items-list" id="pendingReportsList">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">⏳</div>
-                                <div class="empty-state-title">No hay reportes pendientes</div>
-                                <div class="empty-state-desc">Los reportes que requieren revisión aparecerán aquí</div>
+                        
+                        <!-- Filtros de Fecha -->
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label for="timeFilter">Filtrar por:</label>
+                                <select id="timeFilter" onchange="updateApprovedReportsList()">
+                                    <option value="week">Esta Semana</option>
+                                    <option value="month">Este Mes</option>
+                                    <option value="custom">Rango Personalizado</option>
+                                    <option value="all">Todas las Fechas</option>
+                                </select>
                             </div>
+                            
+                            <div class="filter-group" id="customDateRange" style="display: none;">
+                                <label for="startDate">Fecha Inicio:</label>
+                                <input type="date" id="startDate" onchange="updateApprovedReportsList()">
+                                
+                                <label for="endDate">Fecha Fin:</label>
+                                <input type="date" id="endDate" onchange="updateApprovedReportsList()">
+                            </div>
+                            
+                            <div class="filter-info">
+                                <span id="filterInfo">Mostrando: Esta semana</span>
+                            </div>
+                        </div>
+                        
+                        <div class="reports-table-container">
+                            <table class="admin-table reports-table" id="approvedReportsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID Consultor</th>
+                                        <th>Nombre Consultor</th>
+                                        <th>ID Cliente</th>
+                                        <th>Cliente (Empresa)</th>
+                                        <th>Proyecto</th>
+                                        <th>Tarea</th>
+                                        <th>Módulo</th>
+                                        <th>Horas Acumuladas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="approvedReportsTableBody">
+                                    <tr>
+                                        <td colspan="8" class="empty-table-message">
+                                            <div class="empty-state">
+                                                <div class="empty-state-icon">✅</div>
+                                                <div class="empty-state-title">No hay reportes aprobados</div>
+                                                <div class="empty-state-desc">Los reportes aprobados aparecerán aquí con horas acumuladas</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
                     <!-- Sección de Generar Reporte -->
-                    <div id="generar-reporte-section" class="content-section">
-                        <div class="section-header">
-                            <h2 class="section-title">📋 Generar Reporte Administrativo</h2>
-                        </div>
-                        <div class="report-generator">
-                            <div class="report-options">
-                                <h3>Opciones de Reporte</h3>
-                                <div class="form-group">
-                                    <label>
-                                        <input type="checkbox" id="includeUsers" checked> 
-                                        Incluir estadísticas de usuarios
-                                    </label>
-                                </div>
-                                <div class="form-group">
-                                    <label>
-                                        <input type="checkbox" id="includeProjects" checked> 
-                                        Incluir información de proyectos
-                                    </label>
-                                </div>
-                                <div class="form-group">
-                                    <label>
-                                        <input type="checkbox" id="includeActivities" checked> 
-                                        Incluir actividad reciente
-                                    </label>
-                                </div>
-                                <div class="form-group">
-                                    <button type="button" class="btn btn-primary" onclick="generateAdminReport()">
-                                        📊 Generar Reporte Completo
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="exportData()">
-                                        💾 Exportar Datos
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="importData()">
-                                        📁 Importar Datos
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+<div id="generar-reporte-section" class="content-section">
+    <div class="section-header">
+        <h2 class="section-title">📋 Generar Reportes</h2>
+    </div>
+    
+    <div class="report-generator">
+        <!-- Selector de Tipo de Reporte -->
+        <div class="report-type-selector">
+            <h3>Seleccionar Tipo de Reporte</h3>
+            <div class="report-type-options">
+                <div class="report-type-card" onclick="selectReportType('actividades')">
+                    <div class="report-type-icon">📊</div>
+                    <h4>Reporte de Actividades</h4>
+                    <p>Reporte de horas trabajadas por consultor y asignación</p>
+                </div>
+                <div class="report-type-card" onclick="selectReportType('pagos')">
+                    <div class="report-type-icon">💰</div>
+                    <h4>Reporte de Pago Consultores</h4>
+                    <p>Reporte de pagos con tarifas editables por consultor</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración Reporte de Actividades -->
+        <div id="actividades-config" class="report-config" style="display: none;">
+            <h3>📊 Configuración - Reporte de Actividades</h3>
+            <div class="config-form">
+                <div class="form-group">
+                    <label for="actividadesTimeFilter">Período:</label>
+                    <select id="actividadesTimeFilter">
+                        <option value="week">Esta Semana</option>
+                        <option value="month">Este Mes</option>
+                        <option value="custom">Rango Personalizado</option>
+                        <option value="all">Todas las Fechas</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="actividadesCustomDateRange" style="display: none;">
+                    <label for="actividadesStartDate">Fecha Inicio:</label>
+                    <input type="date" id="actividadesStartDate">
+                    
+                    <label for="actividadesEndDate">Fecha Fin:</label>
+                    <input type="date" id="actividadesEndDate">
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" class="btn btn-primary" onclick="generateActividadesReport()">
+                        📊 Generar Reporte de Actividades
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="previewActividadesReport()">
+                        👁️ Vista Previa
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Vista Previa Actividades -->
+            <div id="actividadesPreview" class="report-preview" style="display: none;">
+                <h4>Vista Previa - Reporte de Actividades</h4>
+                <div class="preview-table-container">
+                    <table class="preview-table" id="actividadesPreviewTable">
+                        <thead>
+                            <tr>
+                                <th>ID Consultor</th>
+                                <th>Nombre Consultor</th>
+                                <th>ID Cliente</th>
+                                <th>Cliente (Empresa)</th>
+                                <th>Proyecto</th>
+                                <th>Tarea</th>
+                                <th>Módulo</th>
+                                <th>Horas Totales</th>
+                            </tr>
+                        </thead>
+                        <tbody id="actividadesPreviewBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuración Reporte de Pagos -->
+        <div id="pagos-config" class="report-config" style="display: none;">
+            <h3>💰 Configuración - Reporte de Pago Consultores</h3>
+            <div class="config-form">
+                <div class="form-group">
+                    <label for="pagosTimeFilter">Período:</label>
+                    <select id="pagosTimeFilter">
+                        <option value="week">Esta Semana</option>
+                        <option value="month">Este Mes</option>
+                        <option value="custom">Rango Personalizado</option>
+                        <option value="all">Todas las Fechas</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" id="pagosCustomDateRange" style="display: none;">
+                    <label for="pagosStartDate">Fecha Inicio:</label>
+                    <input type="date" id="pagosStartDate">
+                    
+                    <label for="pagosEndDate">Fecha Fin:</label>
+                    <input type="date" id="pagosEndDate">
+                </div>
+                
+                <div class="form-group">
+                    <button type="button" class="btn btn-primary" onclick="loadPagosConfiguration()">
+                        🔧 Configurar Tarifas y Generar
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Configuración de Tarifas -->
+            <div id="pagosConfiguration" class="pagos-configuration" style="display: none;">
+                <h4>Configuración de Tarifas por Consultor</h4>
+                <div class="tariff-info">
+                    <p><strong>Instrucciones:</strong> Ajuste las horas y tarifas por consultor. El total se calculará automáticamente.</p>
+                </div>
+                <div class="tariff-table-container">
+                    <table class="tariff-table" id="tariffConfigTable">
+                        <thead>
+                            <tr>
+                                <th>ID Consultor</th>
+                                <th>Nombre Consultor</th>
+                                <th>Cliente</th>
+                                <th>Proyecto</th>
+                                <th>Horas Reportadas</th>
+                                <th>Horas Ajustadas</th>
+                                <th>Tarifa por Hora ($)</th>
+                                <th>Total ($)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tariffConfigBody"></tbody>
+                    </table>
+                </div>
+                <div class="tariff-actions">
+                    <button type="button" class="btn btn-success" onclick="generatePagosReport()">
+                        💰 Generar Reporte Final de Pagos
+                    </button>
+                    <button type="button" class="btn btn-secondary" onclick="resetTariffs()">
+                        🔄 Restablecer Tarifas
+                    </button>
+                </div>
+                <div class="tariff-summary">
+                    <div class="summary-item">
+                        <strong>Total Horas: <span id="totalHours">0</span></strong>
+                    </div>
+                    <div class="summary-item">
+                        <strong>Total a Pagar: $<span id="totalAmount">0.00</span></strong>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+
+        <!-- Opciones Generales -->
+        <div class="report-options">
+            <h3>Opciones Generales</h3>
+            <div class="form-group">
+                <button type="button" class="btn btn-secondary" onclick="exportData()">
+                    💾 Exportar Datos Completos
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="importData()">
+                    📁 Importar Datos
+                </button>
+                <button type="button" class="btn btn-info" onclick="generateAdminReport()">
+                    📋 Reporte Administrativo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Modal Usuario -->
     <div id="userModal" class="modal">
@@ -472,6 +647,99 @@
             </form>
         </div>
     </div>
+    <!-- Sección de Historial de Reportes Generados -->
+<div id="historial-reportes-section" class="content-section">
+    <div class="section-header">
+        <h2 class="section-title">📜 Historial de Reportes Generados</h2>
+        <button class="add-btn" onclick="refreshGeneratedReportsList()">🔄 Actualizar</button>
+    </div>
+    
+    <!-- Filtros para Historial -->
+    <div class="reports-filters">
+        <div class="filter-group">
+            <label for="historialTimeFilter">Período:</label>
+            <select id="historialTimeFilter" onchange="updateGeneratedReportsList()">
+                <option value="week">Esta Semana</option>
+                <option value="month">Este Mes</option>
+                <option value="custom">Rango Personalizado</option>
+                <option value="all">Todos los Reportes</option>
+            </select>
+        </div>
+        
+        <div class="filter-group">
+            <label for="historialTypeFilter">Tipo:</label>
+            <select id="historialTypeFilter" onchange="updateGeneratedReportsList()">
+                <option value="all">Todos los Tipos</option>
+                <option value="actividades">Reportes de Actividades</option>
+                <option value="pagos">Reportes de Pagos</option>
+            </select>
+        </div>
+        
+        <div class="filter-group" id="historialCustomDateRange" style="display: none;">
+            <label for="historialStartDate">Fecha Inicio:</label>
+            <input type="date" id="historialStartDate" onchange="updateGeneratedReportsList()">
+            
+            <label for="historialEndDate">Fecha Fin:</label>
+            <input type="date" id="historialEndDate" onchange="updateGeneratedReportsList()">
+        </div>
+        
+        <div class="filter-info">
+            <span id="historialFilterInfo">Mostrando: Esta semana</span>
+        </div>
+    </div>
+    
+    <!-- Tabla de Reportes Generados -->
+    <div class="reports-table-container">
+        <table class="admin-table reports-table" id="generatedReportsTable">
+            <thead>
+                <tr>
+                    <th>Nombre del Archivo</th>
+                    <th>Tipo de Reporte</th>
+                    <th>Período</th>
+                    <th>Registros</th>
+                    <th>Horas Totales</th>
+                    <th>Monto Total</th>
+                    <th>Fecha Generación</th>
+                    <th>Descargas</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="generatedReportsTableBody">
+                <tr>
+                    <td colspan="9" class="empty-table-message">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📊</div>
+                            <div class="empty-state-title">No hay reportes generados</div>
+                            <div class="empty-state-desc">Los reportes Excel generados aparecerán en este historial</div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Estadísticas del Historial -->
+    <div class="historial-stats">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalGeneratedReports">0</div>
+                <div class="stat-label">Total Reportes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalActividadReports">0</div>
+                <div class="stat-label">Rep. Actividades</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalPagoReports">0</div>
+                <div class="stat-label">Rep. Pagos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="totalDownloads">0</div>
+                <div class="stat-label">Total Descargas</div>
+            </div>
+        </div>
+    </div>
+</div>
 
     <!-- Scripts -->
     <script src="../js/database.js"></script>

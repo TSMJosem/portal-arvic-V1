@@ -11,23 +11,22 @@ class PortalDatabase {
 
     // === INICIALIZACIÓN ===
     initializeDefaultData() {
-        // Verificar si ya existen datos
-        if (!this.getData('initialized')) {
-            this.setupDefaultUsers();
-            this.setupDefaultCompanies();
-            this.setupDefaultProjects();
-            this.setupDefaultTasks();
-            this.setupDefaultModules();
-            this.setupDefaultAssignments();
-            this.setupDefaultReports();
-            this.setData('initialized', true);
-            this.setData('user_counter', 3);
-            this.setData('company_counter', 4);
-            this.setData('project_counter', 4);
-            this.setData('task_counter', 4);
-            this.setData('module_counter', 4);
-        }
+    if (!this.getData('initialized')) {
+        this.setupDefaultUsers();
+        this.setupDefaultCompanies();
+        this.setupDefaultProjects();
+        this.setupDefaultSupports(); // Cambiar de setupDefaultTasks
+        this.setupDefaultModules();
+        this.setupDefaultAssignments();
+        this.setupDefaultReports();
+        this.setData('initialized', true);
+        this.setData('user_counter', 3);
+        this.setData('company_counter', 4);
+        this.setData('project_counter', 4);
+        this.setData('support_counter', 4); // Cambiar de task_counter
+        this.setData('module_counter', 4);
     }
+}
 
     setupDefaultUsers() {
     console.log('🔄 Inicializando usuarios por defecto...');
@@ -136,38 +135,41 @@ class PortalDatabase {
         this.setData('projects', defaultProjects);
     }
 
-    setupDefaultTasks() {
-        const defaultTasks = {
-            '0001': {
-                id: '0001',
-                name: 'Configurar base de datos inicial',
-                description: 'Crear esquema de base de datos y tablas principales',
-                status: 'Completada',
-                priority: 'Alta',
-                createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-                isActive: true
-            },
-            '0002': {
-                id: '0002',
-                name: 'Implementar autenticación de usuarios',
-                description: 'Sistema de login y manejo de sesiones',
-                status: 'En Progreso',
-                priority: 'Alta',
-                createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-                isActive: true
-            },
-            '0003': {
-                id: '0003',
-                name: 'Diseñar interfaz de usuario',
-                description: 'Crear mockups y prototipos de la interfaz',
-                status: 'Pendiente',
-                priority: 'Media',
-                createdAt: new Date().toISOString(),
-                isActive: true
-            }
-        };
-        this.setData('tasks', defaultTasks);
-    }
+    etupDefaultSupports() {
+    const defaultSupports = {
+        '0001': {
+            id: '0001',
+            name: 'Soporte técnico sistema ERP',
+            description: 'Soporte para configuración y resolución de problemas del ERP',
+            status: 'Activo',
+            priority: 'Alta',
+            type: 'Técnico',
+            createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
+            isActive: true
+        },
+        '0002': {
+            id: '0002',
+            name: 'Soporte funcional módulo ventas',
+            description: 'Apoyo en el uso y configuración del módulo de ventas',
+            status: 'Activo',
+            priority: 'Media',
+            type: 'Funcional',
+            createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+            isActive: true
+        },
+        '0003': {
+            id: '0003',
+            name: 'Mantenimiento preventivo sistema',
+            description: 'Revisión y mantenimiento del sistema completo',
+            status: 'Activo',
+            priority: 'Baja',
+            type: 'Mantenimiento',
+            createdAt: new Date().toISOString(),
+            isActive: true
+        }
+    };
+    this.setData('supports', defaultSupports);
+}
 
     setupDefaultModules() {
         const defaultModules = {
@@ -203,30 +205,28 @@ class PortalDatabase {
     }
 
     setupDefaultAssignments() {
-        const defaultAssignments = {
-            'assign_001': {
-                id: 'assign_001',
-                userId: '0001',
-                companyId: '0001',
-                projectId: '0001',
-                taskId: '0001',
-                moduleId: '0001',
-                createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-                isActive: true
-            },
-            'assign_002': {
-                id: 'assign_002',
-                userId: '0002',
-                companyId: '0002',
-                projectId: '0002',
-                taskId: '0002',
-                moduleId: '0002',
-                createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-                isActive: true
-            }
-        };
-        this.setData('assignments', defaultAssignments);
-    }
+    const defaultAssignments = {
+        'assign_001': {
+            id: 'assign_001',
+            userId: '0001',
+            companyId: '0001',
+            supportId: '0001', // Cambiar de taskId
+            moduleId: '0001',
+            createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+            isActive: true
+        },
+        'assign_002': {
+            id: 'assign_002',
+            userId: '0002',
+            companyId: '0002',
+            supportId: '0002', // Cambiar de taskId
+            moduleId: '0002',
+            createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+            isActive: true
+        }
+    };
+    this.setData('assignments', defaultAssignments);
+}
 
     setupDefaultReports() {
         const defaultReports = {
@@ -509,60 +509,61 @@ class PortalDatabase {
     }
 
     // === GESTIÓN DE TAREAS ===
-    getTasks() {
-        return this.getData('tasks') || {};
-    }
+    getSupports() {
+    return this.getData('supports') || {};
+}
 
-    getTask(taskId) {
-        const tasks = this.getTasks();
-        return tasks[taskId] || null;
-    }
+getSupport(supportId) {
+    const supports = this.getSupports();
+    return supports[supportId] || null;
+}
 
-    createTask(taskData) {
-        const tasks = this.getTasks();
-        const counter = this.getData('task_counter') || 1;
-        const taskId = counter.toString().padStart(4, '0');
-        
-        const newTask = {
-            id: taskId,
-            name: taskData.name,
-            description: taskData.description || '',
-            status: taskData.status || 'Pendiente',
-            priority: taskData.priority || 'Media',
-            createdAt: new Date().toISOString(),
-            isActive: true
-        };
-        
-        tasks[taskId] = newTask;
-        this.setData('tasks', tasks);
-        this.setData('task_counter', counter + 1);
-        
-        return { success: true, task: newTask };
-    }
+createSupport(supportData) {
+    const supports = this.getSupports();
+    const counter = this.getData('support_counter') || 1;
+    const supportId = counter.toString().padStart(4, '0');
+    
+    const newSupport = {
+        id: supportId,
+        name: supportData.name,
+        description: supportData.description || '',
+        status: supportData.status || 'Activo',
+        priority: supportData.priority || 'Media',
+        type: supportData.type || 'Técnico',
+        createdAt: new Date().toISOString(),
+        isActive: true
+    };
+    
+    supports[supportId] = newSupport;
+    this.setData('supports', supports);
+    this.setData('support_counter', counter + 1);
+    
+    return { success: true, support: newSupport };
+}
 
-    updateTask(taskId, updateData) {
-        const tasks = this.getTasks();
-        if (!tasks[taskId]) {
-            return { success: false, message: 'Tarea no encontrada' };
-        }
-        
-        tasks[taskId] = { ...tasks[taskId], ...updateData };
-        this.setData('tasks', tasks);
-        
-        return { success: true, task: tasks[taskId] };
+updateSupport(supportId, updateData) {
+    const supports = this.getSupports();
+    if (!supports[supportId]) {
+        return { success: false, message: 'Soporte no encontrado' };
     }
+    
+    supports[supportId] = { ...supports[supportId], ...updateData };
+    this.setData('supports', supports);
+    
+    return { success: true, support: supports[supportId] };
+}
 
-    deleteTask(taskId) {
-        const tasks = this.getTasks();
-        if (!tasks[taskId]) {
-            return { success: false, message: 'Tarea no encontrada' };
-        }
-        
-        delete tasks[taskId];
-        this.setData('tasks', tasks);
-        
-        return { success: true, message: 'Tarea eliminada correctamente' };
+deleteSupport(supportId) {
+    const supports = this.getSupports();
+    if (!supports[supportId]) {
+        return { success: false, message: 'Soporte no encontrado' };
     }
+    
+    delete supports[supportId];
+    this.setData('supports', supports);
+    
+    return { success: true, message: 'Soporte eliminado correctamente' };
+}
 
     // === GESTIÓN DE MÓDULOS ===
     getModules() {
@@ -637,20 +638,18 @@ createAssignment(assignmentData) {
     // Verificar que existan todas las entidades
     const user = this.getUser(assignmentData.userId);
     const company = this.getCompany(assignmentData.companyId);
-    const project = this.getProject(assignmentData.projectId);
-    const task = this.getTask(assignmentData.taskId);
+    const support = this.getSupport(assignmentData.supportId); // Cambiar de taskId
     const module = this.getModule(assignmentData.moduleId);
     
-    if (!user || !company || !project || !task || !module) {
+    if (!user || !company || !support || !module) {
         return { success: false, message: 'Una o más entidades no existen' };
     }
     
-    // VERIFICAR si ya existe una asignación igual (evitar duplicados)
+    // Verificar si ya existe una asignación igual
     const existingAssignment = Object.values(assignments).find(a => 
         a.userId === assignmentData.userId &&
         a.companyId === assignmentData.companyId &&
-        a.projectId === assignmentData.projectId &&
-        a.taskId === assignmentData.taskId &&
+        a.supportId === assignmentData.supportId && // Cambiar de taskId
         a.moduleId === assignmentData.moduleId &&
         a.isActive
     );
@@ -663,8 +662,7 @@ createAssignment(assignmentData) {
         id: assignmentId,
         userId: assignmentData.userId,
         companyId: assignmentData.companyId,
-        projectId: assignmentData.projectId,
-        taskId: assignmentData.taskId,
+        supportId: assignmentData.supportId, // Cambiar de taskId
         moduleId: assignmentData.moduleId,
         createdAt: new Date().toISOString(),
         isActive: true
@@ -672,9 +670,6 @@ createAssignment(assignmentData) {
     
     assignments[assignmentId] = newAssignment;
     this.setData('assignments', assignments);
-    
-    // YA NO ACTUALIZAMOS USER con assignedCompany/assignedProject
-    // porque ahora puede tener múltiples asignaciones
     
     return { success: true, assignment: newAssignment };
 }

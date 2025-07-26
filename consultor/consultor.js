@@ -238,8 +238,7 @@ function updateAssignmentsList() {
         
         userAssignments.forEach(assignment => {
             const company = window.PortalDB.getCompany(assignment.companyId);
-            const project = window.PortalDB.getProject(assignment.projectId);
-            const task = window.PortalDB.getTask(assignment.taskId);
+            const support = window.PortalDB.getSupport(assignment.supportId); // Cambiar de getTask
             const module = window.PortalDB.getModule(assignment.moduleId);
             
             // Obtener reportes de esta asignación
@@ -255,8 +254,7 @@ function updateAssignmentsList() {
                 </div>
                 
                 <div class="assignment-details">
-                    <p><strong>📋 Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
-                    <p><strong>✅ Tarea:</strong> ${task?.name || 'Tarea no encontrada'}</p>
+                    <p><strong>📞 Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
                     <p><strong>🧩 Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
                     <p><strong>📊 Reportes:</strong> ${assignmentReports.length} reportes | <strong>⏰ Total:</strong> ${totalHours.toFixed(1)} hrs</p>
                     <p><small>📅 Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
@@ -304,8 +302,7 @@ function openCreateReportModal(assignmentId) {
         }
         
         const company = window.PortalDB.getCompany(assignment.companyId);
-        const project = window.PortalDB.getProject(assignment.projectId);
-        const task = window.PortalDB.getTask(assignment.taskId);
+        const support = window.PortalDB.getSupport(assignment.supportId); // Cambiar de getTask
         const module = window.PortalDB.getModule(assignment.moduleId);
         
         // Mostrar información de la asignación seleccionada
@@ -314,8 +311,7 @@ function openCreateReportModal(assignmentId) {
             assignmentInfoElement.innerHTML = `
                 <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📋 Información de la Asignación</h4>
                 <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
-                <p><strong>📋 Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
-                <p><strong>✅ Tarea:</strong> ${task?.name || 'No encontrada'}</p>
+                <p><strong>📞 Soporte:</strong> ${support?.name || 'No encontrado'}</p>
                 <p style="margin-bottom: 0;"><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
             `;
         }
@@ -395,8 +391,7 @@ function viewAssignmentReports(assignmentId) {
         }
         
         const company = window.PortalDB.getCompany(assignment.companyId);
-        const project = window.PortalDB.getProject(assignment.projectId);
-        const task = window.PortalDB.getTask(assignment.taskId);
+        const support = window.PortalDB.getSupport(assignment.supportId); // Cambiar de getTask
         const module = window.PortalDB.getModule(assignment.moduleId);
         
         const reports = window.PortalDB.getReportsByAssignment(assignmentId);
@@ -408,8 +403,7 @@ function viewAssignmentReports(assignmentId) {
                 <div class="assignment-info-display">
                     <h4>📋 Información de la Asignación</h4>
                     <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
-                    <p><strong>📋 Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
-                    <p><strong>✅ Tarea:</strong> ${task?.name || 'No encontrada'}</p>
+                    <p><strong>📞 Soporte:</strong> ${support?.name || 'No encontrado'}</p>
                     <p><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
                 </div>
             `;

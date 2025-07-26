@@ -2,11 +2,10 @@
 function createAssignment() {
     const userId = document.getElementById('assignUser').value;
     const companyId = document.getElementById('assignCompany').value;
-    const projectId = document.getElementById('assignProject').value;
-    const taskId = document.getElementById('assignTask').value;
+    const supportId = document.getElementById('assignSupport').value; // Cambiar de taskId
     const moduleId = document.getElementById('assignModule').value;
     
-    if (!userId || !companyId || !projectId || !taskId || !moduleId) {
+    if (!userId || !companyId || !supportId || !moduleId) {
         window.NotificationUtils.error('Todos los campos son requeridos para crear una asignación');
         return;
     }
@@ -14,8 +13,7 @@ function createAssignment() {
     const assignmentData = {
         userId: userId,
         companyId: companyId,
-        projectId: projectId,
-        taskId: taskId,
+        supportId: supportId, // Cambiar de taskId
         moduleId: moduleId
     };
 
@@ -24,19 +22,17 @@ function createAssignment() {
     if (result.success) {
         const user = currentData.users[userId];
         const company = currentData.companies[companyId];
-        const project = currentData.projects[projectId];
-        const task = currentData.tasks[taskId];
+        const support = currentData.supports[supportId]; // Cambiar de task
         const module = currentData.modules[moduleId];
         
         window.NotificationUtils.success(
-            `Asignación creada: ${user.name} → ${company.name} (${project.name} - ${task.name} - ${module.name})`
+            `✅ Nueva asignación creada: ${user.name} → ${company.name} (${support.name} - ${module.name})`
         );
         
         // Limpiar formulario
         document.getElementById('assignUser').value = '';
         document.getElementById('assignCompany').value = '';
-        document.getElementById('assignProject').value = '';
-        document.getElementById('assignTask').value = '';
+        document.getElementById('assignSupport').value = ''; // Cambiar de assignTask
         document.getElementById('assignModule').value = '';
         
         loadAllData();
@@ -66,7 +62,7 @@ function loadAllData() {
     currentData.companies = window.PortalDB.getCompanies();
     currentData.projects = window.PortalDB.getProjects();
     currentData.assignments = window.PortalDB.getAssignments();
-    currentData.tasks = window.PortalDB.getTasks() || {};
+    currentData.supports = window.PortalDB.getSupports() || {}; // Cambiar de tasks
     currentData.modules = window.PortalDB.getModules() || {};
     currentData.reports = window.PortalDB.getReports() || {};
     
@@ -91,8 +87,8 @@ function updateCurrentSectionData() {
         case 'proyectos':
             updateProjectsList();
             break;
-        case 'tareas':
-            updateTasksList();
+        case 'soportes': // Cambiar de 'tareas'
+            updateSupportsList();
             break;
         case 'modulos':
             updateModulesList();
@@ -128,44 +124,94 @@ function updateSidebarCounts() {
     const companies = Object.values(currentData.companies);
     const projects = Object.values(currentData.projects);
     const assignments = Object.values(currentData.assignments).filter(a => a.isActive);
-    const tasks = Object.values(currentData.tasks);
+    const supports = Object.values(currentData.supports); // Cambiar de tasks
     const modules = Object.values(currentData.modules);
     const reports = Object.values(currentData.reports);
 
     // Calcular contadores específicos
     const pendingReports = reports.filter(r => r.status === 'Pendiente');
     const approvedReports = reports.filter(r => r.status === 'Aprobado');
-
-    // Actualizar contadores en el sidebar
     const generatedReports = Object.values(window.PortalDB.getGeneratedReports());
+    
     const sidebarElements = {
-    'sidebarUsersCount': consultorUsers.length,
-    'sidebarCompaniesCount': companies.length,
-    'sidebarProjectsCount': projects.length,
-    'sidebarTasksCount': tasks.length,
-    'sidebarModulesCount': modules.length,
-    'sidebarAssignmentsCount': assignments.length,
-    'sidebarReportsCount': pendingReports.length,
-    'sidebarApprovedReportsCount': approvedReports.length,
-    'sidebarGeneratedReportsCount': generatedReports.length
+        'sidebarUsersCount': consultorUsers.length,
+        'sidebarCompaniesCount': companies.length,
+        'sidebarProjectsCount': projects.length,
+        'sidebarSupportsCount': supports.length, // Cambiar de sidebarTasksCount
+        'sidebarModulesCount': modules.length,
+        'sidebarAssignmentsCount': assignments.length,
+        'sidebarReportsCount': pendingReports.length,
+        'sidebarApprovedReportsCount': approvedReports.length,
+        'sidebarGeneratedReportsCount': generatedReports.length
     };
 
     Object.entries(sidebarElements).forEach(([elementId, count]) => {
         const element = document.getElementById(elementId);
         if (element) {
             element.textContent = count;
-            console.log(`✅ Actualizado ${elementId}: ${count}`);
-        } else {
-            console.warn(`⚠️ Elemento no encontrado: ${elementId}`);
         }
     });
+}
 
-    // Debug específico para reportes aprobados
-    console.log('🔍 Debug reportes aprobados:', {
-        totalReports: reports.length,
-        pendingReports: pendingReports.length,
-        approvedReports: approvedReports.length,
-        approvedElement: !!document.getElementById('sidebarApprovedReportsCount')
+function updateSupportsList() {
+    const container = document.getElementById('supportsList');
+    const supports = Object.values(currentData.supports);
+    
+    if (supports.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📞</div>
+                <div class="empty-state-title">No hay soportes</div>
+                <div class="empty-state-desc">Cree el primer soporte</div>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = '';
+    supports.forEach(support => {
+        const supportDiv = document.createElement('div');
+        supportDiv.className = 'item hover-lift';
+        
+        // Colores por prioridad
+        const priorityColors = {
+            'Baja': '#95a5a6',
+            'Media': '#f39c12',
+            'Alta': '#e74c3c',
+            'Crítica': '#8e44ad'
+        };
+        
+        // Colores por tipo
+        const typeColors = {
+            'Técnico': '#3498db',
+            'Funcional': '#2ecc71',
+            'Configuración': '#f39c12',
+            'Mantenimiento': '#9b59b6',
+            'Otros': '#95a5a6'
+        };
+        
+        supportDiv.innerHTML = `
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                    <span class="item-id">${support.id}</span>
+                    <strong>${support.name}</strong>
+                    <span class="custom-badge" style="background: ${typeColors[support.type]}20; color: ${typeColors[support.type]}; border: 1px solid ${typeColors[support.type]};">
+                        ${support.type}
+                    </span>
+                    <span class="custom-badge" style="background: ${priorityColors[support.priority]}20; color: ${priorityColors[support.priority]}; border: 1px solid ${priorityColors[support.priority]}; font-size: 11px;">
+                        ${support.priority}
+                    </span>
+                </div>
+                <small style="color: #666;">
+                    📅 Creado: ${window.DateUtils.formatDate(support.createdAt)}
+                    ${support.description ? `<br>📝 ${window.TextUtils.truncate(support.description, 60)}` : ''}
+                </small>
+            </div>
+            <button class="delete-btn" onclick="deleteSupport('${support.id}')" title="Eliminar soporte">
+                🗑️
+            </button>
+        `;
+        container.appendChild(supportDiv);
     });
 }
 
@@ -578,11 +624,10 @@ function updateAssignmentsList() {
             assignments.forEach(assignment => {
                 const user = currentData.users[assignment.userId];
                 const company = currentData.companies[assignment.companyId];
-                const project = currentData.projects[assignment.projectId];
-                const task = currentData.tasks[assignment.taskId];
+                const support = currentData.supports[assignment.supportId]; // Cambiar de taskId
                 const module = currentData.modules[assignment.moduleId];
                 
-                if (user && company && project && task && module) {
+                if (user && company && support && module) {
                     const assignmentDiv = document.createElement('div');
                     assignmentDiv.className = 'item hover-lift';
                     assignmentDiv.innerHTML = `
@@ -593,8 +638,8 @@ function updateAssignmentsList() {
                                 <span class="custom-badge badge-info">Asignado</span>
                             </div>
                             <small style="color: #666;">
-                                🏢 ${company.name} | 📋 ${project.name}<br>
-                                ✅ ${task.name} | 🧩 ${module.name}<br>
+                                🏢 ${company.name} | 📞 ${support.name}<br>
+                                🔧 ${support.type} | 🧩 ${module.name}<br>
                                 📅 ${window.DateUtils.formatDate(assignment.createdAt)}
                             </small>
                         </div>
@@ -627,9 +672,9 @@ function updateAssignmentsList() {
             recentAssignments.forEach(assignment => {
                 const user = currentData.users[assignment.userId];
                 const company = currentData.companies[assignment.companyId];
-                const project = currentData.projects[assignment.projectId];
+                const support = currentData.supports[assignment.supportId]; // Cambiar de projectId
                 
-                if (user && company && project) {
+                if (user && company && support) {
                     const assignmentDiv = document.createElement('div');
                     assignmentDiv.className = 'item hover-lift';
                     assignmentDiv.innerHTML = `
@@ -641,7 +686,7 @@ function updateAssignmentsList() {
                                 </span>
                             </div>
                             <small style="color: #666;">
-                                🏢 ${company.name} | 📋 ${project.name}
+                                🏢 ${company.name} | 📞 ${support.name}
                             </small>
                         </div>
                     `;
@@ -653,182 +698,84 @@ function updateAssignmentsList() {
 }
 
 function updateReportsList() {
-    const allContainer = document.getElementById('allReportsList');
-    const pendingContainer = document.getElementById('pendingReportsList');
     const reportsTableBody = document.getElementById('reportsTableBody');
     
-    // CAMBIO PRINCIPAL: Mostrar todos los reportes pendientes
+    if (!reportsTableBody) return;
+    
     const allReports = Object.values(currentData.reports);
     const pendingReports = allReports.filter(r => r.status === 'Pendiente');
     
-    // Actualizar tabla de reportes pendientes
-    if (reportsTableBody) {
-        if (pendingReports.length === 0) {
-            reportsTableBody.innerHTML = `
-                <tr>
-                    <td colspan="10" class="empty-table-message">
-                        <div class="empty-state">
-                            <div class="empty-state-icon">📄</div>
-                            <div class="empty-state-title">No hay reportes pendientes</div>
-                            <div class="empty-state-desc">Los reportes pendientes aparecerán aquí para su revisión</div>
+    if (pendingReports.length === 0) {
+        reportsTableBody.innerHTML = `
+            <tr>
+                <td colspan="10" class="empty-table-message">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <div class="empty-state-title">No hay reportes pendientes</div>
+                        <div class="empty-state-desc">Los reportes pendientes aparecerán aquí para su revisión</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    } else {
+        reportsTableBody.innerHTML = '';
+        pendingReports.forEach(report => {
+            const user = currentData.users[report.userId];
+            
+            let assignment = null;
+            let company = null;
+            let support = null; // Cambiar de task
+            let module = null;
+            
+            if (report.assignmentId) {
+                assignment = currentData.assignments[report.assignmentId];
+                if (assignment) {
+                    company = currentData.companies[assignment.companyId];
+                    support = currentData.supports[assignment.supportId]; // Cambiar de taskId
+                    module = currentData.modules[assignment.moduleId];
+                }
+            } else {
+                assignment = Object.values(currentData.assignments).find(a => a.userId === report.userId && a.isActive);
+                if (assignment) {
+                    company = currentData.companies[assignment.companyId];
+                    support = currentData.supports[assignment.supportId]; // Cambiar de taskId
+                    module = currentData.modules[assignment.moduleId];
+                }
+            }
+            
+            if (user) {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><span class="consultant-id">${user.id}</span></td>
+                    <td><span class="consultant-name">${user.name}</span></td>
+                    <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
+                    <td><span class="project-name">${support ? support.name : 'Sin soporte'}</span></td>
+                    <td>${support ? support.type || 'N/A' : 'Sin tipo'}</td>
+                    <td>${module ? module.name : 'Sin módulo'}</td>
+                    <td><span class="hours-reported">${report.hours || '0'} hrs</span></td>
+                    <td><span class="report-date">${window.DateUtils.formatDate(report.createdAt)}</span></td>
+                    <td>
+                        <span class="status-badge status-${report.status.toLowerCase()}">
+                            ${report.status}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
+                                ✅ Aprobar
+                            </button>
+                            <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
+                                ❌ Rechazar
+                            </button>
+                            <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
+                                👁️ Ver
+                            </button>
                         </div>
                     </td>
-                </tr>
-            `;
-        } else {
-            reportsTableBody.innerHTML = '';
-            pendingReports.forEach(report => {
-                const user = currentData.users[report.userId];
-                
-                // BUSCAR la asignación específica del reporte
-                let assignment = null;
-                let company = null;
-                let project = null;
-                let task = null;
-                let module = null;
-                
-                if (report.assignmentId) {
-                    // Nuevo sistema: reporte vinculado a asignación específica
-                    assignment = currentData.assignments[report.assignmentId];
-                    if (assignment) {
-                        company = currentData.companies[assignment.companyId];
-                        project = currentData.projects[assignment.projectId];
-                        task = currentData.tasks[assignment.taskId];
-                        module = currentData.modules[assignment.moduleId];
-                    }
-                } else {
-                    // Sistema legado: buscar primera asignación del usuario
-                    assignment = Object.values(currentData.assignments).find(a => a.userId === report.userId && a.isActive);
-                    if (assignment) {
-                        company = currentData.companies[assignment.companyId];
-                        project = currentData.projects[assignment.projectId];
-                        task = currentData.tasks[assignment.taskId];
-                        module = currentData.modules[assignment.moduleId];
-                    }
-                }
-                
-                if (user) {
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td><span class="consultant-id">${user.id}</span></td>
-                        <td><span class="consultant-name">${user.name}</span></td>
-                        <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
-                        <td><span class="project-name">${project ? project.name : 'Sin asignación'}</span></td>
-                        <td>${task ? task.name : 'Sin tarea'}</td>
-                        <td>${module ? module.name : 'Sin módulo'}</td>
-                        <td><span class="hours-reported">${report.hours || '0'} hrs</span></td>
-                        <td><span class="report-date">${window.DateUtils.formatDate(report.createdAt)}</span></td>
-                        <td>
-                            <span class="status-badge status-${report.status.toLowerCase()}">
-                                ${report.status}
-                            </span>
-                        </td>
-                        <td>
-                            <div class="action-buttons">
-                                <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
-                                    ✅ Aprobar
-                                </button>
-                                <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
-                                    ❌ Rechazar
-                                </button>
-                                <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
-                                    👁️ Ver
-                                </button>
-                            </div>
-                        </td>
-                    `;
-                    reportsTableBody.appendChild(row);
-                }
-            });
-        }
-    }
-    
-    // Resto de la funcionalidad para otros contenedores (mantener igual)
-    if (allContainer) {
-        if (pendingReports.length === 0) {
-            allContainer.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">📄</div>
-                    <div class="empty-state-title">No hay reportes pendientes</div>
-                    <div class="empty-state-desc">Los reportes pendientes aparecerán aquí</div>
-                </div>
-            `;
-        } else {
-            allContainer.innerHTML = '';
-            pendingReports.forEach(report => {
-                const user = currentData.users[report.userId];
-                if (user) {
-                    const reportDiv = document.createElement('div');
-                    reportDiv.className = 'item hover-lift';
-                    
-                    reportDiv.innerHTML = `
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                                <strong>${report.title}</strong>
-                                <span class="custom-badge badge-warning">
-                                    ⏳ Pendiente
-                                </span>
-                            </div>
-                            <small style="color: #666;">
-                                👤 ${user.name} | 📅 ${window.DateUtils.formatDate(report.createdAt)}
-                                ${report.reportType ? `| 📊 ${report.reportType}` : ''}
-                                ${report.hours ? `| ⏰ ${report.hours} hrs` : ''}
-                            </small>
-                        </div>
-                        <span class="custom-badge badge-info">
-                            ${window.DateUtils.formatRelativeTime(report.createdAt)}
-                        </span>
-                    `;
-                    allContainer.appendChild(reportDiv);
-                }
-            });
-        }
-    }
-    
-    // Reportes pendientes (contenedor específico)
-    if (pendingContainer) {
-        if (pendingReports.length === 0) {
-            pendingContainer.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">✅</div>
-                    <div class="empty-state-title">No hay reportes pendientes</div>
-                    <div class="empty-state-desc">Todos los reportes han sido revisados</div>
-                </div>
-            `;
-        } else {
-            pendingContainer.innerHTML = '';
-            pendingReports.forEach(report => {
-                const user = currentData.users[report.userId];
-                if (user) {
-                    const reportDiv = document.createElement('div');
-                    reportDiv.className = 'item hover-lift';
-                    reportDiv.innerHTML = `
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                                <strong>${report.title}</strong>
-                                <span class="custom-badge badge-warning">
-                                    ⏳ Pendiente
-                                </span>
-                            </div>
-                            <small style="color: #666;">
-                                👤 ${user.name} | 📅 ${window.DateUtils.formatDate(report.createdAt)}
-                                ${report.reportType ? `| 📊 ${report.reportType}` : ''}
-                                ${report.hours ? `| ⏰ ${report.hours} hrs` : ''}
-                            </small>
-                        </div>
-                        <div style="display: flex; gap: 5px;">
-                            <button class="btn btn-success" onclick="approveReport('${report.id}')" title="Aprobar reporte" style="padding: 4px 8px; font-size: 12px;">
-                                ✅
-                            </button>
-                            <button class="btn btn-danger" onclick="rejectReport('${report.id}')" title="Rechazar reporte" style="padding: 4px 8px; font-size: 12px;">
-                                ❌
-                            </button>
-                        </div>
-                    `;
-                    pendingContainer.appendChild(reportDiv);
-                }
-            });
-        }
+                `;
+                reportsTableBody.appendChild(row);
+            }
+        });
     }
 }
 
@@ -854,7 +801,7 @@ function updateApprovedReportsList() {
     const reports = Object.values(currentData.reports);
     const approvedReports = reports.filter(r => r.status === 'Aprobado');
     
-    // Filtrar reportes por fecha
+    // Filtrar reportes por fecha (lógica existente...)
     let filteredReports = [];
     const now = new Date();
     let filterText = '';
@@ -863,11 +810,11 @@ function updateApprovedReportsList() {
         switch(timeFilter.value) {
             case 'week':
                 const startOfWeek = new Date(now);
-                startOfWeek.setDate(now.getDate() - now.getDay()); // Domingo
+                startOfWeek.setDate(now.getDate() - now.getDay());
                 startOfWeek.setHours(0, 0, 0, 0);
                 
                 const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
                 endOfWeek.setHours(23, 59, 59, 999);
                 
                 filteredReports = approvedReports.filter(report => {
@@ -943,32 +890,27 @@ function updateApprovedReportsList() {
         return;
     }
     
-    // *** CAMBIO PRINCIPAL: Agrupar por ASIGNACIÓN, no por usuario ***
+    // Agrupar por ASIGNACIÓN
     const assignmentSummary = {};
     
     filteredReports.forEach(report => {
         const user = currentData.users[report.userId];
         
-        // Determinar la asignación específica del reporte
         let assignment = null;
         if (report.assignmentId) {
-            // Nuevo sistema: reporte vinculado a asignación específica
             assignment = currentData.assignments[report.assignmentId];
         } else {
-            // Sistema legado: buscar primera asignación activa del usuario
             assignment = Object.values(currentData.assignments).find(a => 
                 a.userId === report.userId && a.isActive
             );
         }
         
         if (user && assignment) {
-            // Usar assignmentId como clave única para agrupar
             const key = assignment.id;
             
             if (!assignmentSummary[key]) {
                 const company = currentData.companies[assignment.companyId];
-                const project = currentData.projects[assignment.projectId];
-                const task = currentData.tasks[assignment.taskId];
+                const support = currentData.supports[assignment.supportId]; // Cambiar de taskId
                 const module = currentData.modules[assignment.moduleId];
                 
                 assignmentSummary[key] = {
@@ -977,14 +919,13 @@ function updateApprovedReportsList() {
                     consultantName: user.name,
                     companyId: assignment.companyId,
                     companyName: company ? company.name : 'No asignado',
-                    projectName: project ? project.name : 'No asignado',
-                    taskName: task ? task.name : 'No asignada',
+                    supportName: support ? support.name : 'No asignado', // Cambiar de projectName
+                    supportType: support ? support.type : 'N/A', // Nuevo campo
                     moduleName: module ? module.name : 'No asignado',
                     totalHours: 0
                 };
             }
             
-            // Acumular horas por asignación específica
             assignmentSummary[key].totalHours += parseFloat(report.hours || 0);
         }
     });
@@ -998,8 +939,8 @@ function updateApprovedReportsList() {
             <td><span class="consultant-name">${summary.consultantName}</span></td>
             <td><span class="consultant-id">${summary.companyId}</span></td>
             <td><span class="company-name">${summary.companyName}</span></td>
-            <td><span class="project-name">${summary.projectName}</span></td>
-            <td>${summary.taskName}</td>
+            <td><span class="project-name">${summary.supportName}</span></td>
+            <td>${summary.supportType}</td>
             <td>${summary.moduleName}</td>
             <td><span class="hours-reported">${summary.totalHours.toFixed(1)} hrs</span></td>
         `;
@@ -1031,7 +972,7 @@ function rejectReport(reportId) {
 }
 
 function updateDropdowns() {
-    // Dropdown de usuarios - mostrar también los que ya tienen asignaciones
+    // Dropdown de usuarios
     const userSelect = document.getElementById('assignUser');
     if (userSelect) {
         userSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
@@ -1041,7 +982,6 @@ function updateDropdowns() {
                 const option = document.createElement('option');
                 option.value = user.id;
                 
-                // Mostrar cuántas asignaciones tiene
                 const userAssignments = Object.values(currentData.assignments).filter(a => 
                     a.userId === user.id && a.isActive
                 );
@@ -1069,29 +1009,16 @@ function updateDropdowns() {
         });
     }
 
-    // Dropdown de proyectos
-    const projectSelect = document.getElementById('assignProject');
-    if (projectSelect) {
-        projectSelect.innerHTML = '<option value="">Seleccionar proyecto</option>';
+    // Dropdown de soportes (cambiar de tareas)
+    const supportSelect = document.getElementById('assignSupport');
+    if (supportSelect) {
+        supportSelect.innerHTML = '<option value="">Seleccionar Soporte</option>';
         
-        Object.values(currentData.projects).forEach(project => {
+        Object.values(currentData.supports).forEach(support => {
             const option = document.createElement('option');
-            option.value = project.id;
-            option.textContent = `${project.name} (${project.id})`;
-            projectSelect.appendChild(option);
-        });
-    }
-
-    // Dropdown de tareas
-    const taskSelect = document.getElementById('assignTask');
-    if (taskSelect) {
-        taskSelect.innerHTML = '<option value="">Seleccionar Tarea</option>';
-        
-        Object.values(currentData.tasks).forEach(task => {
-            const option = document.createElement('option');
-            option.value = task.id;
-            option.textContent = `${task.name} (${task.id})`;
-            taskSelect.appendChild(option);
+            option.value = support.id;
+            option.textContent = `${support.name} (${support.id})`;
+            supportSelect.appendChild(option);
         });
     }
 
@@ -1309,14 +1236,14 @@ function generateAdminReport() {
 window.showSection = showSection;
 window.openUserModal = openUserModal;
 window.openCompanyModal = openCompanyModal;
+window.openSupportModal = openSupportModal;
+window.deleteSupport = deleteSupport;
 window.openProjectModal = openProjectModal;
-window.openTaskModal = openTaskModal;
 window.openModuleModal = openModuleModal;
 window.closeModal = closeModal;
 window.deleteUser = deleteUser;
 window.deleteCompany = deleteCompany;
 window.deleteProject = deleteProject;
-window.deleteTask = deleteTask;
 window.deleteModule = deleteModule;
 window.createAssignment = createAssignment;
 window.deleteAssignment = deleteAssignment;
@@ -1329,7 +1256,6 @@ window.generateAdminReport = generateAdminReport;
 window.viewReport = viewReport;
 window.updateApprovedReportsList = updateApprovedReportsList;
 window.updateProjectsList = updateProjectsList;
-window.updateTasksList = updateTasksList;
 window.updateModulesList = updateModulesList;
 window.updateAssignmentsList = updateAssignmentsList;
 window.updateUsersList = updateUsersList;
@@ -1388,7 +1314,7 @@ function setupEventListeners() {
     document.getElementById('userForm').addEventListener('submit', handleCreateUser);
     document.getElementById('companyForm').addEventListener('submit', handleCreateCompany);
     document.getElementById('projectForm').addEventListener('submit', handleCreateProject);
-    document.getElementById('taskForm').addEventListener('submit', handleCreateTask);
+    document.getElementById('supportForm').addEventListener('submit', handleCreateSupport); 
     document.getElementById('moduleForm').addEventListener('submit', handleCreateModule);
 
     // Cerrar modales con ESC
@@ -1663,48 +1589,57 @@ function deleteProject(projectId) {
     }
 }
 
-// === GESTIÓN DE TAREAS ===
-function handleCreateTask(e) {
+// === GESTIÓN DE SOPORTES ===
+function handleCreateSupport(e) {
     e.preventDefault();
     
-    const name = document.getElementById('taskName').value.trim();
-    const description = document.getElementById('taskDescription').value.trim();
+    const name = document.getElementById('supportName').value.trim();
+    const description = document.getElementById('supportDescription').value.trim();
+    const priority = document.getElementById('supportPriority').value;
+    const type = document.getElementById('supportType').value;
     
     if (!name) {
-        window.NotificationUtils.error('El nombre de la tarea es requerido');
+        window.NotificationUtils.error('El nombre del soporte es requerido');
         return;
     }
 
-    const taskData = {
+    const supportData = {
         name: name,
-        description: description
+        description: description,
+        priority: priority,
+        type: type
     };
 
-    const result = window.PortalDB.createTask(taskData);
+    const result = window.PortalDB.createSupport(supportData);
     
     if (result.success) {
-        window.NotificationUtils.success(`Tarea "${name}" creada exitosamente`);
-        closeModal('taskModal');
-        document.getElementById('taskForm').reset();
+        window.NotificationUtils.success(`Soporte "${name}" creado exitosamente`);
+        closeModal('supportModal');
+        document.getElementById('supportForm').reset();
         loadAllData();
     } else {
-        window.NotificationUtils.error('Error al crear tarea: ' + result.message);
+        window.NotificationUtils.error('Error al crear soporte: ' + result.message);
     }
 }
 
-function deleteTask(taskId) {
-    if (!confirm('¿Está seguro de eliminar esta tarea?')) {
+function deleteSupport(supportId) {
+    if (!confirm('¿Está seguro de eliminar este soporte?')) {
         return;
     }
 
-    const result = window.PortalDB.deleteTask(taskId);
+    const result = window.PortalDB.deleteSupport(supportId);
     
     if (result.success) {
-        window.NotificationUtils.success('Tarea eliminada correctamente');
+        window.NotificationUtils.success('Soporte eliminado correctamente');
         loadAllData();
     } else {
-        window.NotificationUtils.error('Error al eliminar tarea: ' + result.message);
+        window.NotificationUtils.error('Error al eliminar soporte: ' + result.message);
     }
+}
+
+function openSupportModal() {
+    document.getElementById('supportName').focus();
+    window.ModalUtils.open('supportModal');
 }
 
 // === GESTIÓN DE MÓDULOS ===
@@ -1762,14 +1697,13 @@ function viewReport(reportId) {
     let assignmentInfo = 'Sin asignación';
     if (assignment) {
         const company = currentData.companies[assignment.companyId];
-        const project = currentData.projects[assignment.projectId];
-        const task = currentData.tasks[assignment.taskId];
+        const support = currentData.supports[assignment.supportId]; // Cambiar de taskId
         const module = currentData.modules[assignment.moduleId];
         
         assignmentInfo = `
             <strong>Empresa:</strong> ${company ? company.name : 'No asignada'}<br>
-            <strong>Proyecto:</strong> ${project ? project.name : 'No asignado'}<br>
-            <strong>Tarea:</strong> ${task ? task.name : 'No asignada'}<br>
+            <strong>Soporte:</strong> ${support ? support.name : 'No asignado'}<br>
+            <strong>Tipo:</strong> ${support ? support.type : 'No especificado'}<br>
             <strong>Módulo:</strong> ${module ? module.name : 'No asignado'}
         `;
     }
@@ -2231,8 +2165,7 @@ function processActividadesData(filteredReports) {
             
             if (!assignmentSummary[key]) {
                 const company = currentData.companies[assignment.companyId];
-                const project = currentData.projects[assignment.projectId];
-                const task = currentData.tasks[assignment.taskId];
+                const support = currentData.supports[assignment.supportId]; // Cambiar de taskId
                 const module = currentData.modules[assignment.moduleId];
                 
                 assignmentSummary[key] = {
@@ -2240,8 +2173,8 @@ function processActividadesData(filteredReports) {
                     nombreConsultor: user.name,
                     idCliente: assignment.companyId,
                     cliente: company ? company.name : 'No asignado',
-                    proyecto: project ? project.name : 'No asignado',
-                    tarea: task ? task.name : 'No asignada',
+                    soporte: support ? support.name : 'No asignado', // Cambiar de proyecto
+                    tipoSoporte: support ? support.type : 'No especificado', // Nuevo campo
                     modulo: module ? module.name : 'No asignado',
                     horasTotales: 0
                 };
@@ -2310,7 +2243,7 @@ function generateActividadesReport() {
         // Crear workbook
         const wb = XLSX.utils.book_new();
         
-        // Obtener fechas del filtro
+        // Obtener fechas del filtro (mantener lógica existente...)
         const timeFilter = document.getElementById('actividadesTimeFilter');
         let startDateFormatted = '';
         let endDateFormatted = '';
@@ -2380,22 +2313,22 @@ function generateActividadesReport() {
         // Fila 6: Espaciado
         wsData.push(Array(15).fill(''));
         
-        // Fila 7: Información del proyecto
-        const projectRow = Array(15).fill('');
+        // Fila 7: Información del soporte (cambiar de proyecto)
+        const supportRow = Array(15).fill('');
         if (currentReportData.length > 0) {
-            projectRow[1] = 'PROYECTO:';
-            projectRow[3] = currentReportData[0].proyecto;
-            projectRow[8] = 'CLIENTE';
-            projectRow[10] = currentReportData[0].cliente;
+            supportRow[1] = 'SOPORTE:';
+            supportRow[3] = currentReportData[0].soporte; // Cambiar de proyecto
+            supportRow[8] = 'CLIENTE';
+            supportRow[10] = currentReportData[0].cliente;
         }
-        wsData.push(projectRow);
+        wsData.push(supportRow);
         
-        // Fila 8: Headers de la tabla
+        // Fila 8: Headers de la tabla actualizados
         const tableHeaders = [
             'ID CLIENTE',
-            'ID PROYECTO', 
-            'MODULO',
-            'TICKET',
+            'ID CONSULTOR', 
+            'SOPORTE',
+            'TIPO SOPORTE',
             'FECHA',
             'ACTIVIDAD',
             'HORAS pago consultor',
@@ -2415,15 +2348,15 @@ function generateActividadesReport() {
         headerTableRow[8] = tableHeaders[8];
         wsData.push(headerTableRow);
         
-        // Agregar datos de actividades
+        // Agregar datos de actividades con nueva estructura
         currentReportData.forEach(row => {
             const dataRow = Array(15).fill('');
             dataRow[0] = `${row.idCliente} CLIENTE ${row.cliente.toUpperCase()}`;
-            dataRow[1] = `${row.idConsultor} ${row.proyecto.toUpperCase()}`;
-            dataRow[2] = row.modulo || 'MM';
-            dataRow[3] = ''; // TICKET vacío
+            dataRow[1] = `${row.idConsultor} ${row.nombreConsultor.toUpperCase()}`;
+            dataRow[2] = row.soporte || 'SOPORTE NO ESPECIFICADO'; // Cambiar de proyecto
+            dataRow[3] = row.tipoSoporte || 'TÉCNICO'; // Nuevo campo
             dataRow[4] = new Date().toLocaleDateString('es-ES');
-            dataRow[5] = `Actividades realizadas en ${row.tarea} - ${row.modulo}`;
+            dataRow[5] = `Actividades realizadas en ${row.soporte} - ${row.modulo}`;
             dataRow[6] = row.horasTotales;
             dataRow[7] = ''; // LIDER vacío
             dataRow[8] = row.horasTotales;
@@ -2447,9 +2380,9 @@ function generateActividadesReport() {
         // Configurar anchos de columna
         ws['!cols'] = [
             {wch: 20}, // ID CLIENTE
-            {wch: 20}, // ID PROYECTO
-            {wch: 10}, // MODULO
-            {wch: 10}, // TICKET
+            {wch: 20}, // ID CONSULTOR
+            {wch: 25}, // SOPORTE
+            {wch: 15}, // TIPO SOPORTE
             {wch: 12}, // FECHA
             {wch: 60}, // ACTIVIDAD
             {wch: 18}, // HORAS pago consultor
@@ -2458,7 +2391,7 @@ function generateActividadesReport() {
             {wch: 8}, {wch: 8}, {wch: 12}, {wch: 8}, {wch: 12}, {wch: 8}
         ];
         
-        // Aplicar estilos al worksheet
+        // Aplicar estilos al worksheet (mantener lógica existente...)
         const range = XLSX.utils.decode_range(ws['!ref']);
         
         // Estilo para el título principal
@@ -2523,24 +2456,24 @@ function generateActividadesReport() {
         
         XLSX.writeFile(wb, fileName);
 
-// Guardar en historial
-const totalHours = currentReportData.reduce((sum, row) => sum + row.horasTotales, 0);
-const reportData = {
-    fileName: fileName,
-    reportType: 'actividades',
-    generatedBy: 'Hector Perez',
-    dateRange: getDateRangeText('actividadesTimeFilter', 'actividadesStartDate', 'actividadesEndDate'),
-    recordCount: currentReportData.length,
-    totalHours: totalHours,
-    totalAmount: 0
-};
+        // Guardar en historial
+        const totalHours = currentReportData.reduce((sum, row) => sum + row.horasTotales, 0);
+        const reportData = {
+            fileName: fileName,
+            reportType: 'actividades',
+            generatedBy: 'Hector Perez',
+            dateRange: getDateRangeText('actividadesTimeFilter', 'actividadesStartDate', 'actividadesEndDate'),
+            recordCount: currentReportData.length,
+            totalHours: totalHours,
+            totalAmount: 0
+        };
 
-const saveResult = window.PortalDB.saveGeneratedReport(reportData);
-if (saveResult.success) {
-    updateSidebarCounts();
-}
+        const saveResult = window.PortalDB.saveGeneratedReport(reportData);
+        if (saveResult.success) {
+            updateSidebarCounts();
+        }
 
-window.NotificationUtils.success(`Reporte de actividades generado: ${fileName}`);
+        window.NotificationUtils.success(`Reporte de actividades generado: ${fileName}`);
 
     } catch (error) {
         console.error('Error generando reporte:', error);
@@ -2586,7 +2519,7 @@ function loadPagosConfiguration() {
             <td>${row.idConsultor}</td>
             <td>${row.nombreConsultor}</td>
             <td>${row.cliente}</td>
-            <td>${row.proyecto}</td>
+            <td>${row.soporte}</td>
             <td>${row.horasTotales.toFixed(1)}</td>
             <td>
                 <input type="number" 
@@ -2684,7 +2617,7 @@ function generatePagosReport() {
         // Crear workbook
         const wb = XLSX.utils.book_new();
         
-        // Obtener fechas del filtro
+        // Obtener fechas del filtro (mantener lógica existente...)
         const timeFilter = document.getElementById('pagosTimeFilter');
         let startDateFormatted = '';
         let endDateFormatted = '';
@@ -2760,12 +2693,12 @@ function generatePagosReport() {
         periodoRow[3] = `${startDateFormatted} - ${endDateFormatted}`;
         wsData.push(periodoRow);
         
-        // Fila 8: Headers de la tabla
+        // Fila 8: Headers de la tabla actualizados
         const tableHeaders = [
             'ID CONSULTOR',
             'NOMBRE CONSULTOR',
             'CLIENTE',
-            'PROYECTO',
+            'SOPORTE',
             'HORAS TRABAJADAS',
             'TARIFA POR HORA',
             'TOTAL A PAGAR'
@@ -2783,16 +2716,16 @@ function generatePagosReport() {
         
         let grandTotal = 0;
         
-        // Agregar datos de pagos
+        // Agregar datos de pagos con nueva estructura
         Object.values(tariffConfiguration).forEach(config => {
             const dataRow = Array(12).fill('');
             dataRow[0] = config.idConsultor;
             dataRow[1] = config.nombreConsultor;
             dataRow[2] = config.cliente;
-            dataRow[3] = config.proyecto;
+            dataRow[3] = config.soporte; // Cambiar de proyecto
             dataRow[4] = config.horasAjustadas;
-            dataRow[5] = `$${config.tarifaPorHora.toFixed(2)}`;
-            dataRow[6] = `$${config.total.toFixed(2)}`;
+            dataRow[5] = `${config.tarifaPorHora.toFixed(2)}`;
+            dataRow[6] = `${config.total.toFixed(2)}`;
             wsData.push(dataRow);
             grandTotal += config.total;
         });
@@ -2802,7 +2735,7 @@ function generatePagosReport() {
             const emptyRow = Array(12).fill('');
             if (i === 1) {
                 emptyRow[5] = 'TOTAL GENERAL:';
-                emptyRow[6] = `$${grandTotal.toFixed(2)}`;
+                emptyRow[6] = `${grandTotal.toFixed(2)}`;
             }
             wsData.push(emptyRow);
         }
@@ -2815,14 +2748,14 @@ function generatePagosReport() {
             {wch: 15}, // ID CONSULTOR
             {wch: 25}, // NOMBRE CONSULTOR
             {wch: 25}, // CLIENTE
-            {wch: 20}, // PROYECTO
+            {wch: 25}, // SOPORTE
             {wch: 15}, // HORAS TRABAJADAS
             {wch: 15}, // TARIFA POR HORA
             {wch: 15}, // TOTAL A PAGAR
             {wch: 8}, {wch: 12}, {wch: 8}, {wch: 12}, {wch: 8}
         ];
         
-        // Aplicar estilos al worksheet
+        // Aplicar estilos al worksheet (mantener lógica existente...)
         const range = XLSX.utils.decode_range(ws['!ref']);
         
         // Estilo para el título principal
@@ -2885,30 +2818,30 @@ function generatePagosReport() {
         const today = new Date();
         const fileName = `PAGO_CONSULTORES_HPEREZ_${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}.xlsx`;
         
-       XLSX.writeFile(wb, fileName);
+        XLSX.writeFile(wb, fileName);
 
-// Calcular totales y guardar en historial
-let totalHours = 0;
-Object.values(tariffConfiguration).forEach(config => {
-    totalHours += config.horasAjustadas;
-});
+        // Calcular totales y guardar en historial
+        let totalHours = 0;
+        Object.values(tariffConfiguration).forEach(config => {
+            totalHours += config.horasAjustadas;
+        });
 
-const reportData = {
-    fileName: fileName,
-    reportType: 'pagos',
-    generatedBy: 'Hector Perez',
-    dateRange: getDateRangeText('pagosTimeFilter', 'pagosStartDate', 'pagosEndDate'),
-    recordCount: Object.keys(tariffConfiguration).length,
-    totalHours: totalHours,
-    totalAmount: grandTotal
-};
+        const reportData = {
+            fileName: fileName,
+            reportType: 'pagos',
+            generatedBy: 'Hector Perez',
+            dateRange: getDateRangeText('pagosTimeFilter', 'pagosStartDate', 'pagosEndDate'),
+            recordCount: Object.keys(tariffConfiguration).length,
+            totalHours: totalHours,
+            totalAmount: grandTotal
+        };
 
-const saveResult = window.PortalDB.saveGeneratedReport(reportData);
-if (saveResult.success) {
-    updateSidebarCounts();
-}
+        const saveResult = window.PortalDB.saveGeneratedReport(reportData);
+        if (saveResult.success) {
+            updateSidebarCounts();
+        }
 
-window.NotificationUtils.success(`Reporte de pagos generado: ${fileName}`);
+        window.NotificationUtils.success(`Reporte de pagos generado: ${fileName}`);
 
     } catch (error) {
         console.error('Error generando reporte de pagos:', error);

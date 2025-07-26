@@ -30,6 +30,8 @@ class PortalDatabase {
     }
 
     setupDefaultUsers() {
+    console.log('🔄 Inicializando usuarios por defecto...');
+    
     const defaultUsers = {
         'admin': {
             id: 'admin',
@@ -44,7 +46,7 @@ class PortalDatabase {
             id: '0001',
             name: 'Juan Pérez García',
             email: 'juan.perez@arvic.com',
-            password: 'cons0001.2024', // ✅ Formato nuevo
+            password: 'cons0001.2024',
             role: 'consultor',
             createdAt: new Date().toISOString(),
             isActive: true,
@@ -56,7 +58,7 @@ class PortalDatabase {
             id: '0002',
             name: 'María Elena Rodríguez',
             email: 'maria.rodriguez@arvic.com',
-            password: 'cons0002.1987', // ✅ Formato nuevo
+            password: 'cons0002.1987',
             role: 'consultor',
             createdAt: new Date().toISOString(),
             isActive: true,
@@ -65,7 +67,10 @@ class PortalDatabase {
             reportType: 'Semanal'
         }
     };
+    
     this.setData('users', defaultUsers);
+    console.log('✅ Usuarios creados:', Object.keys(defaultUsers));
+    console.log('✅ Admin password:', defaultUsers.admin.password);
 }
 
     generateUniquePassword(userId) {

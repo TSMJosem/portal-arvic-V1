@@ -16,16 +16,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function initializeLoginForm() {
     const form = document.getElementById('loginForm');
-    const userTypeSelect = document.getElementById('userType');
     const userIdInput = document.getElementById('userId');
     const passwordInput = document.getElementById('password');
 
     // Limpiar formulario
-    form.reset();
+    if (form) form.reset();
     hideMessages();
 
-    // Auto-focus en el primer campo
-    userTypeSelect.focus();
+    // Auto-focus en el primer campo disponible
+    if (userIdInput) {
+        userIdInput.focus();
+    } else if (passwordInput) {
+        passwordInput.focus();
+    }
 }
 
 function setupEventListeners() {
@@ -44,15 +47,17 @@ function setupKeyboardNavigation() {
     
     inputs.forEach((inputId, index) => {
         const input = document.getElementById(inputId);
+        if (!input) return; // Protección adicional
         
         input.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
                 
                 if (index < inputs.length - 1) {
-                    document.getElementById(inputs[index + 1]).focus();
+                    const nextInput = document.getElementById(inputs[index + 1]);
+                    if (nextInput) nextInput.focus();
                 } else {
-                    document.getElementById('loginForm').requestSubmit();
+                    handleLogin(e);
                 }
             }
         });
@@ -70,8 +75,7 @@ async function handleLogin(e) {
     hideMessages();
     
     // Validaciones básicas
-    if (!userId || !password) {
-        showError('Usuario y contraseña son requeridos');
+    if (!validateLoginForm(userId, password)) {
         return;
     }
     
@@ -79,11 +83,14 @@ async function handleLogin(e) {
     showLoadingState(submitButton, true);
     
     try {
-        // ✅ LOGIN SIMPLIFICADO - sin parámetro userType
+        // LOGIN SIMPLIFICADO - sin parámetro userType
         const result = await window.AuthSys.login(userId, password);
         
         if (result.success) {
             showSuccess(`¡Bienvenido ${result.user.name}! Redirigiendo...`);
+            
+            // Guardar último usuario exitoso
+            localStorage.setItem('arvic_last_user_id', userId);
             
             setTimeout(() => {
                 redirectToUserDashboard(result.user);
@@ -119,46 +126,6 @@ function validateLoginForm(userId, password) {
     if (!password) {
         showError('La contraseña es requerida');
         document.getElementById('password').focus();
-        return false;
-    }
-    
-    return true;
-}
-
-function validateLoginForm(userType, userId, password) {
-    // Validar tipo de usuario
-    if (!userType) {
-        showError('Por favor, seleccione un tipo de usuario');
-        document.getElementById('userType').focus();
-        return false;
-    }
-    
-    // Validar ID de usuario
-    const userIdValidation = window.AuthSys.validateUserId(userId);
-    if (!userIdValidation.valid) {
-        showError(userIdValidation.message);
-        document.getElementById('userId').focus();
-        return false;
-    }
-    
-    // Validar contraseña
-    const passwordValidation = window.AuthSys.validatePassword(password);
-    if (!passwordValidation.valid) {
-        showError(passwordValidation.message);
-        document.getElementById('password').focus();
-        return false;
-    }
-    
-    // Validación específica por tipo de usuario
-    if (userType === 'admin' && userId !== 'admin') {
-        showError('Para acceso de administrador, use el usuario "admin"');
-        document.getElementById('userId').focus();
-        return false;
-    }
-    
-    if (userType === 'consultor' && userId === 'admin') {
-        showError('El usuario "admin" no puede acceder como consultor');
-        document.getElementById('userId').focus();
         return false;
     }
     
@@ -282,20 +249,20 @@ function handleConnectionError() {
 // Auto-completar último usuario usado (opcional)
 function loadLastUser() {
     const lastUserId = localStorage.getItem('arvic_last_user_id');
-    const lastUserType = localStorage.getItem('arvic_last_user_type');
     
-    if (lastUserId && lastUserType) {
-        document.getElementById('userType').value = lastUserType;
-        document.getElementById('userId').value = lastUserId;
-        
-        // Focus en contraseña ya que usuario ya está lleno
-        document.getElementById('password').focus();
+    if (lastUserId) {
+        const userIdField = document.getElementById('userId');
+        if (userIdField) {
+            userIdField.value = lastUserId;
+            // Focus en contraseña ya que usuario ya está lleno
+            const passwordField = document.getElementById('password');
+            if (passwordField) passwordField.focus();
+        }
     }
 }
 
 function saveLastUser(userId, userType) {
     localStorage.setItem('arvic_last_user_id', userId);
-    localStorage.setItem('arvic_last_user_type', userType);
 }
 
 // === INICIALIZACIÓN ADICIONAL ===
@@ -311,22 +278,6 @@ document.addEventListener('DOMContentLoaded', function() {
         loadLastUser();
     }
 });
-
-// Guardar último usuario al hacer login exitoso
-const originalHandleLogin = handleLogin;
-handleLogin = async function(e) {
-    const result = await originalHandleLogin(e);
-    
-    // Si el login fue exitoso, guardar el último usuario
-    const userId = document.getElementById('userId').value.trim();
-    const userType = document.getElementById('userType').value.trim();
-    
-    if (userId && userType) {
-        saveLastUser(userId, userType);
-    }
-    
-    return result;
-};
 
 // === MANEJO DE ERRORES GLOBALES ===
 

@@ -68,6 +68,8 @@ class AuthSystem {
     // === LOGIN Y LOGOUT ===
     async login(userId, password) {
     try {
+        console.log('Intentando login con:', userId, password);
+        
         // Validar campos requeridos
         if (!userId || !password) {
             return {
@@ -76,39 +78,9 @@ class AuthSystem {
             };
         }
 
-        // ✅ DETECTAR TIPO AUTOMÁTICAMENTE
-        let detectedUserType = null;
-        
-        // Detectar admin por contraseña especializada
-        if (password === 'hperez1402.') {
-            detectedUserType = 'admin';
-            if (userId !== 'admin') {
-                return {
-                    success: false,
-                    message: 'Credenciales incorrectas'
-                };
-            }
-        }
-        // Detectar si es una contraseña de consultor (formato específico)
-        else if (this.isConsultorPassword(password)) {
-            detectedUserType = 'consultor';
-            if (userId === 'admin') {
-                return {
-                    success: false,
-                    message: 'Credenciales incorrectas'
-                };
-            }
-        }
-        // Si no es ninguna contraseña especializada
-        else {
-            return {
-                success: false,
-                message: 'Contraseña no válida'
-            };
-        }
-
-        // Validar usuario en la base de datos
+        // Primero validar usuario en la base de datos
         const validation = window.PortalDB.validateUser(userId, password);
+        console.log('Resultado validación DB:', validation);
         
         if (!validation.success) {
             return {
@@ -118,13 +90,27 @@ class AuthSystem {
         }
 
         const user = validation.user;
+        console.log('Usuario encontrado:', user);
 
-        // Verificar que el tipo detectado coincida
-        if (user.role !== detectedUserType) {
+        // Detectar tipo automáticamente basado en el usuario obtenido
+        let detectedUserType = user.role;
+
+        // Verificación adicional de seguridad
+        if (userId === 'admin' && password !== 'hperez1402.') {
             return {
                 success: false,
                 message: 'Credenciales incorrectas'
             };
+        }
+
+        if (userId !== 'admin' && user.role === 'consultor') {
+            // Verificar formato de contraseña de consultor
+            if (!this.isConsultorPassword(password)) {
+                return {
+                    success: false,
+                    message: 'Formato de contraseña no válido para consultor'
+                };
+            }
         }
 
         // Guardar sesión

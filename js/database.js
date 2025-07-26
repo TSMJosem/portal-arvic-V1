@@ -30,43 +30,49 @@ class PortalDatabase {
     }
 
     setupDefaultUsers() {
-        const defaultUsers = {
-            'admin': {
-                id: 'admin',
-                name: 'Administrador Principal',
-                email: 'admin@arvic.com',
-                password: 'admin123',
-                role: 'admin',
-                createdAt: new Date().toISOString(),
-                isActive: true
-            },
-            '0001': {
-                id: '0001',
-                name: 'Juan Pérez García',
-                email: 'juan.perez@arvic.com',
-                password: 'consultor123',
-                role: 'consultor',
-                createdAt: new Date().toISOString(),
-                isActive: true,
-                assignedCompany: '0001',
-                assignedProject: '0001',
-                reportType: 'Mensual'
-            },
-            '0002': {
-                id: '0002',
-                name: 'María Elena Rodríguez',
-                email: 'maria.rodriguez@arvic.com',
-                password: 'consultor456',
-                role: 'consultor',
-                createdAt: new Date().toISOString(),
-                isActive: true,
-                assignedCompany: '0002',
-                assignedProject: '0002',
-                reportType: 'Semanal'
-            }
-        };
-        this.setData('users', defaultUsers);
-    }
+    const defaultUsers = {
+        'admin': {
+            id: 'admin',
+            name: 'Administrador Principal',
+            email: 'admin@arvic.com',
+            password: 'hperez1402.',
+            role: 'admin',
+            createdAt: new Date().toISOString(),
+            isActive: true
+        },
+        '0001': {
+            id: '0001',
+            name: 'Juan Pérez García',
+            email: 'juan.perez@arvic.com',
+            password: 'cons0001.2024', // ✅ Formato nuevo
+            role: 'consultor',
+            createdAt: new Date().toISOString(),
+            isActive: true,
+            assignedCompany: '0001',
+            assignedProject: '0001',
+            reportType: 'Mensual'
+        },
+        '0002': {
+            id: '0002',
+            name: 'María Elena Rodríguez',
+            email: 'maria.rodriguez@arvic.com',
+            password: 'cons0002.1987', // ✅ Formato nuevo
+            role: 'consultor',
+            createdAt: new Date().toISOString(),
+            isActive: true,
+            assignedCompany: '0002',
+            assignedProject: '0002',
+            reportType: 'Semanal'
+        }
+    };
+    this.setData('users', defaultUsers);
+}
+
+    generateUniquePassword(userId) {
+    // Formato: "cons" + userId + "." + 4 dígitos aleatorios
+    const randomNum = Math.floor(1000 + Math.random() * 9000);
+    return `cons${userId}.${randomNum}`;
+}
 
     setupDefaultCompanies() {
         const defaultCompanies = {
@@ -301,29 +307,29 @@ class PortalDatabase {
     }
 
     createUser(userData) {
-        const users = this.getUsers();
-        const counter = this.getData('user_counter') || 1;
-        const userId = counter.toString().padStart(4, '0');
-        
-        // Generar contraseña temporal
-        const tempPassword = `temp${userId}${Math.floor(Math.random() * 1000)}`;
-        
-        const newUser = {
-            id: userId,
-            name: userData.name,
-            email: userData.email || '',
-            password: tempPassword,
-            role: userData.role || 'consultor',
-            createdAt: new Date().toISOString(),
-            isActive: true
-        };
-        
-        users[userId] = newUser;
-        this.setData('users', users);
-        this.setData('user_counter', counter + 1);
-        
-        return { success: true, user: newUser };
-    }
+    const users = this.getUsers();
+    const counter = this.getData('user_counter') || 1;
+    const userId = counter.toString().padStart(4, '0');
+    
+    // ✅ GENERAR contraseña única automáticamente
+    const uniquePassword = this.generateUniquePassword(userId);
+    
+    const newUser = {
+        id: userId,
+        name: userData.name,
+        email: userData.email || '',
+        password: uniquePassword, // ✅ Contraseña única generada
+        role: userData.role || 'consultor',
+        createdAt: new Date().toISOString(),
+        isActive: true
+    };
+    
+    users[userId] = newUser;
+    this.setData('users', users);
+    this.setData('user_counter', counter + 1);
+    
+    return { success: true, user: newUser };
+}
 
     updateUser(userId, updateData) {
         const users = this.getUsers();

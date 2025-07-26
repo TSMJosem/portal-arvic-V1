@@ -30,49 +30,17 @@ function initializeLoginForm() {
 
 function setupEventListeners() {
     const form = document.getElementById('loginForm');
-    const userTypeSelect = document.getElementById('userType');
     
     // Manejar envío del formulario
     form.addEventListener('submit', handleLogin);
     
-    // Cambiar placeholder según tipo de usuario
-    userTypeSelect.addEventListener('change', handleUserTypeChange);
-    
-    // Enter key navigation
+    // Enter key navigation (simplificado)
     setupKeyboardNavigation();
-    
-    // Demo credentials click handlers
-    setupDemoCredentials();
 }
 
-function handleUserTypeChange() {
-    const userType = document.getElementById('userType').value;
-    const userIdInput = document.getElementById('userId');
-    const passwordInput = document.getElementById('password');
-    
-    // Limpiar campos al cambiar tipo
-    userIdInput.value = '';
-    passwordInput.value = '';
-    hideMessages();
-    
-    // Cambiar placeholder según el tipo
-    switch(userType) {
-        case 'admin':
-            userIdInput.placeholder = 'Ejemplo: admin';
-            userIdInput.focus();
-            break;
-        case 'consultor':
-            userIdInput.placeholder = 'Ejemplo: 0001';
-            userIdInput.focus();
-            break;
-        default:
-            userIdInput.placeholder = 'Ingrese su usuario o ID';
-            break;
-    }
-}
 
 function setupKeyboardNavigation() {
-    const inputs = ['userType', 'userId', 'password'];
+    const inputs = ['userId', 'password'];
     
     inputs.forEach((inputId, index) => {
         const input = document.getElementById(inputId);
@@ -82,10 +50,8 @@ function setupKeyboardNavigation() {
                 e.preventDefault();
                 
                 if (index < inputs.length - 1) {
-                    // Mover al siguiente campo
                     document.getElementById(inputs[index + 1]).focus();
                 } else {
-                    // En el último campo, enviar formulario
                     document.getElementById('loginForm').requestSubmit();
                 }
             }
@@ -93,61 +59,19 @@ function setupKeyboardNavigation() {
     });
 }
 
-function setupDemoCredentials() {
-    const demoSection = document.querySelector('.demo-credentials');
-    
-    // Agregar botones para auto-completar credenciales demo
-    const adminDemo = document.createElement('button');
-    adminDemo.type = 'button';
-    adminDemo.className = 'btn btn-secondary mt-2';
-    adminDemo.style.marginRight = '10px';
-    adminDemo.textContent = 'Probar Admin';
-    adminDemo.onclick = () => fillDemoCredentials('admin');
-    
-    const consultorDemo = document.createElement('button');
-    consultorDemo.type = 'button';
-    consultorDemo.className = 'btn btn-secondary mt-2';
-    consultorDemo.textContent = 'Probar Consultor';
-    consultorDemo.onclick = () => fillDemoCredentials('consultor');
-    
-    demoSection.appendChild(document.createElement('br'));
-    demoSection.appendChild(adminDemo);
-    demoSection.appendChild(consultorDemo);
-}
-
-function fillDemoCredentials(type) {
-    const userTypeSelect = document.getElementById('userType');
-    const userIdInput = document.getElementById('userId');
-    const passwordInput = document.getElementById('password');
-    
-    if (type === 'admin') {
-        userTypeSelect.value = 'admin';
-        userIdInput.value = 'admin';
-        passwordInput.value = 'admin123';
-    } else if (type === 'consultor') {
-        userTypeSelect.value = 'consultor';
-        userIdInput.value = '0001';
-        passwordInput.value = 'consultor123';
-    }
-    
-    // Actualizar placeholder
-    handleUserTypeChange();
-    hideMessages();
-}
-
 async function handleLogin(e) {
     e.preventDefault();
     
     const submitButton = document.querySelector('.login-btn');
-    const userType = document.getElementById('userType').value.trim();
     const userId = document.getElementById('userId').value.trim();
     const password = document.getElementById('password').value;
     
     // Limpiar mensajes anteriores
     hideMessages();
     
-    // Validaciones del frontend
-    if (!validateLoginForm(userType, userId, password)) {
+    // Validaciones básicas
+    if (!userId || !password) {
+        showError('Usuario y contraseña son requeridos');
         return;
     }
     
@@ -155,13 +79,12 @@ async function handleLogin(e) {
     showLoadingState(submitButton, true);
     
     try {
-        // Intentar login
-        const result = await window.AuthSys.login(userId, password, userType);
+        // ✅ LOGIN SIMPLIFICADO - sin parámetro userType
+        const result = await window.AuthSys.login(userId, password);
         
         if (result.success) {
-            showSuccess('¡Inicio de sesión exitoso! Redirigiendo...');
+            showSuccess(`¡Bienvenido ${result.user.name}! Redirigiendo...`);
             
-            // Breve pausa para mostrar el mensaje de éxito
             setTimeout(() => {
                 redirectToUserDashboard(result.user);
             }, 1500);
@@ -170,10 +93,10 @@ async function handleLogin(e) {
             showError(result.message);
             showLoadingState(submitButton, false);
             
-            // Focus en el campo problemático
-            if (result.message.includes('Usuario')) {
+            // Focus en el campo apropiado
+            if (result.message.includes('Usuario') || result.message.includes('usuario')) {
                 document.getElementById('userId').focus();
-            } else if (result.message.includes('Contraseña')) {
+            } else {
                 document.getElementById('password').focus();
             }
         }
@@ -183,6 +106,23 @@ async function handleLogin(e) {
         showError('Error interno del sistema. Intente nuevamente.');
         showLoadingState(submitButton, false);
     }
+}
+
+// ✅ SIMPLIFICAR validateLoginForm() en login.js
+function validateLoginForm(userId, password) {
+    if (!userId) {
+        showError('El usuario es requerido');
+        document.getElementById('userId').focus();
+        return false;
+    }
+    
+    if (!password) {
+        showError('La contraseña es requerida');
+        document.getElementById('password').focus();
+        return false;
+    }
+    
+    return true;
 }
 
 function validateLoginForm(userType, userId, password) {
@@ -347,7 +287,6 @@ function loadLastUser() {
     if (lastUserId && lastUserType) {
         document.getElementById('userType').value = lastUserType;
         document.getElementById('userId').value = lastUserId;
-        handleUserTypeChange();
         
         // Focus en contraseña ya que usuario ya está lleno
         document.getElementById('password').focus();

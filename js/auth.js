@@ -66,60 +66,100 @@ class AuthSystem {
     }
 
     // === LOGIN Y LOGOUT ===
-    async login(userId, password, userType) {
-        try {
-            // Validar campos requeridos
-            if (!userId || !password || !userType) {
-                return {
-                    success: false,
-                    message: 'Todos los campos son requeridos'
-                };
-            }
-
-            // Validar usuario en la base de datos
-            const validation = window.PortalDB.validateUser(userId, password);
-            
-            if (!validation.success) {
-                return validation;
-            }
-
-            const user = validation.user;
-
-            // Verificar que el tipo de usuario coincida
-            if (user.role !== userType) {
-                return {
-                    success: false,
-                    message: 'Tipo de usuario incorrecto'
-                };
-            }
-
-            // Guardar sesión
-            const sessionSaved = this.saveCurrentSession(user);
-            
-            if (!sessionSaved) {
-                return {
-                    success: false,
-                    message: 'Error al iniciar sesión'
-                };
-            }
-
-            // Registrar actividad de login
-            this.logActivity('login', `Usuario ${userId} inició sesión`);
-
-            return {
-                success: true,
-                user: user,
-                message: 'Inicio de sesión exitoso'
-            };
-
-        } catch (error) {
-            console.error('Login error:', error);
+    async login(userId, password) {
+    try {
+        // Validar campos requeridos
+        if (!userId || !password) {
             return {
                 success: false,
-                message: 'Error interno del sistema'
+                message: 'Usuario y contraseña son requeridos'
             };
         }
+
+        // ✅ DETECTAR TIPO AUTOMÁTICAMENTE
+        let detectedUserType = null;
+        
+        // Detectar admin por contraseña especializada
+        if (password === 'hperez1402.') {
+            detectedUserType = 'admin';
+            if (userId !== 'admin') {
+                return {
+                    success: false,
+                    message: 'Credenciales incorrectas'
+                };
+            }
+        }
+        // Detectar si es una contraseña de consultor (formato específico)
+        else if (this.isConsultorPassword(password)) {
+            detectedUserType = 'consultor';
+            if (userId === 'admin') {
+                return {
+                    success: false,
+                    message: 'Credenciales incorrectas'
+                };
+            }
+        }
+        // Si no es ninguna contraseña especializada
+        else {
+            return {
+                success: false,
+                message: 'Contraseña no válida'
+            };
+        }
+
+        // Validar usuario en la base de datos
+        const validation = window.PortalDB.validateUser(userId, password);
+        
+        if (!validation.success) {
+            return {
+                success: false,
+                message: 'Usuario o contraseña incorrectos'
+            };
+        }
+
+        const user = validation.user;
+
+        // Verificar que el tipo detectado coincida
+        if (user.role !== detectedUserType) {
+            return {
+                success: false,
+                message: 'Credenciales incorrectas'
+            };
+        }
+
+        // Guardar sesión
+        const sessionSaved = this.saveCurrentSession(user);
+        
+        if (!sessionSaved) {
+            return {
+                success: false,
+                message: 'Error al iniciar sesión'
+            };
+        }
+
+        this.logActivity('login', `Usuario ${userId} inició sesión como ${user.role}`);
+
+        return {
+            success: true,
+            user: user,
+            message: 'Inicio de sesión exitoso'
+        };
+
+    } catch (error) {
+        console.error('Login error:', error);
+        return {
+            success: false,
+            message: 'Error interno del sistema'
+        };
     }
+}
+
+isConsultorPassword(password) {
+    // Patrón: "cons" + 4 dígitos + "." + 4 dígitos
+    const consultorPattern = /^cons\d{4}\.\d{4}$/;
+    return consultorPattern.test(password);
+}
+
 
     logout() {
         try {

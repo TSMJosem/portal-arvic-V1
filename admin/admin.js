@@ -1521,6 +1521,7 @@ function handleCreateUser(e) {
     const result = window.PortalDB.createUser(userData);
     
     if (result.success) {
+        // ✅ La contraseña ya viene generada automáticamente
         window.NotificationUtils.success(
             `Usuario creado exitosamente!\nID: ${result.user.id}\nContraseña: ${result.user.password}`,
             8000
@@ -1553,11 +1554,11 @@ function showUserCredentials(user) {
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
                     <p><strong>Nombre:</strong> ${user.name}</p>
                     <p><strong>ID de Usuario:</strong> <code style="background: #e9ecef; padding: 4px 8px; border-radius: 4px;">${user.id}</code></p>
-                    <p><strong>Contraseña Temporal:</strong> <code style="background: #e9ecef; padding: 4px 8px; border-radius: 4px;">${user.password}</code></p>
+                    <p><strong>Contraseña Única:</strong> <code style="background: #e9ecef; padding: 4px 8px; border-radius: 4px;">${user.password}</code></p>
                     ${user.email ? `<p><strong>Email:</strong> ${user.email}</p>` : ''}
                 </div>
-                <div class="message message-warning">
-                    <strong>Importante:</strong> Comparta estas credenciales de forma segura con el usuario.
+                <div class="message message-info">
+                    <strong>Importante:</strong> Esta contraseña es única y se generó automáticamente.
                 </div>
                 <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Entendido</button>
             </div>

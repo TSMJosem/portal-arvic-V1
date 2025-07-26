@@ -10,6 +10,11 @@ function createAssignment() {
         window.NotificationUtils.error('Todos los campos son requeridos para crear una asignación');
         return;
     }
+    
+    if (!userId || !companyId || !projectId || !taskId || !moduleId) {
+        window.NotificationUtils.error('Todos los campos son requeridos para crear una asignación');
+        return;
+    }//Agregado después del Fork
 
     const assignmentData = {
         userId: userId,

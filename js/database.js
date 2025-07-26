@@ -135,7 +135,7 @@ class PortalDatabase {
         this.setData('projects', defaultProjects);
     }
 
-    etupDefaultSupports() {
+    setupDefaultSupports() {
     const defaultSupports = {
         '0001': {
             id: '0001',

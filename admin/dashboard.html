@@ -193,31 +193,34 @@
                             <div class="assignment-form">
                                 <div class="form-group">
                                     <label for="assignUser">Usuario Consultor</label>
-                                    <select id="assignUser" required>
+                                    <select id="assignUser" name="assignUser" required>
                                         <option value="">Seleccionar usuario</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="assignCompany">Empresa Cliente</label>
-                                    <select id="assignCompany" required>
+                                    <select id="assignCompany" name="assignCompany" required>
                                         <option value="">Seleccionar empresa</option>
                                     </select>
                                 </div>
+                                <!-- ✅ ELEMENTO CRÍTICO - ASEGURAR QUE ESTÉ EXACTAMENTE ASÍ -->
                                 <div class="form-group">
                                     <label for="assignSupport">Soporte</label>
-                                    <select id="assignSupport" required>
+                                    <select id="assignSupport" name="assignSupport" required>
                                         <option value="">Seleccionar Soporte</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="assignModule">Módulos</label>
-                                    <select id="assignModule" required>
+                                    <select id="assignModule" name="assignModule" required>
                                         <option value="">Seleccionar Módulo</option>
                                     </select>
                                 </div>
                             </div>
                             <div class="form-group" style="text-align: center; margin-top: 20px;">
-                                <button type="button" class="btn btn-primary" onclick="createAssignment()">Crear Asignación</button>
+                                <button type="button" class="btn btn-primary" onclick="createAssignment()">
+                                    ➕ Crear Asignación
+                                </button>
                             </div>
                         </div>
                     </div>

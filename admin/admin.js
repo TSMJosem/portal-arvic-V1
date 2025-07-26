@@ -1,3 +1,83 @@
+function diagnosticCompleteAdmin() {
+    console.log('🔍 === DIAGNÓSTICO COMPLETO ===');
+    
+    // Verificar que estamos en la página correcta
+    console.log('📄 URL actual:', window.location.href);
+    console.log('📄 Título:', document.title);
+    
+    // Verificar todas las secciones
+    const allSections = document.querySelectorAll('[id$="-section"]');
+    console.log('📝 Secciones encontradas:');
+    allSections.forEach(section => {
+        console.log(`  - ${section.id} (display: ${getComputedStyle(section).display})`);
+    });
+    
+    // Verificar la sección específica
+    const createSection = document.getElementById('crear-asignacion-section');
+    if (createSection) {
+        console.log('✅ crear-asignacion-section encontrada');
+        console.log('  - Display:', getComputedStyle(createSection).display);
+        console.log('  - Clases:', createSection.className);
+        
+        // Buscar todos los selects dentro de esta sección
+        const selectsInSection = createSection.querySelectorAll('select');
+        console.log(`  - Selects encontrados: ${selectsInSection.length}`);
+        selectsInSection.forEach((select, index) => {
+            console.log(`    ${index + 1}. ID: "${select.id}" Name: "${select.name}"`);
+        });
+    } else {
+        console.error('❌ crear-asignacion-section NO encontrada');
+    }
+    
+    // Verificar cada elemento específico
+    const targetElements = ['assignUser', 'assignCompany', 'assignSupport', 'assignModule'];
+    targetElements.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            console.log(`✅ ${id}: Encontrado (${element.tagName})`);
+            console.log(`    - Parent: ${element.parentElement?.className || 'unknown'}`);
+            console.log(`    - Visible: ${getComputedStyle(element).display !== 'none'}`);
+        } else {
+            console.error(`❌ ${id}: NO ENCONTRADO`);
+        }
+    });
+    
+    // Buscar elementos similares por nombre
+    const allSelects = document.querySelectorAll('select');
+    console.log('🔍 Todos los selects en la página:');
+    allSelects.forEach((select, index) => {
+        console.log(`  ${index + 1}. ID: "${select.id}" Name: "${select.name}" Class: "${select.className}"`);
+    });
+}
+
+function debugDropdowns() {
+    console.log('🔍 Diagnosticando elementos del DOM...');
+    
+    const elements = [
+        'assignUser',
+        'assignCompany', 
+        'assignSupport',
+        'assignModule'
+    ];
+    
+    elements.forEach(id => {
+        const element = document.getElementById(id);
+        console.log(`Element ${id}:`, element ? '✅ Exists' : '❌ NOT FOUND');
+        if (element) {
+            console.log(`  - Type: ${element.tagName}`);
+            console.log(`  - Parent: ${element.parentElement?.id || 'unknown'}`);
+        }
+    });
+    
+    // Verificar si la sección está visible
+    const section = document.getElementById('crear-asignacion-section');
+    console.log('Crear asignación section:', section ? '✅ Exists' : '❌ NOT FOUND');
+    if (section) {
+        console.log('  - Display:', getComputedStyle(section).display);
+        console.log('  - Has active class:', section.classList.contains('active'));
+    }
+}
+
 /// === GESTIÓN DE ASIGNACIONES ===
 function createAssignment() {
     const userId = document.getElementById('assignUser').value;
@@ -58,52 +138,56 @@ function deleteAssignment(assignmentId) {
 
 // === CARGA Y ACTUALIZACIÓN DE DATOS ===
 function loadAllData() {
-    currentData.users = window.PortalDB.getUsers();
-    currentData.companies = window.PortalDB.getCompanies();
-    currentData.projects = window.PortalDB.getProjects();
-    currentData.assignments = window.PortalDB.getAssignments();
-    currentData.supports = window.PortalDB.getSupports() || {}; // Cambiar de tasks
-    currentData.modules = window.PortalDB.getModules() || {};
-    currentData.reports = window.PortalDB.getReports() || {};
+    console.log('🔄 Cargando todos los datos...');
     
-    updateUI();
+    try {
+        currentData.users = window.PortalDB.getUsers() || {};
+        currentData.companies = window.PortalDB.getCompanies() || {};
+        currentData.projects = window.PortalDB.getProjects() || {};
+        currentData.assignments = window.PortalDB.getAssignments() || {};
+        currentData.supports = window.PortalDB.getSupports() || {};
+        currentData.modules = window.PortalDB.getModules() || {};
+        currentData.reports = window.PortalDB.getReports() || {};
+        
+        console.log('📊 Datos cargados:');
+        console.log(`  - Usuarios: ${Object.keys(currentData.users).length}`);
+        console.log(`  - Empresas: ${Object.keys(currentData.companies).length}`);
+        console.log(`  - Proyectos: ${Object.keys(currentData.projects).length}`);
+        console.log(`  - Asignaciones: ${Object.keys(currentData.assignments).length}`);
+        console.log(`  - Soportes: ${Object.keys(currentData.supports).length}`);
+        console.log(`  - Módulos: ${Object.keys(currentData.modules).length}`);
+        console.log(`  - Reportes: ${Object.keys(currentData.reports).length}`);
+        
+        updateUI();
+    } catch (error) {
+        console.error('❌ Error cargando datos:', error);
+    }
 }
 
 function updateUI() {
-    //updateStats();
-    updateSidebarCounts();
-    updateCurrentSectionData();
-    updateDropdowns();
+    console.log('🎨 === ACTUALIZANDO UI ===');
+    
+    try {
+        updateSidebarCounts();
+        updateCurrentSectionData();
+        
+        // NO llamar updateDropdowns aquí automáticamente
+        // Se llamará específicamente cuando sea necesario
+        
+        console.log('✅ UI actualizada correctamente');
+    } catch (error) {
+        console.error('❌ Error actualizando UI:', error);
+    }
 }
 
 function updateCurrentSectionData() {
-    switch(currentSection) {
-        case 'usuarios':
-            updateUsersList();
-            break;
-        case 'empresas':
-            updateCompaniesList();
-            break;
-        case 'proyectos':
-            updateProjectsList();
-            break;
-        case 'soportes': // Cambiar de 'tareas'
-            updateSupportsList();
-            break;
-        case 'modulos':
-            updateModulesList();
-            break;
-        case 'lista-asignaciones':
-        case 'asignaciones-recientes':
-            updateAssignmentsList();
-            break;
-        case 'reportes-pendientes':
-            updateReportsList();
-            break;
-        case 'reportes-aprobados':
-             updateApprovedReportsList();
-            break;
+    if (!currentSection) {
+        console.log('⚠️ currentSection no definida');
+        return;
     }
+    
+    console.log(`📊 Actualizando datos para sección actual: ${currentSection}`);
+    loadSectionData(currentSection);
 }
 
 function updateStats() {
@@ -972,68 +1056,108 @@ function rejectReport(reportId) {
 }
 
 function updateDropdowns() {
-    // Dropdown de usuarios
-    const userSelect = document.getElementById('assignUser');
-    if (userSelect) {
-        userSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
+    console.log('🔄 === INICIANDO updateDropdowns ===');
+    
+    // Ejecutar diagnóstico si estamos en desarrollo
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        diagnosticCompleteAdmin();
+    }
+    
+    // Verificar que currentData esté disponible
+    if (!currentData) {
+        console.error('❌ currentData no está disponible');
+        return;
+    }
+    
+    // Inicializar datos si no existen
+    currentData.users = currentData.users || {};
+    currentData.companies = currentData.companies || {};
+    currentData.supports = currentData.supports || {};
+    currentData.modules = currentData.modules || {};
+    currentData.assignments = currentData.assignments || {};
+    
+    // Función helper para actualizar select de forma segura
+    function updateSelectSafely(elementId, defaultOption, dataArray, labelFunction) {
+        const element = document.getElementById(elementId);
+        if (!element) {
+            console.warn(`⚠️ Elemento ${elementId} no encontrado, saltando...`);
+            return false;
+        }
         
-        Object.values(currentData.users).forEach(user => {
-            if (user.role === 'consultor' && user.isActive !== false) {
-                const option = document.createElement('option');
-                option.value = user.id;
-                
-                const userAssignments = Object.values(currentData.assignments).filter(a => 
-                    a.userId === user.id && a.isActive
-                );
-                
-                option.textContent = `${user.name} (${user.id})`;
-                if (userAssignments.length > 0) {
-                    option.textContent += ` - ${userAssignments.length} asignación(es)`;
-                }
-                
-                userSelect.appendChild(option);
+        try {
+            element.innerHTML = `<option value="">${defaultOption}</option>`;
+            
+            if (dataArray && dataArray.length > 0) {
+                dataArray.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = labelFunction(item);
+                    element.appendChild(option);
+                });
+                console.log(`✅ ${elementId} actualizado con ${dataArray.length} opciones`);
+            } else {
+                console.log(`⚠️ ${elementId} actualizado pero sin datos`);
             }
-        });
+            return true;
+        } catch (error) {
+            console.error(`❌ Error actualizando ${elementId}:`, error);
+            return false;
+        }
     }
-
-    // Dropdown de empresas
-    const companySelect = document.getElementById('assignCompany');
-    if (companySelect) {
-        companySelect.innerHTML = '<option value="">Seleccionar empresa</option>';
-        
-        Object.values(currentData.companies).forEach(company => {
-            const option = document.createElement('option');
-            option.value = company.id;
-            option.textContent = `${company.name} (${company.id})`;
-            companySelect.appendChild(option);
-        });
+    
+    // Actualizar usuarios
+    const users = Object.values(currentData.users).filter(user => 
+        user.role === 'consultor' && user.isActive !== false
+    );
+    updateSelectSafely(
+        'assignUser', 
+        'Seleccionar usuario',
+        users,
+        user => {
+            const userAssignments = Object.values(currentData.assignments).filter(a => 
+                a.userId === user.id && a.isActive
+            );
+            return `${user.name} (${user.id})${userAssignments.length > 0 ? ` - ${userAssignments.length} asignación(es)` : ''}`;
+        }
+    );
+    
+    // Actualizar empresas
+    const companies = Object.values(currentData.companies);
+    updateSelectSafely(
+        'assignCompany',
+        'Seleccionar empresa', 
+        companies,
+        company => `${company.name} (${company.id})`
+    );
+    
+    // Actualizar soportes - ESTA ES LA LÍNEA PROBLEMÁTICA
+    const supports = Object.values(currentData.supports);
+    const supportUpdated = updateSelectSafely(
+        'assignSupport',
+        'Seleccionar Soporte',
+        supports, 
+        support => `${support.name} (${support.id})`
+    );
+    
+    if (!supportUpdated) {
+        console.error('❌ CRÍTICO: No se pudo actualizar assignSupport');
+        // Intentar encontrar el elemento real
+        const alternativeSupport = document.querySelector('select[id*="support" i], select[id*="soporte" i]');
+        if (alternativeSupport) {
+            console.log(`🔍 Elemento alternativo encontrado: ${alternativeSupport.id}`);
+        }
     }
-
-    // Dropdown de soportes (cambiar de tareas)
-    const supportSelect = document.getElementById('assignSupport');
-    if (supportSelect) {
-        supportSelect.innerHTML = '<option value="">Seleccionar Soporte</option>';
-        
-        Object.values(currentData.supports).forEach(support => {
-            const option = document.createElement('option');
-            option.value = support.id;
-            option.textContent = `${support.name} (${support.id})`;
-            supportSelect.appendChild(option);
-        });
-    }
-
-    // Dropdown de módulos
-    const moduleSelect = document.getElementById('assignModule');
-    if (moduleSelect) {
-        moduleSelect.innerHTML = '<option value="">Seleccionar Módulo</option>';
-        
-        Object.values(currentData.modules).forEach(module => {
-            const option = document.createElement('option');
-            option.value = module.id;
-            option.textContent = `${module.name} (${module.id})`;
-            moduleSelect.appendChild(option);
-        });
-    }
+    
+    // Actualizar módulos
+    const modules = Object.values(currentData.modules);
+    updateSelectSafely(
+        'assignModule',
+        'Seleccionar Módulo',
+        modules,
+        module => `${module.name} (${module.id})`
+    );
+    
+    console.log('✅ === updateDropdowns COMPLETADO ===');
 }
 
 // === GESTIÓN DE MODALES ===
@@ -1286,16 +1410,34 @@ let currentSection = 'usuarios';
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('🚀 === INICIANDO PANEL DE ADMINISTRADOR ===');
+    
     // Verificar autenticación de administrador
-    if (!window.AuthSys.requireAdmin()) {
+    if (!window.AuthSys || !window.AuthSys.requireAdmin()) {
+        console.error('❌ Fallo de autenticación');
         return;
     }
 
-    initializeAdminPanel();
-    setupEventListeners();
-    setupSidebarNavigation();
-    loadAllData();
+    try {
+        // Inicializar en orden específico
+        initializeAdminPanel();
+        setupEventListeners();
+        setupSidebarNavigation();
+        
+        // Cargar datos con delay para asegurar que el DOM esté listo
+        setTimeout(() => {
+            console.log('📊 Cargando datos iniciales...');
+            loadAllData();
+        }, 300);
+        
+        console.log('✅ Inicialización completada');
+        
+    } catch (error) {
+        console.error('❌ Error durante inicialización:', error);
+    }
 });
+
+console.log('✅ === ADMIN.JS CARGADO CON FUNCIONES MEJORADAS ===');
 
 // === INICIALIZACIÓN ===
 function initializeAdminPanel() {
@@ -1308,6 +1450,18 @@ function initializeAdminPanel() {
     // Mostrar mensaje de bienvenida
     window.NotificationUtils.success('Bienvenido al panel de administración', 3000);
 }
+
+window.forceUpdateDropdowns = function() {
+    console.log('🆘 Forzando actualización de dropdowns...');
+    updateDropdowns();
+};
+
+window.debugAdmin = function() {
+    console.log('🔍 Debug completo del admin...');
+    debugDropdowns();
+    console.log('📊 Current data:', currentData);
+    console.log('📝 Current section:', currentSection);
+};
 
 function setupEventListeners() {
     // Formularios
@@ -1342,6 +1496,8 @@ function setupSidebarNavigation() {
 
 // === NAVEGACIÓN DE SECCIONES ===
 function showSection(sectionName) {
+    console.log(`🔄 === CAMBIANDO A SECCIÓN: ${sectionName} ===`);
+    
     currentSection = sectionName;
     
     // Ocultar todas las secciones
@@ -1353,13 +1509,50 @@ function showSection(sectionName) {
     const targetSection = document.getElementById(`${sectionName}-section`);
     if (targetSection) {
         targetSection.classList.add('active');
+        console.log(`✅ Sección ${sectionName} activada`);
+    } else {
+        console.error(`❌ Sección ${sectionName}-section no encontrada`);
+        return;
     }
 
     // Actualizar navegación activa en el sidebar
     updateActiveSidebarItem(sectionName);
 
-    // Cargar datos específicos de la sección si es necesario
+    // Cargar datos específicos de la sección
     loadSectionData(sectionName);
+    
+    // CASO ESPECIAL: Crear asignación
+    if (sectionName === 'crear-asignacion') {
+        console.log('📝 Preparando sección crear-asignacion...');
+        
+        // Esperar que el DOM se renderice completamente
+        setTimeout(() => {
+            console.log('📝 Verificando elementos después del delay...');
+            
+            // Verificar nuevamente si los elementos existen
+            const requiredElements = ['assignUser', 'assignCompany', 'assignSupport', 'assignModule'];
+            const missingElements = requiredElements.filter(id => !document.getElementById(id));
+            
+            if (missingElements.length > 0) {
+                console.error(`❌ Elementos faltantes: ${missingElements.join(', ')}`);
+                console.error('🚨 La sección crear-asignacion no se renderizó correctamente');
+                
+                // Intentar forzar la renderización
+                if (targetSection) {
+                    targetSection.style.display = 'block';
+                    targetSection.offsetHeight; // Forzar reflow
+                }
+                
+                // Intentar nuevamente después de otro delay
+                setTimeout(() => {
+                    updateDropdowns();
+                }, 200);
+            } else {
+                console.log('✅ Todos los elementos encontrados, actualizando dropdowns...');
+                updateDropdowns();
+            }
+        }, 100);
+    }
 }
 
 function updateActiveSidebarItem(activeSection) {
@@ -1372,57 +1565,53 @@ function updateActiveSidebarItem(activeSection) {
 }
 
 function loadSectionData(sectionName) {
-    switch(sectionName) {
-        case 'usuarios':
-            updateUsersList();
-            break;
-        case 'empresas':
-            updateCompaniesList();
-            break;
-        case 'proyectos':
-            updateProjectsList();
-            break;
-        case 'tareas':
-            updateTasksList();
-            break;
-        case 'modulos':
-            updateModulesList();
-            break;
-        case 'lista-asignaciones':
-        case 'asignaciones-recientes':
-            updateAssignmentsList();
-            break;
-        case 'reportes-pendientes':
-            updateReportsList();
-            break;
-        case 'reportes-aprobados':
-            updateApprovedReportsList();
-           break;
-        case 'generar-reporte':
-         // Reiniciar configuración de reportes
-          selectedReportType = null;
-          currentReportData = [];
-          tariffConfiguration = {};
+    console.log(`📊 Cargando datos para sección: ${sectionName}`);
     
-         // Limpiar selecciones
-        document.querySelectorAll('.report-type-card').forEach(card => {
-        card.classList.remove('selected');
-    });
-    
-        // Ocultar todas las configuraciones
-        const actividadesConfig = document.getElementById('actividades-config');
-        const pagosConfig = document.getElementById('pagos-config');
-        const actividadesPreview = document.getElementById('actividadesPreview');
-        const pagosConfiguration = document.getElementById('pagosConfiguration');
-    
-        if (actividadesConfig) actividadesConfig.style.display = 'none';
-        if (pagosConfig) pagosConfig.style.display = 'none';
-        if (actividadesPreview) actividadesPreview.style.display = 'none';
-        if (pagosConfiguration) pagosConfiguration.style.display = 'none';
-          break;
-        case 'historial-reportes':
-         updateGeneratedReportsList();
-        break;
+    try {
+        switch(sectionName) {
+            case 'usuarios':
+                updateUsersList();
+                break;
+            case 'empresas':
+                updateCompaniesList();
+                break;
+            case 'proyectos':
+                updateProjectsList();
+                break;
+            case 'soportes':
+                updateSupportsList();
+                break;
+            case 'modulos':
+                updateModulesList();
+                break;
+            case 'lista-asignaciones':
+            case 'asignaciones-recientes':
+                updateAssignmentsList();
+                break;
+            case 'reportes-pendientes':
+                updateReportsList();
+                break;
+            case 'reportes-aprobados':
+                updateApprovedReportsList();
+                break;
+            case 'crear-asignacion':
+                // No hacer nada aquí, se maneja en showSection
+                console.log('📝 Sección crear-asignacion - dropdowns se actualizarán por separado');
+                break;
+            case 'generar-reporte':
+                // Reiniciar configuración de reportes
+                selectedReportType = null;
+                currentReportData = [];
+                tariffConfiguration = {};
+                break;
+            case 'historial-reportes':
+                updateGeneratedReportsList();
+                break;
+            default:
+                console.log(`⚠️ Sección ${sectionName} no tiene carga de datos específica`);
+        }
+    } catch (error) {
+        console.error(`❌ Error cargando datos para ${sectionName}:`, error);
     }
 }
 
@@ -1909,11 +2098,10 @@ function updateDropdowns() {
 function createAssignment() {
     const userId = document.getElementById('assignUser').value;
     const companyId = document.getElementById('assignCompany').value;
-    const projectId = document.getElementById('assignProject').value;
-    const taskId = document.getElementById('assignTask').value;
+    const supportId = document.getElementById('assignSupport').value; // ✅ CAMBIO: supportId en lugar de taskId
     const moduleId = document.getElementById('assignModule').value;
     
-    if (!userId || !companyId || !projectId || !taskId || !moduleId) {
+    if (!userId || !companyId || !supportId || !moduleId) {
         window.NotificationUtils.error('Todos los campos son requeridos para crear una asignación');
         return;
     }
@@ -1921,8 +2109,7 @@ function createAssignment() {
     const assignmentData = {
         userId: userId,
         companyId: companyId,
-        projectId: projectId,
-        taskId: taskId,
+        supportId: supportId, // ✅ CAMBIO: supportId
         moduleId: moduleId
     };
 
@@ -1931,19 +2118,17 @@ function createAssignment() {
     if (result.success) {
         const user = currentData.users[userId];
         const company = currentData.companies[companyId];
-        const project = currentData.projects[projectId];
-        const task = currentData.tasks[taskId];
+        const support = currentData.supports[supportId]; // ✅ CAMBIO: support
         const module = currentData.modules[moduleId];
         
         window.NotificationUtils.success(
-            `✅ Nueva asignación creada: ${user.name} → ${company.name} (${project.name} - ${task.name} - ${module.name})`
+            `✅ Nueva asignación creada: ${user.name} → ${company.name} (${support.name} - ${module.name})`
         );
         
         // Limpiar formulario
         document.getElementById('assignUser').value = '';
         document.getElementById('assignCompany').value = '';
-        document.getElementById('assignProject').value = '';
-        document.getElementById('assignTask').value = '';
+        document.getElementById('assignSupport').value = ''; // ✅ CAMBIO
         document.getElementById('assignModule').value = '';
         
         loadAllData();
@@ -2849,6 +3034,8 @@ function generatePagosReport() {
     }
 }
 
+
+
 // Funciones exportadas globalmente
 window.selectReportType = selectReportType;
 window.previewActividadesReport = previewActividadesReport;
@@ -3089,3 +3276,27 @@ function deleteGeneratedReportFromHistory(reportId) {
 }
 
 console.log('✅ Funciones de generación de reportes cargadas correctamente');
+
+// CÓDIGO TEMPORAL DE DIAGNÓSTICO
+window.addEventListener('load', function() {
+    setTimeout(() => {
+        console.log('🔍 DIAGNÓSTICO COMPLETO:');
+        
+        // Verificar elementos
+        const elements = ['assignUser', 'assignCompany', 'assignSupport', 'assignModule'];
+        elements.forEach(id => {
+            const el = document.getElementById(id);
+            console.log(`${id}:`, el ? '✅ Existe' : '❌ NO EXISTE');
+        });
+        
+        // Verificar si la sección existe
+        const section = document.getElementById('crear-asignacion-section');
+        console.log('crear-asignacion-section:', section ? '✅ Existe' : '❌ NO EXISTE');
+        
+        // Mostrar todas las secciones disponibles
+        const allSections = document.querySelectorAll('[id$="-section"]');
+        console.log('📝 Secciones disponibles:');
+        allSections.forEach(s => console.log(`  - ${s.id}`));
+        
+    }, 1000);
+});

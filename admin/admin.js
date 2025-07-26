@@ -1013,8 +1013,6 @@ function approveReport(reportId) {
     if (result.success) {
         window.NotificationUtils.success('Reporte aprobado');
         loadAllData();
-        
-        // AGREGAR ESTA LÍNEA:
         updateSidebarCounts();
     }
 }
@@ -1028,8 +1026,6 @@ function rejectReport(reportId) {
     if (result.success) {
         window.NotificationUtils.success('Reporte rechazado');
         loadAllData();
-        
-        // AGREGAR ESTA LÍNEA:
         updateSidebarCounts();
     }
 }

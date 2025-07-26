@@ -1,29 +1,53 @@
-/* === ESTILOS ESPECÍFICOS PARA LA PÁGINA DE LOGIN === */
+/* === ESTILOS PROFESIONALES PARA LA PÁGINA DE LOGIN === */
 
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 25%, #334155 50%, #475569 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0;
+    position: relative;
+    overflow: hidden;
 }
 
+/* Patrón de fondo corporativo */
+body::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(30, 58, 138, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(30, 64, 175, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+/* Container principal del login */
 .login-container {
-    background: white;
-    border-radius: 15px;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
-    padding: 40px;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-radius: var(--border-radius-xl);
+    box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.25),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
+    padding: var(--spacing-2xl);
     width: 100%;
-    max-width: 420px;
+    max-width: 480px;
     text-align: center;
-    animation: loginFadeIn 0.6s ease;
+    animation: loginFadeIn 0.8s ease;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Animación de entrada refinada */
 @keyframes loginFadeIn {
     from {
         opacity: 0;
-        transform: translateY(30px) scale(0.9);
+        transform: translateY(40px) scale(0.95);
     }
     to {
         opacity: 1;
@@ -31,78 +55,127 @@ body {
     }
 }
 
+/* Sección del logo mejorada */
 .logo-section {
-    margin-bottom: 30px;
+    margin-bottom: var(--spacing-2xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--gray-200);
 }
 
 .logo-section .logo {
     justify-content: center;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
 }
 
 .logo-section .logo-icon {
-    width: 50px;
-    height: 50px;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: 
+        0 10px 25px rgba(30, 58, 138, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .logo-section .logo-icon::before {
-    width: 28px;
-    height: 28px;
-}
-
-.logo-section .logo-icon::after {
-    width: 10px;
-    height: 10px;
-    top: 42%;
+    width: 32px;
+    height: 32px;
 }
 
 .logo-section .arvic-text {
-    font-size: 28px;
+    font-size: 2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
+.logo-section .grupo-text {
+    color: var(--gray-500);
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* Título de bienvenida */
 .welcome-text {
-    color: #666;
-    margin-bottom: 30px;
-    font-size: 16px;
-    font-weight: 400;
+    color: var(--gray-600);
+    margin-bottom: var(--spacing-2xl);
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1.5;
 }
 
+/* Estilos de formulario refinados */
 .form-group {
     text-align: left;
-    margin-bottom: 20px;
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+    color: var(--gray-700);
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
 }
 
 .form-group input,
 .form-group select {
-    border: 2px solid #e1e5e9;
-    padding: 14px 16px;
-    font-size: 16px;
-    transition: all 0.3s ease;
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: var(--transition-normal);
+    background-color: white;
+    color: var(--gray-900);
+    box-shadow: var(--shadow-sm);
 }
 
 .form-group input:focus,
 .form-group select:focus {
-    border-color: #1cb5e0;
-    box-shadow: 0 0 0 3px rgba(28, 181, 224, 0.1);
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 
+        0 0 0 3px rgba(30, 58, 138, 0.1),
+        var(--shadow-md);
     transform: translateY(-1px);
 }
 
-.login-btn {
-    width: 100%;
-    background: linear-gradient(135deg, #1cb5e0 0%, #000851 100%);
-    color: white;
-    border: none;
-    padding: 16px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    margin-bottom: 20px;
-    position: relative;
-    overflow: hidden;
+.form-group input::placeholder {
+    color: var(--gray-400);
+    font-weight: 400;
 }
 
+/* Botón de login profesional */
+.login-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    margin-bottom: var(--spacing-xl);
+    position: relative;
+    overflow: hidden;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    box-shadow: 
+        0 4px 14px 0 rgba(30, 58, 138, 0.39),
+        var(--shadow-md);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Efecto de brillo en el botón */
 .login-btn::before {
     content: '';
     position: absolute;
@@ -110,7 +183,7 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
     transition: left 0.5s;
 }
 
@@ -120,46 +193,75 @@ body {
 
 .login-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(28, 181, 224, 0.3);
+    box-shadow: 
+        0 8px 25px rgba(30, 58, 138, 0.4),
+        var(--shadow-lg);
 }
 
 .login-btn:active {
     transform: translateY(0);
 }
 
+/* Credenciales de demostración refinadas */
 .demo-credentials {
-    background: #f8f9fa;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 25px;
-    font-size: 13px;
-    color: #666;
+    background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+    padding: var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    margin-top: var(--spacing-xl);
+    font-size: 0.875rem;
+    color: var(--gray-700);
     text-align: left;
-    border: 1px solid #e9ecef;
+    border: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-sm);
 }
 
 .demo-credentials h4 {
-    color: #333;
-    margin-bottom: 12px;
-    font-size: 14px;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-md);
+    font-size: 1rem;
     text-align: center;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
 }
 
 .demo-credentials strong {
-    color: #1cb5e0;
+    color: var(--primary-color);
     font-weight: 600;
 }
 
+.demo-credentials code {
+    background: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    font-family: var(--font-secondary);
+    font-size: 0.8rem;
+    border: 1px solid var(--gray-300);
+    color: var(--gray-800);
+}
+
+/* Mensajes de error y éxito mejorados */
 .error-message {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
     color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
     display: none;
     font-weight: 500;
-    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+    box-shadow: 
+        0 4px 12px rgba(220, 38, 38, 0.3),
+        var(--shadow-md);
     animation: shakeError 0.5s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.error-message::before {
+    content: '⚠️';
+    font-size: 1.125rem;
 }
 
 @keyframes shakeError {
@@ -169,15 +271,26 @@ body {
 }
 
 .success-message {
-    background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
     color: white;
-    padding: 12px 16px;
-    border-radius: 8px;
-    margin-bottom: 15px;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
     display: none;
     font-weight: 500;
-    box-shadow: 0 4px 12px rgba(81, 207, 102, 0.3);
+    box-shadow: 
+        0 4px 12px rgba(5, 150, 105, 0.3),
+        var(--shadow-md);
     animation: successPulse 0.6s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.success-message::before {
+    content: '✅';
+    font-size: 1.125rem;
 }
 
 @keyframes successPulse {
@@ -186,10 +299,11 @@ body {
     100% { transform: scale(1); opacity: 1; }
 }
 
-/* Loading animation for login button */
+/* Animación de carga mejorada para el botón */
 .login-btn.loading {
     pointer-events: none;
     position: relative;
+    background: linear-gradient(135deg, var(--gray-400) 0%, var(--gray-500) 100%);
 }
 
 .login-btn.loading::after {
@@ -216,60 +330,138 @@ body {
     opacity: 0;
 }
 
-/* Responsive adjustments */
-@media (max-width: 480px) {
+/* Botones de demostración mejorados */
+.demo-credentials .btn {
+    margin: var(--spacing-sm) var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.75rem;
+    border-radius: var(--border-radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    font-weight: 600;
+}
+
+.demo-credentials .btn:first-of-type {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+}
+
+.demo-credentials .btn:last-of-type {
+    background: linear-gradient(135deg, var(--success-color) 0%, #047857 100%);
+    color: white;
+}
+
+/* Responsive mejorado */
+@media (max-width: 640px) {
     .login-container {
-        padding: 30px 25px;
-        margin: 20px;
+        padding: var(--spacing-xl) var(--spacing-lg);
+        margin: var(--spacing-lg);
         max-width: none;
+        border-radius: var(--border-radius-lg);
     }
     
     .logo-section .logo-icon {
-        width: 45px;
-        height: 45px;
+        width: 56px;
+        height: 56px;
     }
     
     .logo-section .logo-icon::before {
-        width: 25px;
-        height: 25px;
-    }
-    
-    .logo-section .logo-icon::after {
-        width: 9px;
-        height: 9px;
+        width: 28px;
+        height: 28px;
     }
     
     .logo-section .arvic-text {
-        font-size: 24px;
+        font-size: 1.75rem;
     }
     
     .demo-credentials {
-        font-size: 12px;
-        padding: 15px;
+        font-size: 0.8rem;
+        padding: var(--spacing-lg);
+    }
+    
+    .welcome-text {
+        font-size: 1rem;
     }
 }
 
-/* Focus visible for accessibility */
-.login-btn:focus-visible {
-    outline: 2px solid #1cb5e0;
-    outline-offset: 2px;
+@media (max-width: 480px) {
+    body {
+        padding: var(--spacing-md);
+    }
+    
+    .login-container {
+        padding: var(--spacing-lg);
+        margin: 0;
+    }
+    
+    .form-group input,
+    .form-group select {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.9rem;
+    }
+    
+    .login-btn {
+        padding: var(--spacing-md) var(--spacing-lg);
+        font-size: 0.9rem;
+    }
 }
 
+/* Estados de focus mejorados para accesibilidad */
+.login-btn:focus-visible,
 .form-group input:focus-visible,
 .form-group select:focus-visible {
-    outline: 2px solid #1cb5e0;
+    outline: 2px solid var(--primary-color);
     outline-offset: 2px;
 }
 
-/* Dark mode support (optional) */
+/* Mejoras de contraste para modo oscuro */
 @media (prefers-color-scheme: dark) {
     .demo-credentials {
-        background: #2c3e50;
-        color: #ecf0f1;
-        border-color: #34495e;
+        background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-700) 100%);
+        color: var(--gray-300);
+        border-color: var(--gray-600);
     }
     
     .demo-credentials h4 {
-        color: #ecf0f1;
+        color: var(--gray-100);
     }
+    
+    .demo-credentials code {
+        background: var(--gray-900);
+        color: var(--gray-200);
+        border-color: var(--gray-600);
+    }
+}
+
+/* Efectos de partículas de fondo (opcional) */
+.login-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(30, 58, 138, 0.03) 1px, transparent 1px);
+    background-size: 20px 20px;
+    animation: moveBackground 20s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+}
+
+@keyframes moveBackground {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(20px, 20px); }
+}
+
+/* Mejoras de rendimiento */
+.login-container,
+.login-btn,
+.form-group input,
+.form-group select {
+    will-change: transform;
+}
+
+/* Transiciones suaves para cambios de tema */
+* {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }

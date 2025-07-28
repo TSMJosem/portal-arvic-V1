@@ -1056,12 +1056,7 @@ function rejectReport(reportId) {
 }
 
 function updateDropdowns() {
-    console.log('🔄 === INICIANDO updateDropdowns ===');
-    
-    // Ejecutar diagnóstico si estamos en desarrollo
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        diagnosticCompleteAdmin();
-    }
+    console.log('🔄 === INICIANDO updateDropdowns ULTRA-DEFENSIVO ===');
     
     // Verificar que currentData esté disponible
     if (!currentData) {
@@ -1076,89 +1071,206 @@ function updateDropdowns() {
     currentData.modules = currentData.modules || {};
     currentData.assignments = currentData.assignments || {};
     
-    // Función helper para actualizar select de forma segura
-    function updateSelectSafely(elementId, defaultOption, dataArray, labelFunction) {
-        const element = document.getElementById(elementId);
-        if (!element) {
-            console.warn(`⚠️ Elemento ${elementId} no encontrado, saltando...`);
-            return false;
+    // Lista de elementos que vamos a actualizar
+    const elementsToUpdate = [
+        {
+            id: 'assignUser',
+            defaultOption: 'Seleccionar usuario',
+            getData: () => Object.values(currentData.users).filter(user => 
+                user.role === 'consultor' && user.isActive !== false
+            ),
+            getLabel: (user) => {
+                const userAssignments = Object.values(currentData.assignments).filter(a => 
+                    a.userId === user.id && a.isActive
+                );
+                return `${user.name} (${user.id})${userAssignments.length > 0 ? ` - ${userAssignments.length} asignación(es)` : ''}`;
+            }
+        },
+        {
+            id: 'assignCompany',
+            defaultOption: 'Seleccionar empresa',
+            getData: () => Object.values(currentData.companies),
+            getLabel: (company) => `${company.name} (${company.id})`
+        },
+        {
+            id: 'assignSupport',
+            defaultOption: 'Seleccionar Soporte',
+            getData: () => Object.values(currentData.supports),
+            getLabel: (support) => `${support.name} (${support.id})`
+        },
+        {
+            id: 'assignModule',
+            defaultOption: 'Seleccionar Módulo',
+            getData: () => Object.values(currentData.modules),
+            getLabel: (module) => `${module.name} (${module.id})`
         }
+    ];
+    
+    // VERIFICACIÓN PREVIA: Verificar que TODOS los elementos existen
+    console.log('🔍 === VERIFICACIÓN PREVIA DE ELEMENTOS ===');
+    const missingElements = [];
+    elementsToUpdate.forEach(config => {
+        const element = document.getElementById(config.id);
+        if (element) {
+            console.log(`✅ ${config.id}: Encontrado (${element.tagName})`);
+            console.log(`    - Parent: ${element.parentElement?.tagName || 'unknown'}`);
+            console.log(`    - Display: ${getComputedStyle(element).display}`);
+            console.log(`    - Visible: ${element.offsetParent !== null}`);
+        } else {
+            console.error(`❌ ${config.id}: NO ENCONTRADO`);
+            missingElements.push(config.id);
+        }
+    });
+    
+    if (missingElements.length > 0) {
+        console.error(`❌ Elementos faltantes: ${missingElements.join(', ')}`);
+        console.error('🚨 Abortando updateDropdowns debido a elementos faltantes');
+        return;
+    }
+    
+    console.log('✅ Todos los elementos encontrados, procediendo con actualización...');
+    
+    // ACTUALIZACIÓN CON VERIFICACIONES MÚLTIPLES
+    elementsToUpdate.forEach((config, index) => {
+        console.log(`🔄 === ACTUALIZANDO ${config.id} (${index + 1}/${elementsToUpdate.length}) ===`);
         
         try {
-            element.innerHTML = `<option value="">${defaultOption}</option>`;
-            
-            if (dataArray && dataArray.length > 0) {
-                dataArray.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.id;
-                    option.textContent = labelFunction(item);
-                    element.appendChild(option);
-                });
-                console.log(`✅ ${elementId} actualizado con ${dataArray.length} opciones`);
-            } else {
-                console.log(`⚠️ ${elementId} actualizado pero sin datos`);
+            // VERIFICACIÓN 1: Verificar que el elemento aún existe
+            let element = document.getElementById(config.id);
+            if (!element) {
+                console.error(`❌ CRÍTICO: ${config.id} ya no existe al momento de actualizar`);
+                return;
             }
-            return true;
+            console.log(`✅ Verificación 1: ${config.id} existe`);
+            
+            // VERIFICACIÓN 2: Verificar que el elemento es válido
+            if (!(element instanceof HTMLSelectElement)) {
+                console.error(`❌ CRÍTICO: ${config.id} no es un elemento select válido, es: ${element.constructor.name}`);
+                return;
+            }
+            console.log(`✅ Verificación 2: ${config.id} es un select válido`);
+            
+            // VERIFICACIÓN 3: Verificar que innerHTML es accesible
+            try {
+                const testInnerHTML = element.innerHTML;
+                console.log(`✅ Verificación 3: ${config.id} innerHTML es accesible (length: ${testInnerHTML.length})`);
+            } catch (error) {
+                console.error(`❌ CRÍTICO: ${config.id} innerHTML no es accesible:`, error);
+                return;
+            }
+            
+            // ACTUALIZACIÓN SEGURA
+            console.log(`🔄 Limpiando contenido de ${config.id}...`);
+            
+            // VERIFICACIÓN 4: Re-verificar elemento antes de modificar innerHTML
+            element = document.getElementById(config.id);
+            if (!element) {
+                console.error(`❌ CRÍTICO: ${config.id} desapareció justo antes de innerHTML`);
+                return;
+            }
+            
+            // *** AQUÍ ES DONDE PROBABLEMENTE ESTÁ FALLANDO ***
+            console.log(`🔄 Estableciendo innerHTML para ${config.id}...`);
+            console.log(`    Element:`, element);
+            console.log(`    Element type:`, typeof element);
+            console.log(`    Element constructor:`, element.constructor.name);
+            console.log(`    Element parentNode:`, element.parentNode);
+            console.log(`    Default option:`, config.defaultOption);
+            
+            // INTENTO DE ACTUALIZACIÓN CON CAPTURA DE ERROR ESPECÍFICA
+            try {
+                element.innerHTML = `<option value="">${config.defaultOption}</option>`;
+                console.log(`✅ innerHTML establecido exitosamente para ${config.id}`);
+            } catch (innerHTMLError) {
+                console.error(`❌ ERROR ESPECÍFICO AL ESTABLECER innerHTML para ${config.id}:`, innerHTMLError);
+                console.error(`    Element en el momento del error:`, element);
+                console.error(`    Element.innerHTML en el momento del error:`, element.innerHTML);
+                console.error(`    Element.parentNode en el momento del error:`, element.parentNode);
+                throw innerHTMLError; // Re-lanzar para captura externa
+            }
+            
+            // Obtener datos y crear opciones
+            const data = config.getData();
+            console.log(`📊 Datos obtenidos para ${config.id}: ${data.length} elementos`);
+            
+            if (data && data.length > 0) {
+                data.forEach((item, itemIndex) => {
+                    try {
+                        // RE-VERIFICAR elemento antes de cada appendChild
+                        element = document.getElementById(config.id);
+                        if (!element) {
+                            console.error(`❌ CRÍTICO: ${config.id} desapareció durante appendChild ${itemIndex}`);
+                            return;
+                        }
+                        
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = config.getLabel(item);
+                        element.appendChild(option);
+                    } catch (appendError) {
+                        console.error(`❌ Error añadiendo opción ${itemIndex} a ${config.id}:`, appendError);
+                    }
+                });
+                console.log(`✅ ${config.id} actualizado con ${data.length} opciones`);
+            } else {
+                console.log(`⚠️ ${config.id} actualizado pero sin datos`);
+            }
+            
         } catch (error) {
-            console.error(`❌ Error actualizando ${elementId}:`, error);
-            return false;
+            console.error(`❌ ERROR GENERAL actualizando ${config.id}:`, error);
+            console.error(`    Error stack:`, error.stack);
+            
+            // INFORMACIÓN ADICIONAL DE DEBUG
+            const elementAtError = document.getElementById(config.id);
+            console.error(`    Element en momento de error:`, elementAtError);
+            console.error(`    Document readyState:`, document.readyState);
+            console.error(`    Current section:`, currentSection);
+            
+            // NO lanzar el error, continuar con el siguiente elemento
         }
-    }
-    
-    // Actualizar usuarios
-    const users = Object.values(currentData.users).filter(user => 
-        user.role === 'consultor' && user.isActive !== false
-    );
-    updateSelectSafely(
-        'assignUser', 
-        'Seleccionar usuario',
-        users,
-        user => {
-            const userAssignments = Object.values(currentData.assignments).filter(a => 
-                a.userId === user.id && a.isActive
-            );
-            return `${user.name} (${user.id})${userAssignments.length > 0 ? ` - ${userAssignments.length} asignación(es)` : ''}`;
-        }
-    );
-    
-    // Actualizar empresas
-    const companies = Object.values(currentData.companies);
-    updateSelectSafely(
-        'assignCompany',
-        'Seleccionar empresa', 
-        companies,
-        company => `${company.name} (${company.id})`
-    );
-    
-    // Actualizar soportes - ESTA ES LA LÍNEA PROBLEMÁTICA
-    const supports = Object.values(currentData.supports);
-    const supportUpdated = updateSelectSafely(
-        'assignSupport',
-        'Seleccionar Soporte',
-        supports, 
-        support => `${support.name} (${support.id})`
-    );
-    
-    if (!supportUpdated) {
-        console.error('❌ CRÍTICO: No se pudo actualizar assignSupport');
-        // Intentar encontrar el elemento real
-        const alternativeSupport = document.querySelector('select[id*="support" i], select[id*="soporte" i]');
-        if (alternativeSupport) {
-            console.log(`🔍 Elemento alternativo encontrado: ${alternativeSupport.id}`);
-        }
-    }
-    
-    // Actualizar módulos
-    const modules = Object.values(currentData.modules);
-    updateSelectSafely(
-        'assignModule',
-        'Seleccionar Módulo',
-        modules,
-        module => `${module.name} (${module.id})`
-    );
+    });
     
     console.log('✅ === updateDropdowns COMPLETADO ===');
 }
+
+// FUNCIÓN ADICIONAL PARA VERIFICAR EL ESTADO DEL DOM
+function verifyDOMState() {
+    console.log('🔍 === VERIFICACIÓN DE ESTADO DEL DOM ===');
+    console.log('Document readyState:', document.readyState);
+    console.log('Document URL:', document.URL);
+    console.log('Current section:', currentSection);
+    
+    // Verificar si hay elementos duplicados
+    const elements = ['assignUser', 'assignCompany', 'assignSupport', 'assignModule'];
+    elements.forEach(id => {
+        const allElements = document.querySelectorAll(`#${id}`);
+        console.log(`${id}: ${allElements.length} elemento(s) encontrado(s)`);
+        if (allElements.length > 1) {
+            console.error(`❌ DUPLICADO: Hay ${allElements.length} elementos con ID ${id}`);
+            allElements.forEach((el, index) => {
+                console.log(`  ${index + 1}. Parent:`, el.parentElement);
+            });
+        }
+    });
+    
+    // Verificar la sección activa
+    const activeSection = document.querySelector('.content-section.active');
+    console.log('Sección activa:', activeSection ? activeSection.id : 'ninguna');
+    
+    // Verificar si hay conflictos de CSS que puedan estar ocultando elementos
+    const createSection = document.getElementById('crear-asignacion-section');
+    if (createSection) {
+        console.log('crear-asignacion-section:');
+        console.log('  - Display:', getComputedStyle(createSection).display);
+        console.log('  - Visibility:', getComputedStyle(createSection).visibility);
+        console.log('  - Opacity:', getComputedStyle(createSection).opacity);
+        console.log('  - Position:', getComputedStyle(createSection).position);
+    }
+}
+
+// FUNCIÓN PARA LLAMAR DESDE LA CONSOLA
+window.verifyDOMState = verifyDOMState;
+window.ultraDefensiveUpdate = updateDropdowns;
 
 // === GESTIÓN DE MODALES ===
 function openUserModal() {
@@ -1521,37 +1633,25 @@ function showSection(sectionName) {
     // Cargar datos específicos de la sección
     loadSectionData(sectionName);
     
-    // CASO ESPECIAL: Crear asignación
+    // CASO ESPECIAL: Crear asignación - ESPERAR ANIMACIÓN
     if (sectionName === 'crear-asignacion') {
-        console.log('📝 Preparando sección crear-asignacion...');
+        console.log('📝 Preparando sección crear-asignacion - ESPERANDO ANIMACIÓN...');
         
-        // Esperar que el DOM se renderice completamente
-        setTimeout(() => {
-            console.log('📝 Verificando elementos después del delay...');
+        // Esperar a que la animación CSS termine completamente
+        waitForAnimationComplete(targetSection, () => {
+            console.log('🎬 Animación terminada, actualizando dropdowns...');
             
-            // Verificar nuevamente si los elementos existen
-            const requiredElements = ['assignUser', 'assignCompany', 'assignSupport', 'assignModule'];
-            const missingElements = requiredElements.filter(id => !document.getElementById(id));
+            // Verificación final antes de actualizar
+            const finalCheck = ['assignUser', 'assignCompany', 'assignSupport', 'assignModule'];
+            const stillMissing = finalCheck.filter(id => !document.getElementById(id));
             
-            if (missingElements.length > 0) {
-                console.error(`❌ Elementos faltantes: ${missingElements.join(', ')}`);
-                console.error('🚨 La sección crear-asignacion no se renderizó correctamente');
-                
-                // Intentar forzar la renderización
-                if (targetSection) {
-                    targetSection.style.display = 'block';
-                    targetSection.offsetHeight; // Forzar reflow
-                }
-                
-                // Intentar nuevamente después de otro delay
-                setTimeout(() => {
-                    updateDropdowns();
-                }, 200);
+            if (stillMissing.length > 0) {
+                console.error(`❌ Elementos aún faltantes después de animación: ${stillMissing.join(', ')}`);
             } else {
-                console.log('✅ Todos los elementos encontrados, actualizando dropdowns...');
+                console.log('✅ Todos los elementos verificados después de animación, actualizando...');
                 updateDropdowns();
             }
-        }, 100);
+        });
     }
 }
 
@@ -2020,78 +2120,196 @@ function viewUserAssignments(userId) {
     document.body.appendChild(modal);
 }
 
-// Modificar la función updateDropdowns para mostrar usuarios con múltiples asignaciones
-function updateDropdowns() {
-    // Dropdown de usuarios - mostrar también los que ya tienen asignaciones
-    const userSelect = document.getElementById('assignUser');
-    userSelect.innerHTML = '<option value="">Seleccionar usuario</option>';
+function waitForAnimationComplete(element, callback, maxWait = 2000) {
+    const startTime = Date.now();
+    const checkAnimation = () => {
+        const styles = getComputedStyle(element);
+        const opacity = parseFloat(styles.opacity);
+        const display = styles.display;
+        
+        console.log(`🎬 Esperando animación... Opacity: ${opacity}, Display: ${display}`);
+        
+        // Verificar si la animación ha terminado
+        if (opacity === 1 && display === 'block') {
+            console.log('✅ Animación completada, ejecutando callback...');
+            callback();
+        } else if (Date.now() - startTime > maxWait) {
+            console.warn('⚠️ Timeout esperando animación, ejecutando callback de todas formas...');
+            callback();
+        } else {
+            // Seguir esperando
+            setTimeout(checkAnimation, 50);
+        }
+    };
     
-    Object.values(currentData.users).forEach(user => {
-        if (user.role === 'consultor' && user.isActive !== false) {
-            const option = document.createElement('option');
-            option.value = user.id;
-            
-            // Mostrar cuántas asignaciones tiene
-            const userAssignments = Object.values(currentData.assignments).filter(a => 
-                a.userId === user.id && a.isActive
-            );
-            
-            option.textContent = `${user.name} (${user.id})`;
-            if (userAssignments.length > 0) {
-                option.textContent += ` - ${userAssignments.length} asignación(es)`;
-            }
-            
-            userSelect.appendChild(option);
+    checkAnimation();
+}
+
+function diagnosticAnimationState() {
+    console.log('🎬 === DIAGNÓSTICO DE ESTADO DE ANIMACIÓN ===');
+    
+    const section = document.getElementById('crear-asignacion-section');
+    if (section) {
+        const styles = getComputedStyle(section);
+        console.log('crear-asignacion-section:');
+        console.log('  - Display:', styles.display);
+        console.log('  - Visibility:', styles.visibility);
+        console.log('  - Opacity:', styles.opacity);
+        console.log('  - Transform:', styles.transform);
+        console.log('  - Transition:', styles.transition);
+        console.log('  - Animation:', styles.animation);
+        
+        // Verificar si hay animaciones activas
+        const computedStyle = window.getComputedStyle(section);
+        const animationName = computedStyle.getPropertyValue('animation-name');
+        const transitionProperty = computedStyle.getPropertyValue('transition-property');
+        
+        if (animationName && animationName !== 'none') {
+            console.log('🎬 Animación CSS activa:', animationName);
+        }
+        
+        if (transitionProperty && transitionProperty !== 'none') {
+            console.log('🎬 Transición CSS activa:', transitionProperty);
+        }
+    }
+    
+    // Verificar elementos después del diagnóstico
+    const elements = ['assignUser', 'assignCompany', 'assignSupport', 'assignModule'];
+    elements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const elStyles = getComputedStyle(el);
+            console.log(`${id}:`);
+            console.log(`  - Display: ${elStyles.display}`);
+            console.log(`  - Opacity: ${elStyles.opacity}`);
+            console.log(`  - Pointer-events: ${elStyles.pointerEvents}`);
         }
     });
+}
 
-    // Dropdown de empresas
-    const companySelect = document.getElementById('assignCompany');
-    companySelect.innerHTML = '<option value="">Seleccionar empresa</option>';
+// Modificar la función updateDropdowns para mostrar usuarios con múltiples asignaciones
+function updateDropdowns() {
+    console.log('🔄 === INICIANDO updateDropdowns SIMPLIFICADO ===');
     
-    Object.values(currentData.companies).forEach(company => {
-        const option = document.createElement('option');
-        option.value = company.id;
-        option.textContent = `${company.name} (${company.id})`;
-        companySelect.appendChild(option);
-    });
-
-    // Dropdown de proyectos
-    const projectSelect = document.getElementById('assignProject');
-    projectSelect.innerHTML = '<option value="">Seleccionar proyecto</option>';
+    // Verificar datos básicos
+    if (!currentData || !currentData.users || !currentData.companies || !currentData.supports || !currentData.modules) {
+        console.error('❌ Datos no disponibles');
+        return;
+    }
     
-    Object.values(currentData.projects).forEach(project => {
-        const option = document.createElement('option');
-        option.value = project.id;
-        option.textContent = `${project.name} (${project.id})`;
-        projectSelect.appendChild(option);
+    // Configuración de elementos
+    const elementsConfig = [
+        {
+            id: 'assignUser',
+            defaultOption: 'Seleccionar usuario',
+            data: Object.values(currentData.users).filter(user => 
+                user.role === 'consultor' && user.isActive !== false
+            ),
+            getLabel: (user) => `${user.name} (${user.id})`
+        },
+        {
+            id: 'assignCompany',
+            defaultOption: 'Seleccionar empresa',
+            data: Object.values(currentData.companies),
+            getLabel: (company) => `${company.name} (${company.id})`
+        },
+        {
+            id: 'assignSupport',
+            defaultOption: 'Seleccionar Soporte',
+            data: Object.values(currentData.supports),
+            getLabel: (support) => `${support.name} (${support.id})`
+        },
+        {
+            id: 'assignModule',
+            defaultOption: 'Seleccionar Módulo',
+            data: Object.values(currentData.modules),
+            getLabel: (module) => `${module.name} (${module.id})`
+        }
+    ];
+    
+    // Actualizar cada elemento de forma muy segura
+    elementsConfig.forEach(config => {
+        try {
+            console.log(`🔄 Actualizando ${config.id}...`);
+            
+            // Obtener elemento con múltiples intentos
+            let element = null;
+            let attempts = 0;
+            const maxAttempts = 3;
+            
+            while (!element && attempts < maxAttempts) {
+                element = document.getElementById(config.id);
+                if (!element) {
+                    console.warn(`⚠️ Intento ${attempts + 1}: ${config.id} no encontrado, esperando...`);
+                    attempts++;
+                    // Esperar un poco antes del siguiente intento
+                    if (attempts < maxAttempts) {
+                        // Usar una espera síncrona corta
+                        const start = Date.now();
+                        while (Date.now() - start < 100) {
+                            // Espera activa de 100ms
+                        }
+                        continue;
+                    }
+                }
+            }
+            
+            if (!element) {
+                console.error(`❌ ${config.id} no encontrado después de ${maxAttempts} intentos`);
+                return;
+            }
+            
+            // Verificar que sea un select válido
+            if (element.tagName !== 'SELECT') {
+                console.error(`❌ ${config.id} no es un elemento SELECT, es: ${element.tagName}`);
+                return;
+            }
+            
+            // Limpiar opciones de forma muy segura
+            try {
+                // Método alternativo más seguro que innerHTML
+                element.length = 0; // Esto limpia todas las opciones
+                
+                // Agregar opción por defecto
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.textContent = config.defaultOption;
+                element.appendChild(defaultOption);
+                
+            } catch (clearError) {
+                console.error(`❌ Error limpiando ${config.id}:`, clearError);
+                // Fallback: usar innerHTML si falla el método anterior
+                try {
+                    element.innerHTML = `<option value="">${config.defaultOption}</option>`;
+                } catch (innerHTMLError) {
+                    console.error(`❌ Error con innerHTML en ${config.id}:`, innerHTMLError);
+                    return;
+                }
+            }
+            
+            // Agregar opciones de datos
+            if (config.data && config.data.length > 0) {
+                config.data.forEach(item => {
+                    try {
+                        const option = document.createElement('option');
+                        option.value = item.id;
+                        option.textContent = config.getLabel(item);
+                        element.appendChild(option);
+                    } catch (optionError) {
+                        console.warn(`⚠️ Error agregando opción a ${config.id}:`, optionError);
+                    }
+                });
+                console.log(`✅ ${config.id} actualizado con ${config.data.length} opciones`);
+            } else {
+                console.log(`⚠️ ${config.id} actualizado sin datos`);
+            }
+            
+        } catch (error) {
+            console.error(`❌ Error general actualizando ${config.id}:`, error);
+        }
     });
-
-    // Dropdown de tareas
-    const taskSelect = document.getElementById('assignTask');
-    if (taskSelect) {
-        taskSelect.innerHTML = '<option value="">Seleccionar Tarea</option>';
-        
-        Object.values(currentData.tasks).forEach(task => {
-            const option = document.createElement('option');
-            option.value = task.id;
-            option.textContent = `${task.name} (${task.id})`;
-            taskSelect.appendChild(option);
-        });
-    }
-
-    // Dropdown de módulos
-    const moduleSelect = document.getElementById('assignModule');
-    if (moduleSelect) {
-        moduleSelect.innerHTML = '<option value="">Seleccionar Módulo</option>';
-        
-        Object.values(currentData.modules).forEach(module => {
-            const option = document.createElement('option');
-            option.value = module.id;
-            option.textContent = `${module.name} (${module.id})`;
-            moduleSelect.appendChild(option);
-        });
-    }
+    
+    console.log('✅ === updateDropdowns COMPLETADO ===');
 }
 
 // Modificar la función createAssignment para permitir múltiples asignaciones
@@ -3034,8 +3252,6 @@ function generatePagosReport() {
     }
 }
 
-
-
 // Funciones exportadas globalmente
 window.selectReportType = selectReportType;
 window.previewActividadesReport = previewActividadesReport;
@@ -3044,6 +3260,17 @@ window.loadPagosConfiguration = loadPagosConfiguration;
 window.updateTariffCalculation = updateTariffCalculation;
 window.resetTariffs = resetTariffs;
 window.generatePagosReport = generatePagosReport;
+window.diagnosticAnimationState = diagnosticAnimationState;
+window.waitForAnimationComplete = waitForAnimationComplete;
+
+window.forceUpdateAfterAnimation = () => {
+    const section = document.getElementById('crear-asignacion-section');
+    if (section) {
+        waitForAnimationComplete(section, updateDropdowns);
+    }
+};
+
+console.log('✅ === CORRECCIÓN DE ANIMACIÓN CSS CARGADA ===');
 
 // === FUNCIONES PARA HISTORIAL DE REPORTES GENERADOS ===
 

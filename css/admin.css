@@ -1327,6 +1327,207 @@
     z-index: 20;
 }
 
+/* Estilos para selección de consultores */
+.consultors-selection {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin: var(--spacing-lg) 0;
+    border-left: 4px solid var(--success-color);
+}
+
+.consultors-selection h3 {
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-md);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.selection-help {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    margin-bottom: var(--spacing-lg);
+    font-style: italic;
+}
+
+.consultors-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-md);
+    max-height: 300px;
+    overflow-y: auto;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    background: var(--gray-50);
+}
+
+.consultor-checkbox-item {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    padding: var(--spacing-md);
+    transition: var(--transition-normal);
+}
+
+.consultor-checkbox-item:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.consultor-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    cursor: pointer;
+    margin: 0;
+    font-weight: 500;
+}
+
+.consultor-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color);
+}
+
+.checkbox-text {
+    color: var(--gray-700);
+    font-size: 0.875rem;
+}
+
+/* Estilos para fechas del proyecto */
+.project-dates {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-xl);
+    margin: var(--spacing-lg) 0;
+    border-left: 4px solid var(--info-color);
+}
+
+.project-dates h3 {
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+/* Estilos para tarjetas de asignación de proyecto */
+.project-assignment-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-2xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-normal);
+    border-left: 6px solid var(--success-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.project-assignment-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+    border-left-color: var(--primary-color);
+}
+
+.project-assignment-card .assignment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--gray-100);
+}
+
+.project-assignment-card .assignment-header h3 {
+    margin: 0;
+    color: var(--gray-900);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.project-assignments-container {
+    margin-top: var(--spacing-lg);
+}
+
+/* Status badge específico para proyectos */
+.status-badge {
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    background: linear-gradient(135deg, var(--success-color) 0%, #047857 100%);
+    color: white;
+    border: 1px solid var(--success-color);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Responsive para las nuevas secciones */
+@media (max-width: 768px) {
+    .consultors-list {
+        grid-template-columns: 1fr;
+        max-height: 250px;
+    }
+    
+    .project-assignment-card {
+        padding: var(--spacing-lg);
+    }
+    
+    .project-assignment-card .assignment-header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: flex-start;
+    }
+}
+
+.project-assignment-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-2xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-normal);
+    border-left: 6px solid var(--info-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.project-assignment-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, rgba(2, 132, 199, 0.05) 0%, transparent 70%);
+    border-radius: 0 0 0 100px;
+    pointer-events: none;
+}
+
+.project-assignment-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+    border-left-color: var(--primary-color);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .project-assignment-card {
+        padding: var(--spacing-lg);
+    }
+    
+    .project-assignment-card .assignment-header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: flex-start;
+    }
+}
+
 /* Responsive: ocultar el indicador en pantallas muy grandes */
 @media (min-width: 1600px) {
     .reports-table-container::before {

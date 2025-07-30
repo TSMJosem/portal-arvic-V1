@@ -67,16 +67,28 @@
                         <div class="sidebar-menu">
                             <div class="sidebar-menu-item" data-section="crear-asignacion">
                                 <span class="menu-icon">➕</span>
-                                <span class="menu-text">Nueva Asignación</span>
+                                <span class="menu-text">Asignar Soportes</span>
                             </div>
+
                             <div class="sidebar-menu-item" data-section="lista-asignaciones">
                                 <span class="menu-icon">📋</span>
                                 <span class="menu-text">Lista Completa</span>
                                 <span class="menu-badge" id="sidebarAssignmentsCount">0</span>
                             </div>
+                            
                             <div class="sidebar-menu-item" data-section="asignaciones-recientes">
                                 <span class="menu-icon">🕒</span>
                                 <span class="menu-text">Recientes</span>
+                            </div>
+
+                            <div class="sidebar-menu-item" data-section="asignar-proyectos">
+                                <span class="menu-icon">🎯</span>
+                                <span class="menu-text">Asignar Proyectos</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="lista-proyectos-asignados">
+                                <span class="menu-icon">📋</span>
+                                <span class="menu-text">Proyectos Asignados</span>
+                                <span class="menu-badge" id="sidebarProjectAssignmentsCount">0</span>
                             </div>
                         </div>
                     </div>
@@ -187,7 +199,7 @@
                     <!-- Sección de Nueva Asignación -->
                     <div id="crear-asignacion-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">➕ Crear Nueva Asignación</h2>
+                            <h2 class="section-title">➕ Crear Nueva Asignación de Soporte</h2>
                         </div>
                         <div class="assignment-form-container">
                             <div class="assignment-form">
@@ -221,6 +233,84 @@
                                 <button type="button" class="btn btn-primary" onclick="createAssignment()">
                                     ➕ Crear Asignación
                                 </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Asignar Proyectos -->
+                    <div id="asignar-proyectos-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">🎯 Asignar Proyecto a Consultor</h2>
+                        </div>
+                        
+                        <div class="assignment-form-container">
+                            <div class="assignment-form">
+                                <!-- Consultor -->
+                                <div class="form-group">
+                                    <label for="assignProjectConsultor">Consultor</label>
+                                    <select id="assignProjectConsultor" name="assignProjectConsultor" required>
+                                        <option value="">Seleccionar consultor</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Proyecto -->
+                                <div class="form-group">
+                                    <label for="assignProjectProject">Proyecto</label>
+                                    <select id="assignProjectProject" name="assignProjectProject" required>
+                                        <option value="">Seleccionar proyecto</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Empresa Cliente -->
+                                <div class="form-group">
+                                    <label for="assignProjectCompany">Empresa Cliente</label>
+                                    <select id="assignProjectCompany" name="assignProjectCompany" required>
+                                        <option value="">Seleccionar empresa cliente</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Módulo -->
+                                <div class="form-group">
+                                    <label for="assignProjectModule">Módulo</label>
+                                    <select id="assignProjectModule" name="assignProjectModule" required>
+                                        <option value="">Seleccionar módulo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="text-align: center; margin-top: 20px;">
+                                <button type="button" class="btn btn-primary" onclick="createProjectAssignment()">
+                                    🎯 Asignar Proyecto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="lista-proyectos-asignados-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📋 Proyectos Asignados</h2>
+                        </div>
+                        
+                        <div id="projectAssignmentsList" class="assignments-list">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-title">No hay proyectos asignados</div>
+                                <div class="empty-state-desc">Los proyectos asignados a consultores aparecerán aquí</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Lista de Proyectos Asignados -->
+                    <div id="lista-proyectos-asignados-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📋 Proyectos Asignados</h2>
+                        </div>
+                        
+                        <div id="projectAssignmentsList" class="project-assignments-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-title">No hay proyectos asignados</div>
+                                <div class="empty-state-desc">Los proyectos asignados a consultores aparecerán aquí</div>
                             </div>
                         </div>
                     </div>

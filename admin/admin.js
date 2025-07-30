@@ -121,6 +121,21 @@ function createAssignment() {
     }
 }
 
+function deleteProjectAssignment(assignmentId) {
+    if (!confirm('¿Está seguro de eliminar esta asignación de proyecto?')) {
+        return;
+    }
+    
+    const result = window.PortalDB.deleteProjectAssignment(assignmentId);
+    
+    if (result.success) {
+        window.NotificationUtils.success('Asignación de proyecto eliminada');
+        loadAllData();
+    } else {
+        window.NotificationUtils.error('Error: ' + result.message);
+    }
+}
+
 function deleteAssignment(assignmentId) {
     if (!confirm('¿Está seguro de eliminar esta asignación?')) {
         return;
@@ -148,15 +163,7 @@ function loadAllData() {
         currentData.supports = window.PortalDB.getSupports() || {};
         currentData.modules = window.PortalDB.getModules() || {};
         currentData.reports = window.PortalDB.getReports() || {};
-        
-        console.log('📊 Datos cargados:');
-        console.log(`  - Usuarios: ${Object.keys(currentData.users).length}`);
-        console.log(`  - Empresas: ${Object.keys(currentData.companies).length}`);
-        console.log(`  - Proyectos: ${Object.keys(currentData.projects).length}`);
-        console.log(`  - Asignaciones: ${Object.keys(currentData.assignments).length}`);
-        console.log(`  - Soportes: ${Object.keys(currentData.supports).length}`);
-        console.log(`  - Módulos: ${Object.keys(currentData.modules).length}`);
-        console.log(`  - Reportes: ${Object.keys(currentData.reports).length}`);
+        currentData.projectAssignments = window.PortalDB.getProjectAssignments() || {}; // NUEVA LÍNEA
         
         updateUI();
     } catch (error) {
@@ -208,6 +215,9 @@ function updateSidebarCounts() {
     const companies = Object.values(currentData.companies);
     const projects = Object.values(currentData.projects);
     const assignments = Object.values(currentData.assignments).filter(a => a.isActive);
+    const projectAssignments = Object.values(currentData.projectAssignments || {});
+    document.getElementById('sidebarProjectAssignmentsCount').textContent = projectAssignments.length;
+
     const supports = Object.values(currentData.supports); // Cambiar de tasks
     const modules = Object.values(currentData.modules);
     const reports = Object.values(currentData.reports);
@@ -685,6 +695,202 @@ function updateModulesList() {
             </button>
         `;
         container.appendChild(moduleDiv);
+    });
+}
+
+function updateProjectAssignmentsList() {
+    const container = document.getElementById('projectAssignmentsList');
+    if (!container) return;
+    
+    const assignments = Object.values(currentData.projectAssignments || {});
+    
+    if (assignments.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🎯</div>
+                <div class="empty-state-title">No hay proyectos asignados</div>
+                <div class="empty-state-desc">Los proyectos asignados a consultores aparecerán aquí</div>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = '';
+    assignments.forEach(assignment => {
+        const consultor = currentData.users[assignment.consultorId];    // CAMBIO
+        const project = currentData.projects[assignment.projectId];
+        const company = currentData.companies[assignment.companyId];
+        const module = currentData.modules[assignment.moduleId];
+        
+        const assignmentDiv = document.createElement('div');
+        assignmentDiv.className = 'project-assignment-card';
+        assignmentDiv.innerHTML = `
+            <div class="assignment-header">
+                <h3>🎯 ${project?.name || 'Proyecto no encontrado'}</h3>
+                <span class="assignment-id">${assignment.id.slice(-6)}</span>
+            </div>
+            
+            <div class="assignment-details">
+                <p><strong>👤 Consultor:</strong> ${consultor?.name || 'No asignado'}</p>
+                <p><strong>🏢 Cliente:</strong> ${company?.name || 'No asignado'}</p>
+                <p><strong>🧩 Módulo:</strong> ${module?.name || 'No asignado'}</p>
+                <p><small>📅 Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
+            </div>
+            
+            <div class="assignment-actions">
+                <button class="btn btn-danger btn-sm" onclick="deleteProjectAssignment('${assignment.id}')">
+                    🗑️ Eliminar Asignación
+                </button>
+            </div>
+        `;
+        container.appendChild(assignmentDiv);
+    });
+}
+
+function updateProjectAssignmentDropdowns() {
+    console.log('🔄 Actualizando dropdowns de asignación de proyectos...');
+    
+    // Verificar datos básicos
+    if (!currentData || !currentData.users || !currentData.companies || !currentData.projects || !currentData.modules) {
+        console.error('❌ Datos no disponibles para asignación de proyectos');
+        return;
+    }
+    
+    // Configuración IGUAL que la asignación normal, pero con proyectos
+    const elementsConfig = [
+        {
+            id: 'assignProjectConsultor',        // CAMBIO: ahora es consultor individual
+            defaultOption: 'Seleccionar consultor',
+            data: Object.values(currentData.users).filter(user => 
+                user.role === 'consultor' && user.isActive !== false
+            ),
+            getLabel: (user) => `${user.name} (${user.id})`
+        },
+        {
+            id: 'assignProjectProject',
+            defaultOption: 'Seleccionar proyecto',
+            data: Object.values(currentData.projects),
+            getLabel: (project) => `${project.name} (${project.status})`
+        },
+        {
+            id: 'assignProjectCompany',
+            defaultOption: 'Seleccionar empresa cliente',
+            data: Object.values(currentData.companies),
+            getLabel: (company) => `${company.name} (${company.id})`
+        },
+        {
+            id: 'assignProjectModule',
+            defaultOption: 'Seleccionar módulo',
+            data: Object.values(currentData.modules),
+            getLabel: (module) => `${module.name} (${module.id})`
+        }
+    ];
+    
+    // Actualizar cada dropdown (IGUAL que updateDropdowns())
+    elementsConfig.forEach(config => {
+        try {
+            const element = document.getElementById(config.id);
+            if (!element) {
+                console.error(`❌ ${config.id} no encontrado`);
+                return;
+            }
+            
+            // Limpiar y agregar opción por defecto
+            element.innerHTML = `<option value="">${config.defaultOption}</option>`;
+            
+            // Agregar opciones de datos
+            if (config.data && config.data.length > 0) {
+                config.data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = config.getLabel(item);
+                    element.appendChild(option);
+                });
+                console.log(`✅ ${config.id} actualizado con ${config.data.length} opciones`);
+            }
+        } catch (error) {
+            console.error(`❌ Error actualizando ${config.id}:`, error);
+        }
+    });
+}
+
+function updateConsultorsList() {
+    const container = document.getElementById('consultorsListContainer');
+    if (!container) return;
+    
+    const consultors = Object.values(currentData.users).filter(user => 
+        user.role === 'consultor' && user.isActive !== false
+    );
+    
+    if (consultors.length === 0) {
+        container.innerHTML = '<p>No hay consultores disponibles</p>';
+        return;
+    }
+    
+    container.innerHTML = '';
+    consultors.forEach(consultor => {
+        const checkboxDiv = document.createElement('div');
+        checkboxDiv.className = 'consultor-checkbox-item';
+        checkboxDiv.innerHTML = `
+            <label class="consultor-checkbox-label">
+                <input type="checkbox" 
+                       name="selectedConsultors" 
+                       value="${consultor.id}" 
+                       class="consultor-checkbox">
+                <span class="checkbox-text">${consultor.name} (${consultor.id})</span>
+            </label>
+        `;
+        container.appendChild(checkboxDiv);
+    });
+}
+
+function updateProjectAssignmentsList() {
+    const container = document.getElementById('projectAssignmentsList');
+    if (!container) return;
+    
+    const assignments = Object.values(currentData.projectAssignments || {});
+    
+    if (assignments.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🎯</div>
+                <div class="empty-state-title">No hay proyectos asignados</div>
+                <div class="empty-state-desc">Los proyectos asignados aparecerán aquí</div>
+            </div>
+        `;
+        return;
+    }
+    
+    container.innerHTML = '';
+    assignments.forEach(assignment => {
+        const project = currentData.projects[assignment.projectId];
+        const company = currentData.companies[assignment.companyId];
+        const module = currentData.modules[assignment.moduleId];
+        const consultors = assignment.consultorIds.map(id => currentData.users[id]).filter(Boolean);
+        
+        const assignmentDiv = document.createElement('div');
+        assignmentDiv.className = 'project-assignment-card';
+        assignmentDiv.innerHTML = `
+            <div class="assignment-header">
+                <h3>🎯 ${project?.name || 'Proyecto no encontrado'}</h3>
+                <span class="assignment-id">${assignment.id.slice(-6)}</span>
+            </div>
+            
+            <div class="assignment-details">
+                <p><strong>🏢 Cliente:</strong> ${company?.name || 'No asignado'}</p>
+                <p><strong>🧩 Módulo:</strong> ${module?.name || 'No asignado'}</p>
+                <p><strong>👥 Consultores:</strong> ${consultors.map(c => c.name).join(', ')}</p>
+                <p><strong>📅 Período:</strong> ${assignment.startDate || 'No definido'} → ${assignment.endDate || 'No definido'}</p>
+                <p><strong>📊 Estado:</strong> <span class="status-badge">${assignment.status}</span></p>
+            </div>
+            
+            <div class="assignment-actions">
+                <button class="btn btn-danger btn-sm" onclick="deleteProjectAssignment('${assignment.id}')">
+                    🗑️ Eliminar Asignación
+                </button>
+            </div>
+        `;
+        container.appendChild(assignmentDiv);
     });
 }
 
@@ -1483,6 +1689,9 @@ window.deleteProject = deleteProject;
 window.deleteModule = deleteModule;
 window.createAssignment = createAssignment;
 window.deleteAssignment = deleteAssignment;
+window.createProjectAssignment = createProjectAssignment;
+window.deleteProjectAssignment = deleteProjectAssignment;
+window.updateProjectAssignmentDropdowns = updateProjectAssignmentDropdowns;
 window.approveReport = approveReport;
 window.rejectReport = rejectReport;
 window.logout = logout;
@@ -1500,8 +1709,8 @@ window.updateGeneratedReportsList = updateGeneratedReportsList;
 window.refreshGeneratedReportsList = refreshGeneratedReportsList;
 window.deleteGeneratedReportFromHistory = deleteGeneratedReportFromHistory;
 
+console.log('✅ Funciones de asignación de proyectos cargadas');
 console.log('✅ Funciones del administrador exportadas globalmente');/**
-
 
  * === LÓGICA DEL PANEL DE ADMINISTRADOR REORGANIZADO ===
  * Maneja todas las funciones administrativas del portal con sidebar
@@ -1685,11 +1894,18 @@ function loadSectionData(sectionName) {
                 updateModulesList();
                 break;
             case 'lista-asignaciones':
+
             case 'asignaciones-recientes':
                 updateAssignmentsList();
                 break;
             case 'reportes-pendientes':
                 updateReportsList();
+                break;
+            case 'asignar-proyectos':
+                updateProjectAssignmentDropdowns();
+                break;
+            case 'lista-proyectos-asignados':
+                updateProjectAssignmentsList();
                 break;
             case 'reportes-aprobados':
                 updateApprovedReportsList();
@@ -2310,6 +2526,49 @@ function updateDropdowns() {
     });
     
     console.log('✅ === updateDropdowns COMPLETADO ===');
+}
+
+function createProjectAssignment() {
+    const consultorId = document.getElementById('assignProjectConsultor').value;  // CAMBIO
+    const projectId = document.getElementById('assignProjectProject').value;
+    const companyId = document.getElementById('assignProjectCompany').value;
+    const moduleId = document.getElementById('assignProjectModule').value;
+    
+    // Validaciones (IGUAL que createAssignment())
+    if (!consultorId || !projectId || !companyId || !moduleId) {
+        window.NotificationUtils.error('Todos los campos son requeridos para crear una asignación de proyecto');
+        return;
+    }
+    
+    const assignmentData = {
+        consultorId: consultorId,    // CAMBIO: consultorId individual
+        projectId: projectId,
+        companyId: companyId,
+        moduleId: moduleId
+    };
+    
+    const result = window.PortalDB.createProjectAssignment(assignmentData);
+    
+    if (result.success) {
+        const consultor = currentData.users[consultorId];
+        const project = currentData.projects[projectId];
+        const company = currentData.companies[companyId];
+        const module = currentData.modules[moduleId];
+        
+        window.NotificationUtils.success(
+            `✅ Proyecto asignado: ${consultor.name} → "${project.name}" para ${company.name} (${module.name})`
+        );
+        
+        // Limpiar formulario (IGUAL que createAssignment())
+        document.getElementById('assignProjectConsultor').value = '';
+        document.getElementById('assignProjectProject').value = '';
+        document.getElementById('assignProjectCompany').value = '';
+        document.getElementById('assignProjectModule').value = '';
+        
+        loadAllData();
+    } else {
+        window.NotificationUtils.error('Error al asignar proyecto: ' + result.message);
+    }
 }
 
 // Modificar la función createAssignment para permitir múltiples asignaciones

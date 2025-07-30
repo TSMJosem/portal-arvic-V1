@@ -15,15 +15,16 @@ class PortalDatabase {
         this.setupDefaultUsers();
         this.setupDefaultCompanies();
         this.setupDefaultProjects();
-        this.setupDefaultSupports(); // Cambiar de setupDefaultTasks
+        this.setupDefaultSupports(); 
         this.setupDefaultModules();
         this.setupDefaultAssignments();
+        this.setupDefaultProjectAssignments();
         this.setupDefaultReports();
         this.setData('initialized', true);
         this.setData('user_counter', 3);
         this.setData('company_counter', 4);
         this.setData('project_counter', 4);
-        this.setData('support_counter', 4); // Cambiar de task_counter
+        this.setData('support_counter', 4);
         this.setData('module_counter', 4);
     }
 }
@@ -1393,6 +1394,85 @@ deleteGeneratedReport(reportId) {
             optimized: optimized,
             optimizedAt: new Date().toISOString()
         };
+    }
+
+    setupDefaultProjectAssignments() {
+        const defaultProjectAssignments = {
+            'proj_assign_001': {
+                id: 'proj_assign_001',
+                projectId: '0001',
+                consultorId: '0001',      // UN SOLO consultor
+                companyId: '0001',
+                moduleId: '0001',
+                createdAt: new Date().toISOString(),
+                isActive: true
+            }
+        };
+        this.setData('project_assignments', defaultProjectAssignments);
+    }
+
+    getProjectAssignments() {
+        return this.getData('project_assignments') || {};
+    }
+
+    getProjectAssignment(assignmentId) {
+        const assignments = this.getProjectAssignments();
+        return assignments[assignmentId] || null;
+    }
+
+    createProjectAssignment(assignmentData) {
+        const assignments = this.getProjectAssignments();
+        const assignmentId = `proj_assign_${Date.now()}`;
+        
+        // Validar que existan todas las entidades
+        const project = this.getProject(assignmentData.projectId);
+        const consultor = this.getUser(assignmentData.consultorId);
+        const company = this.getCompany(assignmentData.companyId);
+        const module = this.getModule(assignmentData.moduleId);
+        
+        if (!project || !consultor || !company || !module) {
+            return { success: false, message: 'Una o más entidades no existen' };
+        }
+        
+        // Verificar si ya existe una asignación igual
+        const existingAssignment = Object.values(assignments).find(a => 
+            a.projectId === assignmentData.projectId &&
+            a.consultorId === assignmentData.consultorId &&
+            a.companyId === assignmentData.companyId &&
+            a.moduleId === assignmentData.moduleId &&
+            a.isActive
+        );
+        
+        if (existingAssignment) {
+            return { success: false, message: 'Ya existe una asignación idéntica para este consultor en este proyecto' };
+        }
+        
+        const newAssignment = {
+            id: assignmentId,
+            projectId: assignmentData.projectId,
+            consultorId: assignmentData.consultorId,    // UN SOLO consultor
+            companyId: assignmentData.companyId,
+            moduleId: assignmentData.moduleId,
+            createdAt: new Date().toISOString(),
+            isActive: true
+        };
+        
+        assignments[assignmentId] = newAssignment;
+        this.setData('project_assignments', assignments);
+        
+        return { success: true, assignment: newAssignment };
+    }
+
+    deleteProjectAssignment(assignmentId) {
+        const assignments = this.getProjectAssignments();
+        if (!assignments[assignmentId]) {
+            return { success: false, message: 'Asignación de proyecto no encontrada' };
+        }
+        
+        delete assignments[assignmentId];
+        this.setData('project_assignments', assignments);
+        
+        return { success: true, message: 'Asignación de proyecto eliminada' };
     }
 }
 

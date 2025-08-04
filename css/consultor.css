@@ -43,21 +43,24 @@
 .consultor-header .logo {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    flex-shrink: 0;
 }
 
-.consultor-header .logo-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--border-radius-lg);
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    box-shadow: var(--shadow-md);
-    border: 2px solid rgba(255, 255, 255, 0.1);
+.consultor-logo-svg {
+    height: 50px; /* Misma altura que el admin */
+    width: auto;
+    filter: brightness(1.1) drop-shadow(0 2px 8px rgba(255, 255, 255, 0.1));
+    transition: transform 0.3s ease;
+}
+
+.consultor-logo-svg:hover {
+    transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+    .consultor-logo-svg {
+        height: 40px;
+    }
 }
 
 .consultor-header .logo-icon::after {
@@ -73,30 +76,6 @@
     margin-left: -6px;
     margin-top: -10px;
     filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
-
-.consultor-header .logo-text {
-    display: flex;
-    flex-direction: column;
-    line-height: 1.2;
-    margin-left: var(--spacing-md);
-}
-
-.consultor-header .grupo-text {
-    font-size: 0.75rem;
-    color: var(--gray-500);
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    margin-bottom: var(--spacing-xs);
-}
-
-.consultor-header .arvic-text {
-    font-size: 1.5rem;
-    color: var(--gray-900);
-    font-weight: 800;
-    letter-spacing: -0.025em;
-    font-family: var(--font-primary);
 }
 
 /* Título central mejorado */

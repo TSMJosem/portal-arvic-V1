@@ -698,55 +698,6 @@ function updateModulesList() {
     });
 }
 
-function updateProjectAssignmentsList() {
-    const container = document.getElementById('projectAssignmentsList');
-    if (!container) return;
-    
-    const assignments = Object.values(currentData.projectAssignments || {});
-    
-    if (assignments.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">🎯</div>
-                <div class="empty-state-title">No hay proyectos asignados</div>
-                <div class="empty-state-desc">Los proyectos asignados a consultores aparecerán aquí</div>
-            </div>
-        `;
-        return;
-    }
-    
-    container.innerHTML = '';
-    assignments.forEach(assignment => {
-        const consultor = currentData.users[assignment.consultorId];    // CAMBIO
-        const project = currentData.projects[assignment.projectId];
-        const company = currentData.companies[assignment.companyId];
-        const module = currentData.modules[assignment.moduleId];
-        
-        const assignmentDiv = document.createElement('div');
-        assignmentDiv.className = 'project-assignment-card';
-        assignmentDiv.innerHTML = `
-            <div class="assignment-header">
-                <h3>🎯 ${project?.name || 'Proyecto no encontrado'}</h3>
-                <span class="assignment-id">${assignment.id.slice(-6)}</span>
-            </div>
-            
-            <div class="assignment-details">
-                <p><strong>👤 Consultor:</strong> ${consultor?.name || 'No asignado'}</p>
-                <p><strong>🏢 Cliente:</strong> ${company?.name || 'No asignado'}</p>
-                <p><strong>🧩 Módulo:</strong> ${module?.name || 'No asignado'}</p>
-                <p><small>📅 Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
-            </div>
-            
-            <div class="assignment-actions">
-                <button class="btn btn-danger btn-sm" onclick="deleteProjectAssignment('${assignment.id}')">
-                    🗑️ Eliminar Asignación
-                </button>
-            </div>
-        `;
-        container.appendChild(assignmentDiv);
-    });
-}
-
 function updateProjectAssignmentDropdowns() {
     console.log('🔄 Actualizando dropdowns de asignación de proyectos...');
     
@@ -866,7 +817,7 @@ function updateProjectAssignmentsList() {
         const project = currentData.projects[assignment.projectId];
         const company = currentData.companies[assignment.companyId];
         const module = currentData.modules[assignment.moduleId];
-        const consultors = assignment.consultorIds.map(id => currentData.users[id]).filter(Boolean);
+        const consultor = currentData.users[assignment.consultorId];
         
         const assignmentDiv = document.createElement('div');
         assignmentDiv.className = 'project-assignment-card';
@@ -879,7 +830,7 @@ function updateProjectAssignmentsList() {
             <div class="assignment-details">
                 <p><strong>🏢 Cliente:</strong> ${company?.name || 'No asignado'}</p>
                 <p><strong>🧩 Módulo:</strong> ${module?.name || 'No asignado'}</p>
-                <p><strong>👥 Consultores:</strong> ${consultors.map(c => c.name).join(', ')}</p>
+                <p><strong>👤 Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId})</p>
                 <p><strong>📅 Período:</strong> ${assignment.startDate || 'No definido'} → ${assignment.endDate || 'No definido'}</p>
                 <p><strong>📊 Estado:</strong> <span class="status-badge">${assignment.status}</span></p>
             </div>
@@ -2541,7 +2492,7 @@ function createProjectAssignment() {
     }
     
     const assignmentData = {
-        consultorId: consultorId,    // CAMBIO: consultorId individual
+        consultorId: consultorId,
         projectId: projectId,
         companyId: companyId,
         moduleId: moduleId

@@ -56,46 +56,31 @@ body::before {
 }
 
 /* Sección del logo mejorada */
+.logo-svg-complete {
+    width: 160px; /* Ajusta según tu logo */
+    height: auto;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
+    transition: transform 0.3s ease;
+}
+
+.logo-section .logo {
+    display: flex;
+    flex-direction: column; /* Cambiar a columna */
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--spacing-lg);
+    gap: 0; /* Sin gap ya que el SVG tiene todo */
+}
+
 .logo-section {
     margin-bottom: var(--spacing-2xl);
     padding-bottom: var(--spacing-lg);
     border-bottom: 1px solid var(--gray-200);
 }
 
-.logo-section .logo {
-    justify-content: center;
-    margin-bottom: var(--spacing-lg);
-}
-
-.logo-section .logo-icon {
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    box-shadow: 
-        0 10px 25px rgba(30, 58, 138, 0.3),
-        0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
 .logo-section .logo-icon::before {
     width: 32px;
     height: 32px;
-}
-
-.logo-section .arvic-text {
-    font-size: 2rem;
-    font-weight: 800;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.logo-section .grupo-text {
-    color: var(--gray-500);
-    font-size: 0.875rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
 }
 
 /* Título de bienvenida */

@@ -2667,6 +2667,7 @@ function selectReportType(type) {
     document.getElementById('pagos-config').style.display = 'none';
     document.getElementById('pago-consultor-general-config').style.display = 'none';
     document.getElementById('pago-consultor-individual-config').style.display = 'none';
+    document.getElementById('cliente-soporte-config').style.display = 'none';
 
     // Mostrar configuración correspondiente
     if (type === 'actividades') {
@@ -2684,6 +2685,10 @@ function selectReportType(type) {
     } else if (type === 'pago_consultor_individual') {
         document.getElementById('pago-consultor-individual-config').style.display = 'block';
         selectedReportType = 'pago_consultor_individual';
+
+    } else if (type === 'cliente_soporte') {
+        document.getElementById('cliente-soporte-config').style.display = 'block';
+        selectedReportType = 'cliente_soporte';
     }
 }
 
@@ -3773,3 +3778,11 @@ window.updatePagosIndividualRow = updatePagosIndividualRow;
 window.resetPagosIndividualData = resetPagosIndividualData;
 window.showConsultorSelector = showConsultorSelector;
 window.onConsultorSelected = onConsultorSelected;
+
+// Funciones del reporte Cliente Soporte
+window.loadClienteSoporteConfiguration = loadClienteSoporteConfiguration;
+window.generateClienteSoporteReport = generateClienteSoporteReport;
+window.updateClienteSoporteRow = updateClienteSoporteRow;
+window.resetClienteSoporteData = resetClienteSoporteData;
+window.showClienteSelector = showClienteSelector;
+window.handleClienteSelection = handleClienteSelection;

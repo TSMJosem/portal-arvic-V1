@@ -466,6 +466,11 @@
                                         <h4>Pago Consultor (Consultor)</h4>
                                         <p>Reporte de pagos individual para un consultor específico</p>
                                     </div>
+                                    <div class="report-type-card" onclick="selectReportType('cliente_soporte')">
+                                        <div class="report-type-icon">📞</div>
+                                        <h4>Cliente Soporte</h4>
+                                        <p>Reporte de servicios de soporte para un cliente específico</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -636,6 +641,28 @@
                                 <!-- Contenedor para la vista previa -->
                                 <div id="reportPreviewContainerIndividual">
                                     <!-- Aquí se carga el selector y la tabla editable -->
+                                </div>
+                            </div>
+
+                            <!-- Configuración Cliente Soporte -->
+                            <div id="cliente-soporte-config" class="report-config" style="display: none;">
+                                <h3>📞 Configuración - Cliente Soporte</h3>
+                                <div class="config-form">
+                                    <div class="form-group">
+                                        <label>Información:</label>
+                                        <p class="config-info">Este reporte muestra los servicios de soporte por módulo para un cliente específico. Primero deberá seleccionar el cliente y luego las horas y tarifas serán editables.</p>
+                                    </div>
+                                    
+                                    <div class="form-group" style="text-align: center;">
+                                        <button type="button" class="btn btn-primary" onclick="loadClienteSoporteConfiguration()">
+                                            👤 Seleccionar Cliente
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contenedor para la vista previa -->
+                                <div id="reportPreviewContainerSoporte">
+                                    <!-- Aquí se carga el selector de cliente y la tabla editable -->
                                 </div>
                             </div>
 
@@ -919,6 +946,7 @@
     <script src="../js/utils.js"></script>
     <script src="js/pago-consultor-general.js"></script>
     <script src="js/pago-consultor-individual.js"></script>
+    <script src="js/cliente-soporte.js"></script>
     <script src="admin.js"></script>
 </body>
 </html>

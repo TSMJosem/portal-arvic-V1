@@ -1874,6 +1874,17 @@ function loadSectionData(sectionName) {
             case 'historial-reportes':
                 updateGeneratedReportsList();
                 break;
+            case 'generar-reporte':
+                // Reiniciar configuración de reportes
+                selectedReportType = null;
+                currentReportData = [];
+                tariffConfiguration = {};
+                // Limpiar vista previa del nuevo reporte
+                const previewContainer = document.getElementById('reportPreviewContainer');
+                if (previewContainer) {
+                    previewContainer.innerHTML = '';
+                }
+                break;
             default:
                 console.log(`⚠️ Sección ${sectionName} no tiene carga de datos específica`);
         }
@@ -2654,14 +2665,25 @@ function selectReportType(type) {
     // Ocultar todas las configuraciones
     document.getElementById('actividades-config').style.display = 'none';
     document.getElementById('pagos-config').style.display = 'none';
-    
+    document.getElementById('pago-consultor-general-config').style.display = 'none';
+    document.getElementById('pago-consultor-individual-config').style.display = 'none';
+
     // Mostrar configuración correspondiente
     if (type === 'actividades') {
         document.getElementById('actividades-config').style.display = 'block';
         setupActividadesTimeFilter();
+
     } else if (type === 'pagos') {
         document.getElementById('pagos-config').style.display = 'block';
         setupPagosTimeFilter();
+
+    } else if (type === 'pago_consultor_general') {
+        document.getElementById('pago-consultor-general-config').style.display = 'block';
+        selectedReportType = 'pago_consultor_general';
+
+    } else if (type === 'pago_consultor_individual') {
+        document.getElementById('pago-consultor-individual-config').style.display = 'block';
+        selectedReportType = 'pago_consultor_individual';
     }
 }
 
@@ -3462,17 +3484,6 @@ function generatePagosReport() {
     }
 }
 
-// Funciones exportadas globalmente
-window.selectReportType = selectReportType;
-window.previewActividadesReport = previewActividadesReport;
-window.generateActividadesReport = generateActividadesReport;
-window.loadPagosConfiguration = loadPagosConfiguration;
-window.updateTariffCalculation = updateTariffCalculation;
-window.resetTariffs = resetTariffs;
-window.generatePagosReport = generatePagosReport;
-window.diagnosticAnimationState = diagnosticAnimationState;
-window.waitForAnimationComplete = waitForAnimationComplete;
-
 window.forceUpdateAfterAnimation = () => {
     const section = document.getElementById('crear-asignacion-section');
     if (section) {
@@ -3737,3 +3748,28 @@ window.addEventListener('load', function() {
         
     }, 1000);
 });
+
+// Funciones exportadas globalmente
+window.selectReportType = selectReportType;
+window.previewActividadesReport = previewActividadesReport;
+window.generateActividadesReport = generateActividadesReport;
+window.loadPagosConfiguration = loadPagosConfiguration;
+window.updateTariffCalculation = updateTariffCalculation;
+window.resetTariffs = resetTariffs;
+window.generatePagosReport = generatePagosReport;
+window.diagnosticAnimationState = diagnosticAnimationState;
+window.waitForAnimationComplete = waitForAnimationComplete;
+
+// Funciones del nuevo reporte
+window.loadPagosGeneralConfiguration = loadPagosGeneralConfiguration;
+window.generatePagosGeneralReport = generatePagosGeneralReport;
+window.updatePagosGeneralRow = updatePagosGeneralRow;
+window.resetPagosGeneralData = resetPagosGeneralData;
+
+// Funciones del reporte individual
+window.loadPagosIndividualConfiguration = loadPagosIndividualConfiguration;
+window.generatePagosIndividualReport = generatePagosIndividualReport;
+window.updatePagosIndividualRow = updatePagosIndividualRow;
+window.resetPagosIndividualData = resetPagosIndividualData;
+window.showConsultorSelector = showConsultorSelector;
+window.onConsultorSelected = onConsultorSelected;

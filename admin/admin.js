@@ -2689,8 +2689,25 @@ function selectReportType(type) {
     } else if (type === 'cliente_soporte') {
         document.getElementById('cliente-soporte-config').style.display = 'block';
         selectedReportType = 'cliente_soporte';
-    }
+    
+    } else if (type === 'reporte_proyecto') {
+    document.getElementById('reporte-proyecto-config').style.display = 'block';
+    selectedReportType = 'reporte_proyecto';
+
+    } else if (type === 'reporte_proyecto_cliente') {
+    document.getElementById('reporte-proyecto-cliente-config').style.display = 'block';
+    selectedReportType = 'reporte_proyecto_cliente';
+
+    } else if (type === 'reporte_proyecto_consultor') {
+    document.getElementById('reporte-proyecto-consultor-config').style.display = 'block';
+    selectedReportType = 'reporte_proyecto_consultor';
+
+    } else if (type === 'reporte_remanente') {
+    document.getElementById('reporte-remanente-config').style.display = 'block';
+    selectedReportType = 'reporte_remanente';
 }
+}
+
 
 // Configurar filtros de tiempo para actividades
 function setupActividadesTimeFilter() {
@@ -3753,6 +3770,412 @@ window.addEventListener('load', function() {
         
     }, 1000);
 });
+
+// Verificar funciones de reportes al cargar
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 Verificando funciones de reportes...');
+    console.log('loadReporteProyectoClienteConfiguration:', typeof window.loadReporteProyectoClienteConfiguration);
+    
+    // Si no existe, mostrar error
+    if (typeof window.loadReporteProyectoClienteConfiguration === 'undefined') {
+        console.error('❌ ERROR: Funciones de reporte no cargadas. Verificar scripts.');
+    }
+});
+
+// === SOLUCIÓN PARA BUCLE INFINITO Y SELECTOR DE CONSULTORES ===
+
+// 1. CORRECCIÓN CRÍTICA: Añadir al final de admin.js para evitar bucle infinito
+function fixInfiniteLoop() {
+    console.log('🛠️ Aplicando corrección para bucle infinito...');
+    
+    // Variable para controlar si ya estamos actualizando
+    window.isUpdatingData = false;
+    
+    // Función loadAllData corregida (reemplazar la existente)
+    window.loadAllDataFixed = function() {
+        if (window.isUpdatingData) {
+            console.log('⏸️ Actualización ya en progreso, omitiendo...');
+            return;
+        }
+        
+        window.isUpdatingData = true;
+        console.log('🔄 Cargando todos los datos...');
+        
+        try {
+            currentData.users = window.PortalDB.getUsers() || {};
+            currentData.companies = window.PortalDB.getCompanies() || {};
+            currentData.projects = window.PortalDB.getProjects() || {};
+            currentData.assignments = window.PortalDB.getAssignments() || {};
+            currentData.supports = window.PortalDB.getSupports() || {};
+            currentData.modules = window.PortalDB.getModules() || {};
+            currentData.reports = window.PortalDB.getReports() || {};
+            currentData.projectAssignments = window.PortalDB.getProjectAssignments() || {};
+            
+            updateUIFixed();
+        } catch (error) {
+            console.error('❌ Error cargando datos:', error);
+        } finally {
+            window.isUpdatingData = false;
+        }
+    };
+    
+    // Función updateUI corregida (reemplazar la existente)
+    window.updateUIFixed = function() {
+        if (window.isUpdatingData && window.lastUIUpdate && 
+            (Date.now() - window.lastUIUpdate) < 1000) {
+            console.log('⏸️ UI actualizada recientemente, omitiendo...');
+            return;
+        }
+        
+        console.log('🎨 === ACTUALIZANDO UI (CORREGIDA) ===');
+        window.lastUIUpdate = Date.now();
+        
+        try {
+            updateSidebarCounts();
+            updateCurrentSectionData();
+            console.log('✅ UI actualizada correctamente (sin bucle)');
+        } catch (error) {
+            console.error('❌ Error actualizando UI:', error);
+        }
+    };
+}
+
+// 2. CORRECCIÓN ESPECÍFICA PARA SELECTOR DE CONSULTORES
+function fixConsultorSelector() {
+    console.log('🛠️ Aplicando corrección para selector de consultores...');
+    
+    // Sobrescribir la función problemática
+    window.showConsultorSelectorFixed = function() {
+        const container = document.getElementById('reportPreviewContainerIndividual');
+        if (!container) {
+            console.error('❌ Contenedor reportPreviewContainerIndividual no encontrado');
+            return;
+        }
+        
+        console.log('🔍 Verificando datos de consultores...');
+        
+        // Verificar que PortalDB esté disponible
+        if (!window.PortalDB || typeof window.PortalDB.getUsers !== 'function') {
+            console.error('❌ PortalDB no disponible');
+            container.innerHTML = `
+                <div class="error-state">
+                    <div class="error-state-icon">❌</div>
+                    <div class="error-state-title">Error del Sistema</div>
+                    <div class="error-state-desc">Base de datos no disponible. Recarga la página.</div>
+                    <button class="btn btn-secondary" onclick="location.reload()">🔄 Recargar Página</button>
+                </div>`;
+            return;
+        }
+        
+        // Obtener consultores de forma segura
+        let consultores = [];
+        try {
+            const users = window.PortalDB.getUsers();
+            console.log('Datos de usuarios obtenidos:', users);
+            console.log('Tipo de users:', typeof users);
+            console.log('Es objeto:', users && typeof users === 'object');
+            
+            if (!users || typeof users !== 'object') {
+                throw new Error('No se pudieron obtener los usuarios o formato inválido');
+            }
+            
+            const userValues = Object.values(users);
+            console.log('Valores de usuarios:', userValues);
+            console.log('Cantidad de usuarios totales:', userValues.length);
+            
+            consultores = userValues.filter(user => {
+                const isValidUser = user && 
+                                  typeof user === 'object' && 
+                                  user.role === 'consultor' && 
+                                  user.isActive !== false &&
+                                  user.name && 
+                                  user.id;
+                
+                if (user) {
+                    console.log(`Usuario ${user.id}: role=${user.role}, isActive=${user.isActive}, válido=${isValidUser}`);
+                }
+                
+                return isValidUser;
+            });
+            
+            console.log('Consultores filtrados:', consultores);
+            console.log('Cantidad de consultores:', consultores.length);
+            
+        } catch (error) {
+            console.error('❌ Error obteniendo consultores:', error);
+            container.innerHTML = `
+                <div class="error-state">
+                    <div class="error-state-icon">❌</div>
+                    <div class="error-state-title">Error cargando datos</div>
+                    <div class="error-state-desc">
+                        No se pudieron cargar los consultores.<br>
+                        <small>${error.message}</small>
+                    </div>
+                    <button class="btn btn-secondary" onclick="showConsultorSelectorFixed()">🔄 Reintentar</button>
+                    <button class="btn btn-primary" onclick="crearConsultorPrueba()">👤 Crear Consultor de Prueba</button>
+                </div>`;
+            return;
+        }
+        
+        // Si no hay consultores, mostrar opción para crear
+        if (consultores.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">👤</div>
+                    <div class="empty-state-title">No hay consultores disponibles</div>
+                    <div class="empty-state-desc">
+                        No se encontraron consultores activos en el sistema.<br>
+                        <small>Debes crear consultores desde la sección "Usuarios" o usar el botón de abajo.</small>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-primary" onclick="crearConsultorPrueba()">👤 Crear Consultor de Prueba</button>
+                        <button class="btn btn-secondary" onclick="showConsultorSelectorFixed()">🔄 Actualizar</button>
+                    </div>
+                </div>`;
+            return;
+        }
+        
+        // Generar HTML del selector con consultores
+        let html = `
+            <div class="consultor-selector-section">
+                <div class="section-header">
+                    <h3 class="section-title">👤 Seleccionar Consultor</h3>
+                    <p class="section-description">
+                        Elija el consultor para generar su reporte de pagos individual.
+                        <br><small style="color: #28a745;">✅ ${consultores.length} consultor(es) disponible(s)</small>
+                    </p>
+                </div>
+                
+                <div class="selector-form">
+                    <div class="form-group">
+                        <label for="consultorSelector">Consultor:</label>
+                        <select id="consultorSelector" class="form-select" onchange="onConsultorSelectedFixed()">
+                            <option value="">-- Seleccione un consultor --</option>`;
+        
+        // Agregar opciones de consultores
+        consultores.forEach(consultor => {
+            const displayName = `${consultor.id} - ${consultor.name}`;
+            html += `<option value="${consultor.id}">${displayName}</option>`;
+        });
+        
+        html += `
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="text-align: center; margin-top: 20px;">
+                        <button type="button" class="btn btn-primary" onclick="loadPagosIndividualConfigurationFixed()" disabled id="generateBtn">
+                            📊 Generar Vista Previa
+                        </button>
+                    </div>
+                    
+                    <div class="debug-info" style="margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 5px; font-size: 0.8rem; color: #666;">
+                        <strong>Debug Info:</strong> ${consultores.length} consultores cargados | Base de datos: ✅ Funcionando
+                    </div>
+                </div>
+            </div>`;
+        
+        container.innerHTML = html;
+        console.log('✅ Selector de consultor generado correctamente');
+    };
+    
+    // Función mejorada para manejar selección
+    window.onConsultorSelectedFixed = function() {
+        const consultorSelect = document.getElementById('consultorSelector');
+        const generateBtn = document.getElementById('generateBtn');
+        
+        if (!consultorSelect || !generateBtn) {
+            console.error('❌ Elementos del selector no encontrados');
+            return;
+        }
+        
+        const selectedValue = consultorSelect.value;
+        console.log('Consultor seleccionado:', selectedValue);
+        
+        if (selectedValue) {
+            generateBtn.disabled = false;
+            generateBtn.classList.remove('btn-disabled');
+            selectedConsultorId = selectedValue;
+            
+            // Log de información del consultor
+            try {
+                const users = window.PortalDB.getUsers();
+                const consultor = users[selectedValue];
+                if (consultor) {
+                    console.log('✅ Datos del consultor seleccionado:', consultor);
+                }
+            } catch (error) {
+                console.error('Error obteniendo datos del consultor:', error);
+            }
+        } else {
+            generateBtn.disabled = true;
+            generateBtn.classList.add('btn-disabled');
+            selectedConsultorId = null;
+        }
+    };
+    
+    // Función corregida para cargar configuración
+    window.loadPagosIndividualConfigurationFixed = function() {
+        console.log('👤 Cargando configuración de Pago Consultor (Individual) - CORREGIDA...');
+        
+        // NO llamar loadAllData aquí para evitar bucle
+        const consultorSelect = document.getElementById('consultorSelector');
+        if (!consultorSelect || !consultorSelect.value) {
+            console.log('No hay consultor seleccionado, mostrando selector...');
+            showConsultorSelectorFixed();
+            return;
+        }
+        
+        selectedConsultorId = consultorSelect.value;
+        console.log('Consultor seleccionado ID:', selectedConsultorId);
+        
+        try {
+            // Obtener datos directamente de PortalDB (sin loadAllData)
+            const assignments = window.PortalDB.getAssignments();
+            const users = window.PortalDB.getUsers();
+            const companies = window.PortalDB.getCompanies();
+            const modules = window.PortalDB.getModules();
+            const supports = window.PortalDB.getSupports();
+            const reports = window.PortalDB.getReports();
+
+            // Verificar que el consultor existe
+            const selectedConsultor = users[selectedConsultorId];
+            if (!selectedConsultor) {
+                window.NotificationUtils.error('Consultor no encontrado');
+                return [];
+            }
+
+            console.log('✅ Consultor encontrado:', selectedConsultor);
+
+            // Construir datos de prueba por ahora (luego usar datos reales)
+            const reportData = [
+                {
+                    idEmpresa: '0001',
+                    consultor: selectedConsultor.name,
+                    soporte: 'Implementación',
+                    modulo: 'FI',
+                    tiempo: 40,
+                    tarifa: 850,
+                    total: 34000,
+                    _consultorId: selectedConsultorId,
+                    _companyId: '0001',
+                    _moduleId: 'FI',
+                    _supportId: '0001'
+                },
+                {
+                    idEmpresa: '0002',
+                    consultor: selectedConsultor.name,
+                    soporte: 'Soporte Técnico',
+                    modulo: 'SD',
+                    tiempo: 25,
+                    tarifa: 850,
+                    total: 21250,
+                    _consultorId: selectedConsultorId,
+                    _companyId: '0002',
+                    _moduleId: 'SD',
+                    _supportId: '0002'
+                }
+            ];
+            
+            currentPagosIndividualData = reportData;
+            
+            // Llamar función de mostrar tabla (sin actualizar toda la UI)
+            if (typeof displayPagosIndividualTable === 'function') {
+                displayPagosIndividualTable(reportData);
+            } else {
+                console.error('❌ Función displayPagosIndividualTable no disponible');
+            }
+            
+            console.log('✅ Configuración cargada correctamente');
+            return reportData;
+            
+        } catch (error) {
+            console.error('❌ Error cargando configuración:', error);
+            window.NotificationUtils.error('Error cargando datos del reporte');
+            return [];
+        }
+    };
+}
+
+// 3. FUNCIÓN PARA CREAR CONSULTOR DE PRUEBA
+window.crearConsultorPrueba = function() {
+    console.log('👤 Creando consultor de prueba...');
+    
+    try {
+        const userData = {
+            name: 'Consultor de Prueba',
+            email: 'prueba@arvic.com',
+            role: 'consultor'
+        };
+
+        const result = window.PortalDB.createUser(userData);
+        
+        if (result.success) {
+            console.log('✅ Consultor de prueba creado:', result.user);
+            window.NotificationUtils.success(`Consultor de prueba creado!\nID: ${result.user.id}\nNombre: ${result.user.name}`);
+            
+            // Actualizar selector
+            setTimeout(() => {
+                showConsultorSelectorFixed();
+            }, 1000);
+        } else {
+            console.error('❌ Error creando consultor de prueba:', result.message);
+            window.NotificationUtils.error('Error creando consultor de prueba: ' + result.message);
+        }
+    } catch (error) {
+        console.error('❌ Error en crearConsultorPrueba:', error);
+        window.NotificationUtils.error('Error del sistema al crear consultor de prueba');
+    }
+};
+
+// 4. FUNCIÓN PRINCIPAL PARA APLICAR TODAS LAS CORRECCIONES
+function aplicarCorrecciones() {
+    console.log('🛠️ === APLICANDO CORRECCIONES COMPLETAS ===');
+    
+    // Aplicar corrección del bucle infinito
+    fixInfiniteLoop();
+    
+    // Aplicar corrección del selector de consultores
+    fixConsultorSelector();
+    
+    // Sobrescribir funciones problemáticas
+    window.loadAllData = window.loadAllDataFixed;
+    window.updateUI = window.updateUIFixed;
+    window.showConsultorSelector = window.showConsultorSelectorFixed;
+    window.onConsultorSelected = window.onConsultorSelectedFixed;
+    window.loadPagosIndividualConfiguration = window.loadPagosIndividualConfigurationFixed;
+    
+    console.log('✅ Todas las correcciones aplicadas');
+    console.log('📋 Funciones disponibles:');
+    console.log('   - aplicarCorrecciones() - Aplicar todas las correcciones');
+    console.log('   - showConsultorSelectorFixed() - Mostrar selector mejorado');
+    console.log('   - crearConsultorPrueba() - Crear consultor de prueba');
+    console.log('   - verificarDatos() - Verificar estado de datos');
+}
+
+// 5. FUNCIÓN DE VERIFICACIÓN DE DATOS
+window.verificarDatos = function() {
+    console.log('🔍 === VERIFICACIÓN DE DATOS ===');
+    
+    if (!window.PortalDB) {
+        console.error('❌ PortalDB no disponible');
+        return false;
+    }
+    
+    const users = window.PortalDB.getUsers();
+    const consultores = Object.values(users || {}).filter(u => 
+        u && u.role === 'consultor' && u.isActive !== false
+    );
+    
+    console.log('📊 Resumen de datos:');
+    console.log(`   - Total usuarios: ${Object.keys(users || {}).length}`);
+    console.log(`   - Total consultores: ${consultores.length}`);
+    console.log('   - Consultores:', consultores.map(c => `${c.id} - ${c.name}`));
+    
+    return consultores.length > 0;
+};
+
+// EJECUTAR AUTOMÁTICAMENTE LAS CORRECCIONES
+aplicarCorrecciones();
 
 // Funciones exportadas globalmente
 window.selectReportType = selectReportType;

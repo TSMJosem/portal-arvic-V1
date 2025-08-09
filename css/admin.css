@@ -1018,63 +1018,9 @@
     margin-bottom: var(--spacing-2xl);
 }
 
-.report-type-selector h3 {
-    color: var(--gray-900);
-    margin-bottom: var(--spacing-xl);
-    font-size: 1.25rem;
-    font-weight: 600;
-    text-align: center;
-}
-
-.report-type-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: var(--spacing-xl);
-    margin-bottom: var(--spacing-2xl);
-}
-
-.report-type-card {
-    background: white;
-    border: 2px solid var(--gray-200);
-    border-radius: var(--border-radius-xl);
-    padding: var(--spacing-2xl);
-    text-align: center;
-    cursor: pointer;
-    transition: var(--transition-normal);
-    position: relative;
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-}
-
-.report-type-card:hover {
-    border-color: var(--primary-color);
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
-}
-
-.report-type-card.selected {
-    border-color: var(--success-color);
-    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-    box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
-}
-
 .report-type-icon {
     font-size: 3rem;
     margin-bottom: var(--spacing-lg);
-}
-
-.report-type-card h4 {
-    color: var(--gray-900);
-    margin-bottom: var(--spacing-sm);
-    font-size: 1.125rem;
-    font-weight: 600;
-}
-
-.report-type-card p {
-    color: var(--gray-600);
-    font-size: 0.875rem;
-    line-height: 1.5;
-    margin: 0;
 }
 
 /* Configuración de reportes */
@@ -1600,6 +1546,133 @@
     background: var(--gray-50);
     overflow-y: auto;
     height: calc(100vh - 80px);
+}
+
+/* === ESTILOS PARA SELECTOR DE REPORTES CON DROPDOWN === */
+
+/* Contenedor principal del selector */
+.report-type-selector {
+    text-align: center;
+    margin-bottom: var(--spacing-xl, 30px);
+    padding: var(--spacing-xl, 25px);
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+}
+
+.report-type-selector h3 {
+    margin-bottom: var(--spacing-lg, 20px);
+    color: var(--gray-900, #1e293b);
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+/* Estilos para el form-group del dropdown */
+.report-type-selector .form-group {
+    margin-bottom: 0;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.report-type-selector .form-group label {
+    display: block;
+    margin-bottom: var(--spacing-sm, 8px);
+    font-weight: 600;
+    color: var(--gray-700, #374151);
+    font-size: 1rem;
+    text-align: left;
+}
+
+/* Estilos para el dropdown select */
+.report-type-selector .form-control {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--gray-300, #d1d5db);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    background: white;
+    color: var(--gray-900, #1f2937);
+}
+
+.report-type-selector .form-control:focus {
+    outline: none;
+    border-color: var(--primary-color, #3b82f6);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.report-type-selector .form-control option {
+    padding: 8px;
+    color: var(--gray-900, #1f2937);
+}
+
+/* Ocultar elementos de tarjetas antiguos si existen */
+.report-type-options,
+.report-type-card {
+    display: none !important;
+}
+
+/* === ESTILOS PARA REPORTE REMANENTE SIMPLIFICADO === */
+
+/* Estilos específicos para el selector de mes del reporte remanente */
+#remanenteMonthSelector {
+    font-size: 1rem;
+    text-align: center;
+    color: var(--gray-900, #1f2937);
+}
+
+#remanenteMonthSelector:focus {
+    border-color: var(--accent-color, #dc2626);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* Botón específico para reporte remanente */
+#generateRemanenteSimpleBtn {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    border-color: #dc2626;
+}
+
+#generateRemanenteSimpleBtn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
+}
+
+#generateRemanenteSimpleBtn.btn-disabled {
+    background: var(--gray-400, #9ca3af);
+    border-color: var(--gray-400, #9ca3af);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Contenedor de vista previa del reporte remanente */
+#reportPreviewContainerRemanenteSimple {
+    margin-top: var(--spacing-xl, 30px);
+}
+
+/* Responsive para el reporte remanente */
+@media (max-width: 768px) {
+    .report-config #remanenteMonthSelector {
+        font-size: 0.9rem;
+    }
+}
+
+/* Responsive para el dropdown */
+@media (max-width: 768px) {
+    .report-type-selector {
+        padding: var(--spacing-lg, 15px);
+        margin-bottom: var(--spacing-lg, 20px);
+    }
+    
+    .report-type-selector .form-group {
+        max-width: 100% !important;
+    }
+    
+    .report-type-selector h3 {
+        font-size: 1.125rem;
+    }
 }
 
 /* Responsive */

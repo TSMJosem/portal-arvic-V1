@@ -69,15 +69,8 @@ function loadReporteProyectoConsultorConfiguration() {
             
             if (!company || !module) return;
             
-            // Obtener reportes filtrados por fecha
-            const filteredReports = getFilteredReportsByDate(
-                'reporteProyectoConsultorTimeFilter',
-                'reporteProyectoConsultorStartDate', 
-                'reporteProyectoConsultorEndDate'
-            );
-
             // Buscar reportes aprobados para esta asignación específica
-            const consultorReports = filteredReports.filter(report =>
+            const consultorReports = Object.values(reports).filter(report => 
                 report.consultorId === assignment.consultorId &&
                 report.companyId === assignment.companyId &&
                 report.moduleId === assignment.moduleId &&
@@ -168,128 +161,85 @@ function loadReporteProyectoConsultorConfiguration() {
 }
 
 // === MOSTRAR SELECTOR DE CONSULTOR ===
-function showConsultorSelectorProyecto() {  // ✅ CAMBIO DE NOMBRE
-    console.log('👤 === INICIANDO showConsultorSelectorProyecto ===');
-    
+function showConsultorSelector() {
     const container = document.getElementById('reportPreviewContainerProyectoConsultor');
     if (!container) {
-        console.error('❌ Contenedor reportPreviewContainerProyectoConsultor no encontrado');
+        console.error('❌ Contenedor no encontrado');
         return;
     }
-
-    console.log('✅ Contenedor encontrado, limpiando...');
-    container.innerHTML = '';
     
-    try {
-        const users = window.PortalDB.getUsers();
-        if (!users) {
-            console.error('❌ No se pudieron obtener usuarios');
-            return;
-        }
-        
-        const consultores = Object.values(users).filter(user => 
-            user && user.role === 'consultor' && user.isActive !== false
-        );
-        
-        console.log('✅ Consultores encontrados:', consultores.length);
-        
-        if (consultores.length === 0) {
-            container.innerHTML = `
-                <div class="alert alert-warning" style="background: #fef3c7; border: 1px solid #f59e0b; padding: 20px; border-radius: 8px; text-align: center;">
-                    <h4>⚠️ No hay consultores disponibles</h4>
-                    <p>No se encontraron consultores activos en el sistema.</p>
-                </div>
-            `;
-            return;
-        }
-
-        const selectorHTML = `
-            <div class="consultant-selector-container" style="background: white; padding: 25px; border-radius: 12px; border: 2px solid #e5e7eb; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                <h3 style="text-align: center; color: #1f2937; margin-bottom: 25px; font-size: 1.25rem;">👤 Seleccionar Consultor</h3>
-                <div class="form-group" style="max-width: 400px; margin: 0 auto 20px;">
-                    <label for="consultorSelector" style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Consultor:</label>
-                    <select id="consultorSelector" class="form-control" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 1rem;" onchange="onConsultorSelectedForProject()">
+    const users = window.PortalDB.getUsers();
+    const consultores = Object.values(users).filter(user => 
+        user.role === 'consultor' && user.isActive !== false
+    );
+    
+    if (consultores.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">👤</div>
+                <div class="empty-state-title">No hay consultores</div>
+                <div class="empty-state-desc">Registre al menos un consultor para generar este reporte</div>
+            </div>
+        `;
+        return;
+    }
+    
+    let consultorOptions = '';
+    consultores.forEach(consultor => {
+        consultorOptions += `<option value="${consultor.id}">${consultor.name} (ID: ${consultor.id})</option>`;
+    });
+    
+    container.innerHTML = `
+        <div class="report-preview-section">
+            <div class="section-header">
+                <h3 class="section-title">👤 Seleccionar Consultor y Proyecto</h3>
+                <p class="section-description">Elija el consultor y el proyecto para generar el reporte personalizado.</p>
+            </div>
+            
+            <div class="selector-grid">
+                <div class="form-group">
+                    <label for="consultorSelector">Consultor:</label>
+                    <select id="consultorSelector" class="form-control" onchange="onConsultorSelectedConsultor()">
                         <option value="">-- Seleccione un consultor --</option>
-                        ${consultores.map(consultor => 
-                            `<option value="${consultor.id}">${consultor.name}</option>`
-                        ).join('')}
+                        ${consultorOptions}
                     </select>
                 </div>
                 
-                <div id="projectSelectorContainer" style="display: none; max-width: 400px; margin: 0 auto;">
-                    <div class="form-group">
-                        <label for="projectSelectorConsultor" style="display: block; margin-bottom: 8px; font-weight: 600; color: #374151;">Proyecto:</label>
-                        <select id="projectSelectorConsultor" class="form-control" style="width: 100%; padding: 12px; border: 2px solid #d1d5db; border-radius: 8px; font-size: 1rem;" onchange="onProjectSelectedForConsultor()">
-                            <option value="">-- Primero seleccione consultor --</option>
-                        </select>
-                    </div>
+                <div class="form-group">
+                    <label for="projectSelectorConsultor">Proyecto:</label>
+                    <select id="projectSelectorConsultor" class="form-control" onchange="onProjectSelectedConsultor()" disabled>
+                        <option value="">-- Primero seleccione consultor --</option>
+                    </select>
                 </div>
             </div>
-        `;
-        
-        console.log('✅ Insertando HTML...');
-        container.innerHTML = selectorHTML;
-        
-        // Forzar estilos para asegurar visibilidad
-        container.style.display = 'block';
-        container.style.visibility = 'visible';
-        container.style.opacity = '1';
-        container.style.minHeight = '200px';
-        
-        // Verificar que se insertó correctamente
-        setTimeout(() => {
-            const consultorSelect = document.getElementById('consultorSelector');
-            if (consultorSelect) {
-                console.log('✅ Selector insertado correctamente - Opciones:', consultorSelect.options.length);
-                console.log('✅ Función onclick actual:', consultorSelect.getAttribute('onchange'));
-            } else {
-                console.error('❌ Selector no encontrado después de insertar');
-            }
-        }, 100);
-        
-    } catch (error) {
-        console.error('❌ Error en showConsultorSelector:', error);
-        container.innerHTML = `
-            <div style="background: #fee2e2; border: 1px solid #ef4444; padding: 20px; border-radius: 8px; color: #991b1b; text-align: center;">
-                <h4>❌ Error al cargar selector</h4>
-                <p>Error: ${error.message}</p>
-                <button onclick="location.reload()" style="background: #dc2626; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer;">🔄 Recargar Página</button>
+            
+            <div class="form-group" style="text-align: center; margin-top: 20px;">
+                <button type="button" class="btn btn-primary" onclick="loadReporteProyectoConsultorConfiguration()" id="generateConsultorReportBtn" disabled>
+                    👤 Generar Reporte Consultor
+                </button>
             </div>
-        `;
-    }
+        </div>
+    `;
 }
-
-// === PROTECCIÓN CONTRA INTERFERENCIAS ===
-function protectConsultorSelector() {
-    const consultorSelect = document.getElementById('consultorSelector');
-    if (consultorSelect && consultorSelect.getAttribute('onchange') !== 'onConsultorSelectedForProject()') {
-        console.log('🛡️ Protegiendo selector de consultor contra modificaciones externas');
-        consultorSelect.setAttribute('onchange', 'onConsultorSelectedForProject()');
-    }
-}
-
-// Ejecutar protección cada 2 segundos
-setInterval(protectConsultorSelector, 2000);
 
 // === MANEJAR SELECCIÓN DE CONSULTOR ===
-function onConsultorSelectedForProject() {
+function onConsultorSelectedConsultor() {
     const consultorSelect = document.getElementById('consultorSelector');
-    const projectContainer = document.getElementById('projectSelectorContainer');
     const projectSelect = document.getElementById('projectSelectorConsultor');
+    const generateBtn = document.getElementById('generateConsultorReportBtn');
     
-    if (!consultorSelect || !consultorSelect.value) {
-        if (projectContainer) projectContainer.style.display = 'none';
+    selectedConsultorIdConsultor = consultorSelect.value;
+    
+    if (!selectedConsultorIdConsultor) {
+        projectSelect.disabled = true;
+        projectSelect.innerHTML = '<option value="">-- Primero seleccione consultor --</option>';
+        generateBtn.disabled = true;
         return;
     }
     
-    selectedConsultorIdConsultor = consultorSelect.value;
-    console.log('Consultor seleccionado:', selectedConsultorIdConsultor);
-    
-    // Mostrar selector de proyectos
-    if (projectContainer) {
-        projectContainer.style.display = 'block';
-        loadConsultorProjects();
-    }
+    // Cargar proyectos del consultor
+    loadConsultorProjects();
+    generateBtn.disabled = false;
 }
 
 // === CARGAR PROYECTOS DEL CONSULTOR ===
@@ -310,6 +260,7 @@ function loadConsultorProjects() {
     
     // Llenar dropdown de proyectos
     projectSelect.innerHTML = '<option value="">-- Seleccione un proyecto --</option>';
+    projectSelect.disabled = false;
     
     consultorProjectIds.forEach(projectId => {
         const project = projects[projectId];
@@ -317,23 +268,12 @@ function loadConsultorProjects() {
             projectSelect.innerHTML += `<option value="${projectId}">${project.name}</option>`;
         }
     });
-    
-    console.log(`Proyectos cargados para consultor ${selectedConsultorIdConsultor}:`, consultorProjectIds.size);
 }
 
 // === MANEJAR SELECCIÓN DE PROYECTO ===
-function onProjectSelectedForConsultor() {
+function onProjectSelectedConsultor() {
     const projectSelect = document.getElementById('projectSelectorConsultor');
-    
-    if (!projectSelect || !projectSelect.value) {
-        return;
-    }
-    
-    selectedProjectIdConsultor = projectSelect.value;
-    console.log('Proyecto seleccionado:', selectedProjectIdConsultor);
-    
-    // Cargar configuración del reporte
-    loadReporteProyectoConsultorConfiguration();
+    selectedProjectIdConsultor = projectSelect.value || null;
 }
 
 // === MOSTRAR TABLA EDITABLE ===
@@ -665,38 +605,6 @@ function addReporteProyectoConsultorStyles() {
     document.head.insertAdjacentHTML('beforeend', styles);
 }
 
-// === INICIALIZACIÓN DEL REPORTE ===
-function initReporteProyectoConsultor() {
-    console.log('🔄 Inicializando Reporte Proyecto (Consultor)...');
-    
-    // Limpiar contenedor si existe
-    const container = document.getElementById('reportPreviewContainerProyectoConsultor');
-    if (container) {
-        container.innerHTML = '';
-    }
-    
-    // Resetear variables globales
-    selectedConsultorIdConsultor = null;
-    selectedProjectIdConsultor = null;
-    currentReporteProyectoConsultorData = [];
-    
-    console.log('✅ Reporte Proyecto (Consultor) listo para uso');
-}
-
-// === FUNCIÓN PRINCIPAL DE CARGA (para compatibilidad) ===
-function loadReporteProyectoConsultorConfigurationMain() {
-    console.log('🚀 Iniciando configuración principal...');
-    
-    // Si no hay selecciones, mostrar selector
-    if (!selectedConsultorIdConsultor || !selectedProjectIdConsultor) {
-        showConsultorSelector();
-        return;
-    }
-    
-    // Si ya hay selecciones, cargar configuración normal
-    loadReporteProyectoConsultorConfiguration();
-}
-
 // === EXPORTAR FUNCIONES GLOBALMENTE ===
 if (typeof window !== 'undefined') {
     window.ReporteProyectoConsultorReport = {
@@ -705,20 +613,18 @@ if (typeof window !== 'undefined') {
         reset: resetReporteProyectoConsultorData,
         updateRow: updateReporteProyectoConsultorRow,
         showSelector: showConsultorSelector,
-        onConsultorSelected: onConsultorSelectedForProject,  // ✅ CAMBIADO
-        onProjectSelected: onProjectSelectedForConsultor,    // ✅ CAMBIADO
+        onConsultorSelected: onConsultorSelectedConsultor,
+        onProjectSelected: onProjectSelectedConsultor,
         calculateTotalHours: calculateReporteProyectoConsultorTotalHours,
         calculateGrandTotal: calculateReporteProyectoConsultorGrandTotal
     };
 }
 
 // Exportar funciones inmediatamente
-window.showConsultorSelectorProyecto = showConsultorSelectorProyecto;
-window.onConsultorSelectedForProject = onConsultorSelectedForProject;
-window.onProjectSelectedForConsultor = onProjectSelectedForConsultor;
+window.showConsultorSelector = showConsultorSelector;
+window.onConsultorSelectedConsultor = onConsultorSelectedConsultor;
+window.onProjectSelectedConsultor = onProjectSelectedConsultor;
 window.loadReporteProyectoConsultorConfiguration = loadReporteProyectoConsultorConfiguration;
-window.loadReporteProyectoConsultorConfigurationMain = loadReporteProyectoConsultorConfigurationMain; // NUEVA
-window.initReporteProyectoConsultor = initReporteProyectoConsultor; // NUEVA
 window.updateReporteProyectoConsultorRow = updateReporteProyectoConsultorRow;
 window.resetReporteProyectoConsultorData = resetReporteProyectoConsultorData;
 window.generateReporteProyectoConsultorReport = generateReporteProyectoConsultorReport;

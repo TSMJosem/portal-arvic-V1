@@ -596,24 +596,6 @@
                                         <label>Información:</label>
                                         <p class="config-info">Este reporte consolida los pagos de todos los consultores en todas las empresas. Las horas y tarifas son editables antes de generar el Excel.</p>
                                     </div>
-
-                                    <div class="form-group">
-                                        <label for="pagosGeneralTimeFilter">Período:</label>
-                                        <select id="pagosGeneralTimeFilter">
-                                            <option value="week">Esta Semana</option>
-                                            <option value="month">Este Mes</option>
-                                            <option value="custom">Rango Personalizado</option>
-                                            <option value="all">Todas las Fechas</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group" id="pagosGeneralCustomDateRange" style="display: none;">
-                                        <label for="pagosGeneralStartDate">Fecha Inicio:</label>
-                                        <input type="date" id="pagosGeneralStartDate">
-                                        
-                                        <label for="pagosGeneralEndDate">Fecha Fin:</label>
-                                        <input type="date" id="pagosGeneralEndDate">
-                                    </div>
                                     
                                     <div class="form-group" style="text-align: center;">
                                         <button type="button" class="btn btn-primary" onclick="loadPagosGeneralConfiguration()">
@@ -636,27 +618,9 @@
                                         <label>Información:</label>
                                         <p class="config-info">Este reporte muestra los pagos de un consultor específico. Primero deberá seleccionar el consultor y luego las horas y tarifas serán editables.</p>
                                     </div>
-
-                                    <div class="form-group">
-                                        <label for="pagosIndividualTimeFilter">Período:</label>
-                                        <select id="pagosIndividualTimeFilter">
-                                            <option value="week">Esta Semana</option>
-                                            <option value="month">Este Mes</option>
-                                            <option value="custom">Rango Personalizado</option>
-                                            <option value="all">Todas las Fechas</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group" id="pagosIndividualCustomDateRange" style="display: none;">
-                                        <label for="pagosIndividualStartDate">Fecha Inicio:</label>
-                                        <input type="date" id="pagosIndividualStartDate">
-                                        
-                                        <label for="pagosIndividualEndDate">Fecha Fin:</label>
-                                        <input type="date" id="pagosIndividualEndDate">
-                                    </div>
                                     
                                     <div class="form-group" style="text-align: center;">
-                                       <button type="button" class="btn btn-primary" onclick="showConsultorSelectorIndividual()">
+                                        <button type="button" class="btn btn-primary" onclick="loadPagosIndividualConfiguration()">
                                             👤 Seleccionar Consultor
                                         </button>
                                     </div>
@@ -675,24 +639,6 @@
                                     <div class="form-group">
                                         <label>Información:</label>
                                         <p class="config-info">Este reporte muestra los servicios de soporte por módulo para un cliente específico. Primero deberá seleccionar el cliente y luego las horas y tarifas serán editables.</p>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label for="clienteSoporteTimeFilter">Período:</label>
-                                        <select id="clienteSoporteTimeFilter">
-                                            <option value="week">Esta Semana</option>
-                                            <option value="month">Este Mes</option>
-                                            <option value="custom">Rango Personalizado</option>
-                                            <option value="all">Todas las Fechas</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group" id="clienteSoporteCustomDateRange" style="display: none;">
-                                        <label for="clienteSoporteStartDate">Fecha Inicio:</label>
-                                        <input type="date" id="clienteSoporteStartDate">
-                                        
-                                        <label for="clienteSoporteEndDate">Fecha Fin:</label>
-                                        <input type="date" id="clienteSoporteEndDate">
                                     </div>
                                     
                                     <div class="form-group" style="text-align: center;">
@@ -716,24 +662,6 @@
                                         <label>Información:</label>
                                         <p class="config-info">Este reporte muestra todos los consultores trabajando en un proyecto específico. Primero deberá seleccionar el proyecto y luego las horas y tarifas serán editables.</p>
                                     </div>
-
-                                    <div class="form-group">
-                                        <label for="reporteProyectoTimeFilter">Período:</label>
-                                        <select id="reporteProyectoTimeFilter">
-                                            <option value="week">Esta Semana</option>
-                                            <option value="month">Este Mes</option>
-                                            <option value="custom">Rango Personalizado</option>
-                                            <option value="all">Todas las Fechas</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group" id="reporteProyectoCustomDateRange" style="display: none;">
-                                        <label for="reporteProyectoStartDate">Fecha Inicio:</label>
-                                        <input type="date" id="reporteProyectoStartDate">
-                                        
-                                        <label for="reporteProyectoEndDate">Fecha Fin:</label>
-                                        <input type="date" id="reporteProyectoEndDate">
-                                    </div>
                                     
                                     <div class="form-group" style="text-align: center;">
                                         <button type="button" class="btn btn-primary" onclick="loadReporteProyectoConfiguration()">
@@ -756,25 +684,6 @@
                                         <label>Información:</label>
                                         <p class="config-info">Este reporte muestra los proyectos trabajados para un cliente específico, agrupados por módulos. Ideal para presentación externa al cliente.</p>
                                     </div>
-
-                                     <div class="form-group">
-                                        <label for="reporteProyectoClienteTimeFilter">Período:</label>
-                                        <select id="reporteProyectoClienteTimeFilter">
-                                            <option value="week">Esta Semana</option>
-                                            <option value="month">Este Mes</option>
-                                            <option value="custom">Rango Personalizado</option>
-                                            <option value="all">Todas las Fechas</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group" id="reporteProyectoClienteCustomDateRange" style="display: none;">
-                                        <label for="reporteProyectoClienteStartDate">Fecha Inicio:</label>
-                                        <input type="date" id="reporteProyectoClienteStartDate">
-                                        
-                                        <label for="reporteProyectoClienteEndDate">Fecha Fin:</label>
-                                        <input type="date" id="reporteProyectoClienteEndDate">
-                                    </div>
-
                                     <div class="form-group" style="text-align: center;">
                                     <button type="button" class="btn btn-primary" onclick="loadReporteProyectoClienteConfiguration()">
                                         🏢 Seleccionar Cliente
@@ -797,27 +706,8 @@
                                         <p class="config-info">Este reporte muestra el trabajo individual de un consultor específico en un proyecto particular. Ideal para evaluaciones de desempeño y reportes personales.</p>
                                     </div>
                                     
-                                    <!-- FILTROS DE FECHA (que ya agregaste) -->
-                                    <div class="form-group">
-                                        <label for="reporteProyectoConsultorTimeFilter">Período:</label>
-                                        <select id="reporteProyectoConsultorTimeFilter">
-                                            <option value="week">Esta Semana</option>
-                                            <option value="month">Este Mes</option>
-                                            <option value="custom">Rango Personalizado</option>
-                                            <option value="all">Todas las Fechas</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group" id="reporteProyectoConsultorCustomDateRange" style="display: none;">
-                                        <label for="reporteProyectoConsultorStartDate">Fecha Inicio:</label>
-                                        <input type="date" id="reporteProyectoConsultorStartDate">
-                                        
-                                        <label for="reporteProyectoConsultorEndDate">Fecha Fin:</label>
-                                        <input type="date" id="reporteProyectoConsultorEndDate">
-                                    </div>
-                                    
                                     <div class="form-group" style="text-align: center;">
-                                        <button type="button" class="btn btn-primary" onclick="showConsultorSelectorProyecto()">
+                                        <button type="button" class="btn btn-primary" onclick="loadReporteProyectoConsultorConfiguration()">
                                             👤 Seleccionar Consultor
                                         </button>
                                     </div>

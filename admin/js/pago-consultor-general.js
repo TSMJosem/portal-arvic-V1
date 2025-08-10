@@ -31,8 +31,15 @@ function loadPagosGeneralConfiguration() {
             
             if (!consultor || !company || !module || !support) return;
             
+            // Obtener reportes filtrados por fecha
+            const filteredReports = getFilteredReportsByDate(
+                'pagosGeneralTimeFilter',
+                'pagosGeneralStartDate', 
+                'pagosGeneralEndDate'
+            );
+
             // Buscar reportes aprobados para esta asignación
-            const consultorReports = Object.values(reports).filter(report => 
+            const consultorReports = filteredReports.filter(report => 
                 report.consultorId === assignment.consultorId &&
                 report.companyId === assignment.companyId &&
                 report.moduleId === assignment.moduleId &&

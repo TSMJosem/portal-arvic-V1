@@ -50,8 +50,15 @@ function loadReporteProyectoConfiguration() {
             
             if (!consultor || !company || !module) return;
             
-            // Buscar reportes aprobados para esta asignación
-            const consultorReports = Object.values(reports).filter(report => 
+            // Obtener reportes filtrados por fecha
+            const filteredReports = getFilteredReportsByDate(
+                'reporteProyectoTimeFilter',
+                'reporteProyectoStartDate', 
+                'reporteProyectoEndDate'
+            );
+
+            // Buscar reportes aprobados para esta asignación específica
+            const consultorReports = filteredReports.filter(report =>
                 report.consultorId === assignment.consultorId &&
                 report.companyId === assignment.companyId &&
                 report.moduleId === assignment.moduleId &&

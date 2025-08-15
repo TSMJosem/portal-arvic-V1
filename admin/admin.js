@@ -3781,62 +3781,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // === SOLUCIÓN PARA BUCLE INFINITO Y SELECTOR DE CONSULTORES ===
 
-// 1. CORRECCIÓN CRÍTICA: Añadir al final de admin.js para evitar bucle infinito
-function fixInfiniteLoop() {
-    console.log('🛠️ Aplicando corrección para bucle infinito...');
-    
-    // Variable para controlar si ya estamos actualizando
-    window.isUpdatingData = false;
-    
-    // Función loadAllData corregida (reemplazar la existente)
-    window.loadAllDataFixed = function() {
-        if (window.isUpdatingData) {
-            console.log('⏸️ Actualización ya en progreso, omitiendo...');
-            return;
-        }
-        
-        window.isUpdatingData = true;
-        console.log('🔄 Cargando todos los datos...');
-        
-        try {
-            currentData.users = window.PortalDB.getUsers() || {};
-            currentData.companies = window.PortalDB.getCompanies() || {};
-            currentData.projects = window.PortalDB.getProjects() || {};
-            currentData.assignments = window.PortalDB.getAssignments() || {};
-            currentData.supports = window.PortalDB.getSupports() || {};
-            currentData.modules = window.PortalDB.getModules() || {};
-            currentData.reports = window.PortalDB.getReports() || {};
-            currentData.projectAssignments = window.PortalDB.getProjectAssignments() || {};
-            
-            updateUIFixed();
-        } catch (error) {
-            console.error('❌ Error cargando datos:', error);
-        } finally {
-            window.isUpdatingData = false;
-        }
-    };
-    
-    // Función updateUI corregida (reemplazar la existente)
-    window.updateUIFixed = function() {
-        if (window.isUpdatingData && window.lastUIUpdate && 
-            (Date.now() - window.lastUIUpdate) < 1000) {
-            console.log('⏸️ UI actualizada recientemente, omitiendo...');
-            return;
-        }
-        
-        console.log('🎨 === ACTUALIZANDO UI (CORREGIDA) ===');
-        window.lastUIUpdate = Date.now();
-        
-        try {
-            updateSidebarCounts();
-            updateCurrentSectionData();
-            console.log('✅ UI actualizada correctamente (sin bucle)');
-        } catch (error) {
-            console.error('❌ Error actualizando UI:', error);
-        }
-    };
-}
-
 // 2. CORRECCIÓN ESPECÍFICA PARA SELECTOR DE CONSULTORES
 function fixConsultorSelector() {
     console.log('🛠️ Aplicando corrección para selector de consultores...');
@@ -4918,6 +4862,10 @@ function fixReportsNavigation() {
             'actividades': {
                 containers: ['reportPreviewContainerActividades'],
                 variables: ['currentActividadesData']
+            },
+            'pagos': {
+                containers: ['reportPreviewContainer', 'pagosConfiguration', 'tariffConfigBody'],
+                variables: ['currentReportData', 'tariffConfiguration']
             }
         };
         
@@ -4928,6 +4876,10 @@ function fixReportsNavigation() {
                 const container = document.getElementById(containerId);
                 if (container) {
                     container.innerHTML = '';
+                    // Si es pagosConfiguration, también ocultarlo
+                    if (containerId === 'pagosConfiguration') {
+                        container.style.display = 'none';
+                    }
                     console.log(`✅ Contenedor ${containerId} limpiado`);
                 }
             });
@@ -5230,8 +5182,8 @@ function solucionPracticaSimple() {
             const container = document.getElementById(containerId);
             if (container && container.innerHTML.length > 50) {
                 const esComentario = container.innerHTML.trim().startsWith('<!--') && 
-                                  !container.innerHTML.includes('<div') && 
-                                  !container.innerHTML.includes('<table');
+                                !container.innerHTML.includes('<div') && 
+                                !container.innerHTML.includes('<table');
                 
                 if (!esComentario) {
                     console.log(`🧹 Limpiando: ${containerId}`);
@@ -5240,6 +5192,32 @@ function solucionPracticaSimple() {
                 }
             }
         });
+
+        // === LIMPIEZA FORZADA PARA REPORTE DE PAGOS ===
+        const pagosConfig = document.getElementById('pagosConfiguration');
+        if (pagosConfig) {
+            console.log('🧹 Limpiando FORZADAMENTE: pagosConfiguration');
+            // NO limpiar innerHTML completo, solo ocultar
+            pagosConfig.style.display = 'none';
+            limpiados++;
+        }
+
+        const tariffBody = document.getElementById('tariffConfigBody');
+        if (tariffBody) {
+            console.log('🧹 Limpiando FORZADAMENTE: tariffConfigBody');
+            tariffBody.innerHTML = '';
+            limpiados++;
+        }
+
+        // Limpiar también los totales
+        const totalHours = document.getElementById('totalHours');
+        const totalAmount = document.getElementById('totalAmount');
+        if (totalHours) {
+            totalHours.textContent = '0';
+        }
+        if (totalAmount) {
+            totalAmount.textContent = '0.00';
+        }
         
         // Limpiar variables
         const variables = [
@@ -5406,6 +5384,62 @@ window.diagnosticoFinalProblema = function() {
     
     mostrarInstruccionesLimpieza();
 };
+
+// 1. CORRECCIÓN CRÍTICA: Añadir al final de admin.js para evitar bucle infinito
+function fixInfiniteLoop() {
+    console.log('🛠️ Aplicando corrección para bucle infinito...');
+    
+    // Variable para controlar si ya estamos actualizando
+    window.isUpdatingData = false;
+    
+    // Función loadAllData corregida (reemplazar la existente)
+    window.loadAllDataFixed = function() {
+        if (window.isUpdatingData) {
+            console.log('⏸️ Actualización ya en progreso, omitiendo...');
+            return;
+        }
+        
+        window.isUpdatingData = true;
+        console.log('🔄 Cargando todos los datos...');
+        
+        try {
+            currentData.users = window.PortalDB.getUsers() || {};
+            currentData.companies = window.PortalDB.getCompanies() || {};
+            currentData.projects = window.PortalDB.getProjects() || {};
+            currentData.assignments = window.PortalDB.getAssignments() || {};
+            currentData.supports = window.PortalDB.getSupports() || {};
+            currentData.modules = window.PortalDB.getModules() || {};
+            currentData.reports = window.PortalDB.getReports() || {};
+            currentData.projectAssignments = window.PortalDB.getProjectAssignments() || {};
+            
+            updateUIFixed();
+        } catch (error) {
+            console.error('❌ Error cargando datos:', error);
+        } finally {
+            window.isUpdatingData = false;
+        }
+    };
+    
+    // Función updateUI corregida (reemplazar la existente)
+    window.updateUIFixed = function() {
+        if (window.isUpdatingData && window.lastUIUpdate && 
+            (Date.now() - window.lastUIUpdate) < 1000) {
+            console.log('⏸️ UI actualizada recientemente, omitiendo...');
+            return;
+        }
+        
+        console.log('🎨 === ACTUALIZANDO UI (CORREGIDA) ===');
+        window.lastUIUpdate = Date.now();
+        
+        try {
+            updateSidebarCounts();
+            updateCurrentSectionData();
+            console.log('✅ UI actualizada correctamente (sin bucle)');
+        } catch (error) {
+            console.error('❌ Error actualizando UI:', error);
+        }
+    };
+}
 
 // === APLICAR SOLUCIÓN PRÁCTICA ===
 solucionPracticaSimple();

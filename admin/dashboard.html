@@ -451,6 +451,7 @@
                                         <option value="">-- Seleccione un tipo de reporte --</option>
                                         <option value="actividades">📊 Reporte de Actividades</option>
                                         <option value="pagos">💰 Pago Consultor General (Proyecto)</option>
+                                        <option value="pago_consultor_proyecto">💼 Pago Consultor (Proyecto) - MODERNIZADO</option>
                                         <option value="pago_consultor_general">🏢 Pago Consultor General (Soporte)</option>
                                         <option value="pago_consultor_individual">👤 Pago Consultor (Soporte)</option>
                                         <option value="cliente_soporte">📞 Cliente Soporte</option>
@@ -607,6 +608,78 @@
                                 <!-- Contenedor para la vista previa -->
                                 <div id="reportPreviewContainer">
                                     <!-- Aquí se carga la tabla editable -->
+                                </div>
+                            </div>
+
+                            <!-- Configuración Pago Consultor Proyecto (MODERNIZADO) -->
+                            <div id="pago-consultor-proyecto-config" class="report-config" style="display: none;">
+                                <h3 class="config-title">💼 Configuración - Pago Consultor (Proyecto) - MODERNIZADO</h3>
+                                
+                                <div class="migration-notice">
+                                    <div class="notice-badge">🚀 NUEVO</div>
+                                    <div class="notice-content">
+                                        <strong>Sistema Modernizado:</strong> Interfaz mejorada, sin errores, validaciones robustas.
+                                        <br><small>Migrado desde el sistema original para eliminar el error "Cannot set properties of undefined"</small>
+                                    </div>
+                                </div>
+                                
+                                <div class="config-form">
+                                    <div class="form-group">
+                                        <label>Información:</label>
+                                        <p class="config-info">
+                                            Este reporte calcula los pagos de consultores basado en proyectos con interfaz moderna y validaciones mejoradas.
+                                            Las horas y tarifas son completamente editables antes de generar el Excel.
+                                        </p>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="pagosProyectoTimeFilter">Período:</label>
+                                        <select id="pagosProyectoTimeFilter">
+                                            <option value="week">Esta Semana</option>
+                                            <option value="month">Este Mes</option>
+                                            <option value="custom">Rango Personalizado</option>
+                                            <option value="all">Todas las Fechas</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group" id="pagosProyectoCustomDateRange" style="display: none;">
+                                        <label for="pagosProyectoStartDate">Fecha Inicio:</label>
+                                        <input type="date" id="pagosProyectoStartDate">
+                                        
+                                        <label for="pagosProyectoEndDate">Fecha Fin:</label>
+                                        <input type="date" id="pagosProyectoEndDate">
+                                    </div>
+                                    
+                                    <div class="form-group" style="text-align: center;">
+                                        <button type="button" class="btn btn-primary modern-btn" onclick="loadPagosProyectoConfiguration()">
+                                            🚀 Configurar Tarifas Modernizado
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="comparison-panel">
+                                        <div class="comparison-item old-system">
+                                            <h4>❌ Sistema Original</h4>
+                                            <ul>
+                                                <li>Error: "Cannot set properties of undefined"</li>
+                                                <li>Interfaz básica</li>
+                                                <li>Sin validaciones robustas</li>
+                                            </ul>
+                                        </div>
+                                        <div class="comparison-item new-system">
+                                            <h4>✅ Sistema Modernizado</h4>
+                                            <ul>
+                                                <li>Sin errores</li>
+                                                <li>Interfaz atractiva</li>
+                                                <li>Validaciones completas</li>
+                                                <li>Mejor experiencia de usuario</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Contenedor para la vista previa modernizada -->
+                                <div id="reportPreviewContainer">
+                                    <!-- Aquí se carga la tabla editable moderna -->
                                 </div>
                             </div>
 
@@ -1031,6 +1104,7 @@
 <script src="js/reporte-proyecto-cliente.js"></script>
 <script src="js/reporte-proyecto-consultor.js"></script>
 <script src="js/reporte-remanente.js"></script>
+<script src="js/pago-consultor-proyecto.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>

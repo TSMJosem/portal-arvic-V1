@@ -2703,6 +2703,16 @@ function selectReportType(type) {
         selectedReportType = 'reporte_remanente';
         initializeRemanenteMonth(); // Inicializar mes actual
     }
+    else if (type === 'pago_consultor_proyecto') {
+        // Ocultar configuración antigua
+        document.getElementById('pagos-config').style.display = 'none';
+        
+        // Mostrar nueva configuración modernizada  
+        document.getElementById('pago-consultor-proyecto-config').style.display = 'block';
+        selectedReportType = 'pago_consultor_proyecto';
+        
+        console.log('✅ Tipo de reporte seleccionado: Pago Consultor (Proyecto) - MODERNIZADO');
+    }
 }
 
 
@@ -4866,7 +4876,11 @@ function fixReportsNavigation() {
             'pagos': {
                 containers: ['reportPreviewContainer', 'pagosConfiguration', 'tariffConfigBody'],
                 variables: ['currentReportData', 'tariffConfiguration']
-            }
+            },
+            'pago-proyecto': {
+                containers: ['reportPreviewContainer', 'pago-consultor-proyecto-config'],
+                variables: ['currentPagosProyectoData']
+            },
         };
         
         const mapping = reportMappings[reportType];
@@ -5075,6 +5089,149 @@ function fixReportsNavigation() {
     
     console.log('✅ Corrección para navegación entre reportes aplicada');
 }
+
+window.loadPagosConfigurationModernized = function() {
+    console.log('🔄 Redirigiendo a sistema modernizado...');
+    
+    // Mostrar mensaje de migración
+    window.NotificationUtils.info('Usando sistema modernizado de Pago Consultor (Proyecto)');
+    
+    // Cambiar a la nueva configuración
+    document.getElementById('pagos-config').style.display = 'none';
+    document.getElementById('pago-consultor-proyecto-config').style.display = 'block';
+    
+    // Cargar datos con el nuevo sistema
+    if (typeof loadPagosProyectoConfiguration === 'function') {
+        return loadPagosProyectoConfiguration();
+    } else {
+        console.error('❌ Sistema modernizado no cargado');
+        window.NotificationUtils.error('Error: Sistema modernizado no disponible');
+    }
+};
+
+// Función para comparar sistemas (antiguo y modernizado) (debugging)
+window.comparePagosSystems = function() {
+    console.log('🔍 === COMPARACIÓN DE SISTEMAS ===');
+    
+    console.log('📊 Sistema Original (admin.js):');
+    console.log('   • Variable: tariffConfiguration (objeto)');
+    console.log('   • Función: updateTariffCalculation()');
+    console.log('   • Problema: Acceso sin validación');
+    console.log('   • Estado:', typeof window.tariffConfiguration);
+    
+    console.log('📊 Sistema Modernizado (pago-consultor-proyecto.js):');
+    console.log('   • Variable: currentPagosProyectoData (array)');
+    console.log('   • Función: updatePagosProyectoRow()');
+    console.log('   • Beneficio: Validaciones robustas');
+    console.log('   • Estado:', typeof window.currentPagosProyectoData);
+    
+    // Verificar si ambos sistemas están cargados
+    const oldSystemLoaded = typeof window.updateTariffCalculation === 'function';
+    const newSystemLoaded = typeof window.updatePagosProyectoRow === 'function';
+    
+    console.log('✅ Sistema Original cargado:', oldSystemLoaded);
+    console.log('✅ Sistema Modernizado cargado:', newSystemLoaded);
+    
+    if (newSystemLoaded) {
+        console.log('🎯 MIGRACIÓN COMPLETADA - Usar sistema modernizado');
+    } else {
+        console.log('⚠️ MIGRACIÓN PENDIENTE - Sistema modernizado no disponible');
+    }
+};
+
+window.verificarMigracion = function() {
+    console.log('🔍 === VERIFICACIÓN DE MIGRACIÓN ===');
+    
+    const elementos = {
+        // Archivos de script
+        'pago-consultor-proyecto.js': document.querySelector('script[src*="pago-consultor-proyecto.js"]'),
+        
+        // Elementos HTML nuevos
+        'pago-consultor-proyecto-config': document.getElementById('pago-consultor-proyecto-config'),
+        
+        // Funciones nuevas
+        'loadPagosProyectoConfiguration': typeof window.loadPagosProyectoConfiguration === 'function',
+        'updatePagosProyectoRow': typeof window.updatePagosProyectoRow === 'function',
+        
+        // Variables nuevas
+        'currentPagosProyectoData': typeof window.currentPagosProyectoData !== 'undefined'
+    };
+    
+    let todoOK = true;
+    
+    Object.entries(elementos).forEach(([nombre, estado]) => {
+        const ok = !!estado;
+        console.log(`${ok ? '✅' : '❌'} ${nombre}: ${ok ? 'OK' : 'FALTA'}`);
+        if (!ok) todoOK = false;
+    });
+    
+    if (todoOK) {
+        console.log('🎉 MIGRACIÓN COMPLETA - Todos los elementos están listos');
+        window.NotificationUtils.success('Migración verificada correctamente');
+    } else {
+        console.log('⚠️ MIGRACIÓN INCOMPLETA - Faltan elementos');
+        window.NotificationUtils.warning('Migración incompleta - revisar elementos faltantes');
+    }
+    
+    return todoOK;
+};
+
+const originalError = window.onerror;
+
+window.onerror = function(message, source, lineno, colno, error) {
+    // Detectar el error específico del sistema problemático
+    if (message && message.includes("Cannot set properties of undefined")) {
+        console.error('❌ DETECTADO: Error del sistema original');
+        console.log('💡 SOLUCIÓN: Usar sistema modernizado');
+        
+        // Sugerir migración
+        window.NotificationUtils.error(
+            'Error detectado en sistema original. Usar "Pago Consultor (Proyecto) - MODERNIZADO" en su lugar.'
+        );
+        
+        // Auto-migrar si es posible
+        if (typeof window.loadPagosProyectoConfiguration === 'function') {
+            console.log('🔄 Intentando auto-migración...');
+            setTimeout(() => {
+                document.getElementById('reportTypeSelect').value = 'pago_consultor_proyecto';
+                selectReportType('pago_consultor_proyecto');
+            }, 2000);
+        }
+    }
+    
+    // Llamar handler original si existe
+    if (originalError) {
+        return originalError.call(this, message, source, lineno, colno, error);
+    }
+};
+
+// === INSTRUCCIONES DE MIGRACIÓN PARA DESARROLLADOR ===
+window.mostrarInstruccionesMigracion = function() {
+    console.log('📋 === INSTRUCCIONES DE MIGRACIÓN ===');
+    console.log('');
+    console.log('1️⃣ ARCHIVO NUEVO:');
+    console.log('   • Crear: admin/js/pago-consultor-proyecto.js');
+    console.log('   • Contenido: Sistema modernizado completo');
+    console.log('');
+    console.log('2️⃣ MODIFICAR admin.js:');
+    console.log('   • Agregar case en selectReportType()');
+    console.log('   • Actualizar clearSpecificReport()');
+    console.log('');
+    console.log('3️⃣ MODIFICAR dashboard.html:');
+    console.log('   • Agregar <script src="js/pago-consultor-proyecto.js">');
+    console.log('   • Agregar nueva sección HTML');
+    console.log('');
+    console.log('4️⃣ VERIFICAR:');
+    console.log('   • Ejecutar: verificarMigracion()');
+    console.log('   • Probar nuevo sistema');
+    console.log('');
+    console.log('✅ RESULTADO: Sistema sin errores, interfaz moderna');
+};
+
+// Mostrar instrucciones automáticamente
+console.log('💡 Para ver instrucciones completas: mostrarInstruccionesMigracion()');
+console.log('🔍 Para verificar migración: verificarMigracion()');
+console.log('📊 Para comparar sistemas: comparePagosystems()');
 
 // === FUNCIÓN PARA DIAGNÓSTICO DE LIMPIEZA ===
 window.debugReportsCleanup = function() {
@@ -5441,6 +5598,42 @@ function fixInfiniteLoop() {
     };
 }
 
+function setupPagosProyectoTimeFilter() {
+    const timeFilter = document.getElementById('pagosProyectoTimeFilter');
+    const customDateRange = document.getElementById('pagosProyectoCustomDateRange');
+    
+    if (timeFilter && customDateRange) {
+        timeFilter.addEventListener('change', function() {
+            if (this.value === 'custom') {
+                customDateRange.style.display = 'block';
+            } else {
+                customDateRange.style.display = 'none';
+            }
+        });
+    }
+}
+
+// Inicializar cuando se carga la página
+document.addEventListener('DOMContentLoaded', function() {
+    setupPagosProyectoTimeFilter();
+    
+    // Agregar indicators de estado a las opciones del dropdown
+    const reportSelect = document.getElementById('reportTypeSelect');
+    if (reportSelect) {
+        // Marcar sistema original como deprecated
+        const originalOption = reportSelect.querySelector('option[value="pagos"]');
+        if (originalOption) {
+            originalOption.textContent += ' (ORIGINAL - PROBLEMAS)';
+        }
+        
+        // Marcar sistema nuevo como moderno
+        const modernOption = reportSelect.querySelector('option[value="pago_consultor_proyecto"]');
+        if (modernOption) {
+            modernOption.textContent += ' ⭐';
+        }
+    }
+});
+
 // === APLICAR SOLUCIÓN PRÁCTICA ===
 solucionPracticaSimple();
 
@@ -5500,3 +5693,8 @@ window.updateClienteSoporteRow = updateClienteSoporteRow;
 window.resetClienteSoporteData = resetClienteSoporteData;
 window.showClienteSelector = showClienteSelector;
 window.handleClienteSelection = handleClienteSelection;
+
+window.loadPagosProyectoConfiguration = window.loadPagosProyectoConfiguration || null;
+window.updatePagosProyectoRow = window.updatePagosProyectoRow || null;
+window.generatePagosProyectoReport = window.generatePagosProyectoReport || null;
+window.resetPagosProyectoData = window.resetPagosProyectoData || null;

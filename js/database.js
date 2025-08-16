@@ -1296,6 +1296,13 @@ deleteGeneratedReport(reportId) {
         return assignments.filter(assignment => assignment.projectId === projectId);
     }
 
+    getUserProjectAssignments(consultorId) {
+        const projectAssignments = Object.values(this.getProjectAssignments());
+        return projectAssignments.filter(assignment => 
+            assignment.consultorId === consultorId && assignment.isActive
+        );
+    }
+
     // === FUNCIONES DE RESET ===
     resetToDefaults() {
         this.clearAllData();
@@ -1409,6 +1416,11 @@ deleteGeneratedReport(reportId) {
             }
         };
         this.setData('project_assignments', defaultProjectAssignments);
+    }
+
+    getProjectAssignment(assignmentId) {
+        const assignments = this.getProjectAssignments();
+        return assignments[assignmentId] || null;
     }
 
     getProjectAssignments() {

@@ -93,7 +93,7 @@
     border-radius: 0;
     box-shadow: none;
     overflow: hidden;
-    height: calc(100vh - 80px);
+    min-height: calc(100vh - 80px);
     margin-top: 0;
 }
 
@@ -105,9 +105,6 @@
     flex-shrink: 0;
     padding: var(--spacing-xl) 0;
     overflow-y: auto;
-    height: calc(100vh - 80px);
-    position: sticky;
-    top: 0;
     box-shadow: inset -1px 0 0 0 var(--gray-200);
 }
 
@@ -1018,9 +1015,63 @@
     margin-bottom: var(--spacing-2xl);
 }
 
+.report-type-selector h3 {
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-xl);
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.report-type-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-2xl);
+}
+
+.report-type-card {
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-2xl);
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.report-type-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.report-type-card.selected {
+    border-color: var(--success-color);
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+}
+
 .report-type-icon {
     font-size: 3rem;
     margin-bottom: var(--spacing-lg);
+}
+
+.report-type-card h4 {
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-sm);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.report-type-card p {
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin: 0;
 }
 
 /* Configuración de reportes */
@@ -1465,421 +1516,6 @@
     transform: translateY(-4px);
     box-shadow: var(--shadow-xl);
     border-left-color: var(--primary-color);
-}
-
-/* Estilos para reportes editables */
-.report-preview-section {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    margin: 20px 0;
-}
-
-.editable-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-}
-
-.editable-input {
-    width: 100%;
-    max-width: 100px;
-    padding: 6px 8px;
-    border: 2px solid transparent;
-    border-radius: 4px;
-    text-align: center;
-    font-size: 0.85rem;
-    background: white;
-    transition: all 0.3s ease;
-}
-
-.editable-input:focus {
-    outline: none;
-    border-color: var(--primary-color, #1e3a8a);
-    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
-}
-
-.calculated-cell {
-    background-color: #f0fdf4;
-    font-weight: 600;
-    color: #059669;
-}
-
-.summary-row {
-    background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-    color: white;
-    font-weight: 700;
-}
-
-/* === MEJORA DE SCROLL INDEPENDIENTE PARA SIDEBAR === */
-
-/* Scrollbar personalizada para el sidebar */
-.admin-sidebar::-webkit-scrollbar {
-    width: 6px;
-}
-
-.admin-sidebar::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-.admin-sidebar::-webkit-scrollbar-thumb {
-    background: var(--gray-400);
-    border-radius: var(--border-radius-sm);
-    transition: var(--transition-normal);
-}
-
-.admin-sidebar::-webkit-scrollbar-thumb:hover {
-    background: var(--gray-500);
-}
-
-/* Para Firefox */
-.admin-sidebar {
-    scrollbar-width: thin;
-    scrollbar-color: var(--gray-400) transparent;
-}
-
-/* Asegurar que el contenido principal también tenga scroll independiente */
-.admin-main-content {
-    flex: 1;
-    padding: var(--spacing-2xl);
-    background: var(--gray-50);
-    overflow-y: auto;
-    height: calc(100vh - 80px);
-}
-
-/* === ESTILOS PARA SELECTOR DE REPORTES CON DROPDOWN === */
-
-/* Contenedor principal del selector */
-.report-type-selector {
-    text-align: center;
-    margin-bottom: var(--spacing-xl, 30px);
-    padding: var(--spacing-xl, 25px);
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 2px solid #e2e8f0;
-}
-
-.report-type-selector h3 {
-    margin-bottom: var(--spacing-lg, 20px);
-    color: var(--gray-900, #1e293b);
-    font-size: 1.25rem;
-    font-weight: 600;
-}
-
-/* Estilos para el form-group del dropdown */
-.report-type-selector .form-group {
-    margin-bottom: 0;
-    max-width: 500px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.report-type-selector .form-group label {
-    display: block;
-    margin-bottom: var(--spacing-sm, 8px);
-    font-weight: 600;
-    color: var(--gray-700, #374151);
-    font-size: 1rem;
-    text-align: left;
-}
-
-/* Estilos para el dropdown select */
-.report-type-selector .form-control {
-    width: 100%;
-    padding: 12px 16px;
-    border: 2px solid var(--gray-300, #d1d5db);
-    border-radius: 8px;
-    font-size: 1rem;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    background: white;
-    color: var(--gray-900, #1f2937);
-}
-
-.report-type-selector .form-control:focus {
-    outline: none;
-    border-color: var(--primary-color, #3b82f6);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.report-type-selector .form-control option {
-    padding: 8px;
-    color: var(--gray-900, #1f2937);
-}
-
-/* Ocultar elementos de tarjetas antiguos si existen */
-.report-type-options,
-.report-type-card {
-    display: none !important;
-}
-
-/* === ESTILOS PARA REPORTE REMANENTE SIMPLIFICADO === */
-
-/* Estilos específicos para el selector de mes del reporte remanente */
-#remanenteMonthSelector {
-    font-size: 1rem;
-    text-align: center;
-    color: var(--gray-900, #1f2937);
-}
-
-#remanenteMonthSelector:focus {
-    border-color: var(--accent-color, #dc2626);
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-}
-
-/* Botón específico para reporte remanente */
-#generateRemanenteSimpleBtn {
-    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
-    border-color: #dc2626;
-}
-
-#generateRemanenteSimpleBtn:hover:not(:disabled) {
-    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
-}
-
-#generateRemanenteSimpleBtn.btn-disabled {
-    background: var(--gray-400, #9ca3af);
-    border-color: var(--gray-400, #9ca3af);
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-/* Contenedor de vista previa del reporte remanente */
-#reportPreviewContainerRemanenteSimple {
-    margin-top: var(--spacing-xl, 30px);
-}
-
-/* Responsive para el reporte remanente */
-@media (max-width: 768px) {
-    .report-config #remanenteMonthSelector {
-        font-size: 0.9rem;
-    }
-}
-
-.config-title {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-size: 1.3rem;
-    font-weight: 700;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.migration-notice {
-    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
-    border: 2px solid #10b981;
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-}
-
-.notice-badge {
-    background: #10b981;
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    white-space: nowrap;
-}
-
-.notice-content {
-    flex: 1;
-    color: #064e3b;
-    line-height: 1.5;
-}
-
-.notice-content strong {
-    color: #065f46;
-}
-
-.notice-content small {
-    color: #059669;
-    font-size: 0.85rem;
-}
-
-.modern-btn {
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: white;
-    border: none;
-    padding: 14px 28px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.modern-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
-}
-
-.comparison-panel {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    margin-top: 24px;
-    padding: 20px;
-    background: #f8fafc;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-}
-
-.comparison-item {
-    padding: 16px;
-    border-radius: 8px;
-    border: 2px solid;
-}
-
-.comparison-item h4 {
-    margin: 0 0 12px 0;
-    font-size: 1rem;
-    font-weight: 600;
-}
-
-.comparison-item ul {
-    margin: 0;
-    padding-left: 20px;
-}
-
-.comparison-item li {
-    margin-bottom: 6px;
-    font-size: 0.9rem;
-}
-
-.old-system {
-    background: #fef2f2;
-    border-color: #f87171;
-}
-
-.old-system h4 {
-    color: #dc2626;
-}
-
-.old-system li {
-    color: #991b1b;
-}
-
-.new-system {
-    background: #f0fdf4;
-    border-color: #22c55e;
-}
-
-.new-system h4 {
-    color: #16a34a;
-}
-
-.new-system li {
-    color: #15803d;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .comparison-panel {
-        grid-template-columns: 1fr;
-    }
-    
-    .migration-notice {
-        flex-direction: column;
-        text-align: center;
-    }
-}
-
-/* === INDICADORES DE ESTADO === */
-.system-status {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.status-deprecated {
-    background: #fef3c7;
-    color: #92400e;
-    border: 1px solid #fbbf24;
-}
-
-.status-modern {
-    background: #dcfce7;
-    color: #166534;
-    border: 1px solid #22c55e;
-}
-
-/* === ANIMACIONES === */
-@keyframes slideInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.report-config {
-    animation: slideInUp 0.3s ease-out;
-}
-
-/* === TOOLTIPS === */
-.tooltip-modern {
-    position: relative;
-    cursor: help;
-}
-
-.tooltip-modern::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #1f2937;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 6px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    z-index: 1000;
-}
-
-.tooltip-modern:hover::after {
-    opacity: 1;
-}
-
-/* Responsive para el dropdown */
-@media (max-width: 768px) {
-    .report-type-selector {
-        padding: var(--spacing-lg, 15px);
-        margin-bottom: var(--spacing-lg, 20px);
-    }
-    
-    .report-type-selector .form-group {
-        max-width: 100% !important;
-    }
-    
-    .report-type-selector h3 {
-        font-size: 1.125rem;
-    }
 }
 
 /* Responsive */

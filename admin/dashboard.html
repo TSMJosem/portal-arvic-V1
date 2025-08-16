@@ -445,21 +445,17 @@
                             <!-- Selector de Tipo de Reporte -->
                             <div class="report-type-selector">
                                 <h3>Seleccionar Tipo de Reporte</h3>
-                                <div class="form-group" style="max-width: 500px; margin: 0 auto;">
-                                    <label for="reportTypeSelect">Tipo de Reporte:</label>
-                                    <select id="reportTypeSelect" class="form-control" onchange="selectReportType(this.value)">
-                                        <option value="">-- Seleccione un tipo de reporte --</option>
-                                        <option value="actividades">📊 Reporte de Actividades</option>
-                                        <option value="pagos">💰 Pago Consultor General (Proyecto)</option>
-                                        <option value="pago_consultor_proyecto">💼 Pago Consultor (Proyecto) - MODERNIZADO</option>
-                                        <option value="pago_consultor_general">🏢 Pago Consultor General (Soporte)</option>
-                                        <option value="pago_consultor_individual">👤 Pago Consultor (Soporte)</option>
-                                        <option value="cliente_soporte">📞 Cliente Soporte</option>
-                                        <option value="reporte_proyecto">📋 Reporte Proyecto</option>
-                                        <option value="reporte_proyecto_cliente">🏢 Reporte Proyecto (Cliente)</option>
-                                        <option value="reporte_proyecto_consultor">👤 Rep. Proyecto (Consultor)</option>
-                                        <option value="reporte_remanente">⏳ Reporte Remanente</option>
-                                    </select>
+                                <div class="report-type-options">
+                                    <div class="report-type-card" onclick="selectReportType('actividades')">
+                                        <div class="report-type-icon">📊</div>
+                                        <h4>Reporte de Actividades</h4>
+                                        <p>Reporte de horas trabajadas por consultor y asignación</p>
+                                    </div>
+                                    <div class="report-type-card" onclick="selectReportType('pagos')">
+                                        <div class="report-type-icon">💰</div>
+                                        <h4>Reporte de Pago Consultores</h4>
+                                        <p>Reporte de pagos con tarifas editables por consultor</p>
+                                    </div>
                                 </div>
                             </div>
 
@@ -520,7 +516,7 @@
 
                             <!-- Configuración Reporte de Pagos -->
                             <div id="pagos-config" class="report-config" style="display: none;">
-                                <h3>💰 Configuración - Pago Consultores (Proyecto)</h3>
+                                <h3>💰 Configuración - Reporte de Pago Consultores</h3>
                                 <div class="config-form">
                                     <div class="form-group">
                                         <label for="pagosTimeFilter">Período:</label>
@@ -586,236 +582,6 @@
                                             <strong>Total a Pagar: $<span id="totalAmount">0.00</span></strong>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Configuración Pago Consultor General -->
-                            <div id="pago-consultor-general-config" class="report-config" style="display: none;">
-                                <h3>🏢 Configuración - Pago Consultor General (Soporte)</h3>
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label>Información:</label>
-                                        <p class="config-info">Este reporte consolida los pagos de todos los consultores en todas las empresas. Las horas y tarifas son editables antes de generar el Excel.</p>
-                                    </div>
-                                    
-                                    <div class="form-group" style="text-align: center;">
-                                        <button type="button" class="btn btn-primary" onclick="loadPagosGeneralConfiguration()">
-                                            📊 Generar Vista Previa
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- Contenedor para la vista previa -->
-                                <div id="reportPreviewContainer">
-                                    <!-- Aquí se carga la tabla editable -->
-                                </div>
-                            </div>
-
-                            <!-- Configuración Pago Consultor Proyecto (MODERNIZADO) -->
-                            <div id="pago-consultor-proyecto-config" class="report-config" style="display: none;">
-                                <h3 class="config-title">💼 Configuración - Pago Consultor (Proyecto) - MODERNIZADO</h3>
-                                
-                                <div class="migration-notice">
-                                    <div class="notice-badge">🚀 NUEVO</div>
-                                    <div class="notice-content">
-                                        <strong>Sistema Modernizado:</strong> Interfaz mejorada, sin errores, validaciones robustas.
-                                        <br><small>Migrado desde el sistema original para eliminar el error "Cannot set properties of undefined"</small>
-                                    </div>
-                                </div>
-                                
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label>Información:</label>
-                                        <p class="config-info">
-                                            Este reporte calcula los pagos de consultores basado en proyectos con interfaz moderna y validaciones mejoradas.
-                                            Las horas y tarifas son completamente editables antes de generar el Excel.
-                                        </p>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label for="pagosProyectoTimeFilter">Período:</label>
-                                        <select id="pagosProyectoTimeFilter">
-                                            <option value="week">Esta Semana</option>
-                                            <option value="month">Este Mes</option>
-                                            <option value="custom">Rango Personalizado</option>
-                                            <option value="all">Todas las Fechas</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group" id="pagosProyectoCustomDateRange" style="display: none;">
-                                        <label for="pagosProyectoStartDate">Fecha Inicio:</label>
-                                        <input type="date" id="pagosProyectoStartDate">
-                                        
-                                        <label for="pagosProyectoEndDate">Fecha Fin:</label>
-                                        <input type="date" id="pagosProyectoEndDate">
-                                    </div>
-                                    
-                                    <div class="form-group" style="text-align: center;">
-                                        <button type="button" class="btn btn-primary modern-btn" onclick="loadPagosProyectoConfiguration()">
-                                            🚀 Configurar Tarifas Modernizado
-                                        </button>
-                                    </div>
-                                    
-                                    <div class="comparison-panel">
-                                        <div class="comparison-item old-system">
-                                            <h4>❌ Sistema Original</h4>
-                                            <ul>
-                                                <li>Error: "Cannot set properties of undefined"</li>
-                                                <li>Interfaz básica</li>
-                                                <li>Sin validaciones robustas</li>
-                                            </ul>
-                                        </div>
-                                        <div class="comparison-item new-system">
-                                            <h4>✅ Sistema Modernizado</h4>
-                                            <ul>
-                                                <li>Sin errores</li>
-                                                <li>Interfaz atractiva</li>
-                                                <li>Validaciones completas</li>
-                                                <li>Mejor experiencia de usuario</li>
-                                            </ul>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <!-- Contenedor para la vista previa modernizada -->
-                                <div id="reportPreviewContainer">
-                                    <!-- Aquí se carga la tabla editable moderna -->
-                                </div>
-                            </div>
-
-                            <!-- Configuración Pago Consultor Individual -->
-                            <div id="pago-consultor-individual-config" class="report-config" style="display: none;">
-                                <h3>👤 Configuración - Pago Consultor Individual (Soporte)</h3>
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label>Información:</label>
-                                        <p class="config-info">Este reporte muestra los pagos de un consultor específico. Primero deberá seleccionar el consultor y luego las horas y tarifas serán editables.</p>
-                                    </div>
-                                    
-                                    <div class="form-group" style="text-align: center;">
-                                        <button type="button" class="btn btn-primary" onclick="loadPagosIndividualConfiguration()">
-                                            👤 Seleccionar Consultor
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- Contenedor para la vista previa -->
-                                <div id="reportPreviewContainerIndividual">
-                                    <!-- Aquí se carga el selector y la tabla editable -->
-                                </div>
-                            </div>
-
-                            <!-- Configuración Cliente Soporte -->
-                            <div id="cliente-soporte-config" class="report-config" style="display: none;">
-                                <h3>📞 Configuración - Cliente Soporte</h3>
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label>Información:</label>
-                                        <p class="config-info">Este reporte muestra los servicios de soporte por módulo para un cliente específico. Primero deberá seleccionar el cliente y luego las horas y tarifas serán editables.</p>
-                                    </div>
-                                    
-                                    <div class="form-group" style="text-align: center;">
-                                        <button type="button" class="btn btn-primary" onclick="loadClienteSoporteConfiguration()">
-                                            👤 Seleccionar Cliente
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- Contenedor para la vista previa -->
-                                <div id="reportPreviewContainerSoporte">
-                                    <!-- Aquí se carga el selector de cliente y la tabla editable -->
-                                </div>
-                            </div>
-
-                            <!-- Configuración Reporte Proyecto -->
-                            <div id="reporte-proyecto-config" class="report-config" style="display: none;">
-                                <h3>📋 Configuración - Reporte Proyecto</h3>
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label>Información:</label>
-                                        <p class="config-info">Este reporte muestra todos los consultores trabajando en un proyecto específico. Primero deberá seleccionar el proyecto y luego las horas y tarifas serán editables.</p>
-                                    </div>
-                                    
-                                    <div class="form-group" style="text-align: center;">
-                                        <button type="button" class="btn btn-primary" onclick="loadReporteProyectoConfiguration()">
-                                            📋 Seleccionar Proyecto
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- Contenedor para la vista previa -->
-                                <div id="reportPreviewContainerProyecto">
-                                    <!-- Aquí se carga el selector y la tabla editable -->
-                                </div>
-                            </div>
-
-                            <!-- Configuración Reporte Proyecto (Cliente) -->
-                            <div id="reporte-proyecto-cliente-config" class="report-config" style="display: none;">
-                                <h3>🏢 Configuración - Rep. Proyecto (Cliente)</h3>
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label>Información:</label>
-                                        <p class="config-info">Este reporte muestra los proyectos trabajados para un cliente específico, agrupados por módulos. Ideal para presentación externa al cliente.</p>
-                                    </div>
-                                    <div class="form-group" style="text-align: center;">
-                                    <button type="button" class="btn btn-primary" onclick="loadReporteProyectoClienteConfiguration()">
-                                        🏢 Seleccionar Cliente
-                                    </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- Contenedor para la vista previa -->
-                                <div id="reportPreviewContainerProyectoCliente">
-                                    <!-- Aquí se carga el selector y la tabla editable -->
-                                </div>
-                            </div>
-
-                            <!-- Configuración Reporte Proyecto (Consultor) -->
-                            <div id="reporte-proyecto-consultor-config" class="report-config" style="display: none;">
-                                <h3>👤 Configuración - Rep. Proyecto (Consultor)</h3>
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label>Información:</label>
-                                        <p class="config-info">Este reporte muestra el trabajo individual de un consultor específico en un proyecto particular. Ideal para evaluaciones de desempeño y reportes personales.</p>
-                                    </div>
-                                    
-                                    <div class="form-group" style="text-align: center;">
-                                        <button type="button" class="btn btn-primary" onclick="loadReporteProyectoConsultorConfiguration()">
-                                            👤 Seleccionar Consultor
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- Contenedor para la vista previa -->
-                                <div id="reportPreviewContainerProyectoConsultor">
-                                    <!-- Aquí se carga el selector y la tabla editable -->
-                                </div>
-                            </div>
-
-                            <!-- Configuración Reporte Remanente -->
-                            <div id="reporte-remanente-config" class="report-config" style="display: none;">
-                                <h3>⏳ Configuración - Reporte Remanente</h3>
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label>Información:</label>
-                                        <p class="config-info">Este reporte muestra una matriz semanal de horas remanentes por módulo en el período mensual seleccionado.</p>
-                                    </div>
-                                    
-                                    <div class="form-group" style="max-width: 300px; margin: 0 auto;">
-                                        <label for="remanenteMonthSelector">Seleccionar Mes:</label>
-                                        <input type="month" id="remanenteMonthSelector" class="form-control" onchange="onRemanenteMonthSelected()">
-                                    </div>
-                                    
-                                    <div class="form-group" style="text-align: center; margin-top: 20px;">
-                                        <button type="button" class="btn btn-primary" onclick="loadRemanenteSimpleConfiguration()" id="generateRemanenteSimpleBtn" disabled>
-                                            ⏳ Generar Reporte Remanente
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                <!-- Contenedor para la vista previa -->
-                                <div id="reportPreviewContainerRemanenteSimple">
-                                    <!-- Aquí se carga la matriz editable -->
                                 </div>
                             </div>
 
@@ -1094,17 +860,9 @@
     </div>
 
     <!-- Scripts -->
-<script src="../js/database.js"></script>
-<script src="../js/auth.js"></script>
-<script src="../js/utils.js"></script>
-<script src="js/pago-consultor-general.js"></script>
-<script src="js/pago-consultor-individual.js"></script>
-<script src="js/cliente-soporte.js"></script>
-<script src="js/reporte-proyecto.js"></script>
-<script src="js/reporte-proyecto-cliente.js"></script>
-<script src="js/reporte-proyecto-consultor.js"></script>
-<script src="js/reporte-remanente.js"></script>
-<script src="js/pago-consultor-proyecto.js"></script>
-<script src="admin.js"></script>
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="admin.js"></script>
 </body>
 </html>

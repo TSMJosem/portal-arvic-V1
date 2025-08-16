@@ -285,7 +285,7 @@ function updateAssignmentsList() {
                     </div>
                     
                     <div class="assignment-actions">
-                        <button class="btn btn-primary" onclick="openReportModal('${assignment.id}')">
+                        <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.id}')">
                             📝 Crear Reporte
                         </button>
                         <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
@@ -365,18 +365,35 @@ function openCreateReportModal(assignmentId) {
         }
         
         const company = window.PortalDB.getCompany(assignment.companyId);
-        const support = window.PortalDB.getSupport(assignment.supportId); // Cambiar de getTask
         const module = window.PortalDB.getModule(assignment.moduleId);
         
         // Mostrar información de la asignación seleccionada
         const assignmentInfoElement = document.getElementById('selectedAssignmentInfo');
         if (assignmentInfoElement) {
-            assignmentInfoElement.innerHTML = `
-                <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📋 Información de la Asignación</h4>
-                <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
-                <p><strong>📞 Soporte:</strong> ${support?.name || 'No encontrado'}</p>
-                <p style="margin-bottom: 0;"><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
-            `;
+            let assignmentDetails = '';
+            
+            // 🔄 DETECTAR TIPO DE ASIGNACIÓN Y MOSTRAR INFORMACIÓN CORRECTA
+            if (assignment.assignmentType === 'project') {
+                // 🟩 ASIGNACIÓN DE PROYECTO
+                const project = window.PortalDB.getProject(assignment.projectId);
+                assignmentDetails = `
+                    <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📋 Información de la Asignación</h4>
+                    <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                    <p><strong>🎯 Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
+                    <p style="margin-bottom: 0;"><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                `;
+            } else {
+                // 🟦 ASIGNACIÓN DE SOPORTE
+                const support = window.PortalDB.getSupport(assignment.supportId);
+                assignmentDetails = `
+                    <h4 style="margin: 0 0 10px 0; color: #2c3e50;">📋 Información de la Asignación</h4>
+                    <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                    <p><strong>📞 Soporte:</strong> ${support?.name || 'No encontrado'}</p>
+                    <p style="margin-bottom: 0;"><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                `;
+            }
+            
+            assignmentInfoElement.innerHTML = assignmentDetails;
         }
         
         // Limpiar formulario
@@ -454,7 +471,6 @@ function viewAssignmentReports(assignmentId) {
         }
         
         const company = window.PortalDB.getCompany(assignment.companyId);
-        const support = window.PortalDB.getSupport(assignment.supportId); // Cambiar de getTask
         const module = window.PortalDB.getModule(assignment.moduleId);
         
         const reports = window.PortalDB.getReportsByAssignment(assignmentId);
@@ -462,14 +478,38 @@ function viewAssignmentReports(assignmentId) {
         // Mostrar información de la asignación
         const assignmentInfoElement = document.getElementById('assignmentReportsInfo');
         if (assignmentInfoElement) {
-            assignmentInfoElement.innerHTML = `
-                <div class="assignment-info-display">
-                    <h4>📋 Información de la Asignación</h4>
-                    <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
-                    <p><strong>📞 Soporte:</strong> ${support?.name || 'No encontrado'}</p>
-                    <p><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
-                </div>
-            `;
+            let assignmentDetails = '';
+            
+            // 🔄 DETECTAR TIPO DE ASIGNACIÓN Y MOSTRAR INFORMACIÓN CORRECTA
+            if (assignment.assignmentType === 'project') {
+                // 🟩 ASIGNACIÓN DE PROYECTO
+                const project = window.PortalDB.getProject(assignment.projectId);
+                assignmentDetails = `
+                    <div class="assignment-info-display">
+                        <h4>📋 Información de la Asignación</h4>
+                        <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                        <p><strong>🎯 Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
+                        <p><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                        <p><strong>📊 Estado:</strong> <span class="status-badge">${project?.status || 'No definido'}</span></p>
+                        <p><strong>📝 Descripción:</strong> ${project?.description || 'Sin descripción'}</p>
+                    </div>
+                `;
+            } else {
+                // 🟦 ASIGNACIÓN DE SOPORTE
+                const support = window.PortalDB.getSupport(assignment.supportId);
+                assignmentDetails = `
+                    <div class="assignment-info-display">
+                        <h4>📋 Información de la Asignación</h4>
+                        <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                        <p><strong>📞 Soporte:</strong> ${support?.name || 'No encontrado'}</p>
+                        <p><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                        <p><strong>🔧 Tipo:</strong> ${support?.type || 'No especificado'}</p>
+                        <p><strong>⚡ Prioridad:</strong> ${support?.priority || 'No definida'}</p>
+                    </div>
+                `;
+            }
+            
+            assignmentInfoElement.innerHTML = assignmentDetails;
         }
         
         // Mostrar lista de reportes
@@ -493,23 +533,19 @@ function viewAssignmentReports(assignmentId) {
                     const reportDiv = document.createElement('div');
                     reportDiv.className = 'report-item';
                     reportDiv.innerHTML = `
-                        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
-                            <div style="flex: 1;">
-                                <h5 style="margin: 0 0 5px 0; color: #2c3e50;">${report.title}</h5>
-                                <p style="margin: 5px 0; color: #666; font-size: 14px;">${report.description}</p>
-                                <div style="display: flex; gap: 15px; font-size: 12px; color: #888;">
-                                    <span>⏰ ${report.hours} hrs</span>
-                                    <span>📅 ${window.DateUtils.formatDate(report.reportDate)}</span>
-                                    <span>🕒 Enviado: ${window.DateUtils.formatRelativeTime(report.createdAt)}</span>
-                                </div>
-                            </div>
-                            <div>
-                                <span class="report-status status-${report.status.toLowerCase()}">
-                                    ${report.status}
-                                </span>
-                            </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                            <h5 style="margin: 0; color: #2c3e50;">${report.title}</h5>
+                            <span class="report-status status-${report.status.toLowerCase()}">${report.status}</span>
                         </div>
-                        ${report.status === 'Rechazado' && report.feedback ? `
+                        <p style="margin: 5px 0; color: #666; font-size: 0.9em;">
+                            <strong>⏰ Horas:</strong> ${report.hours}h | 
+                            <strong>📅 Fecha:</strong> ${window.DateUtils.formatDate(report.reportDate)} |
+                            <strong>📤 Enviado:</strong> ${window.DateUtils.formatDateTime(report.createdAt)}
+                        </p>
+                        <p style="margin: 10px 0 0 0; color: #555; font-size: 0.9em; line-height: 1.4;">
+                            ${report.description}
+                        </p>
+                        ${report.feedback ? `
                             <div style="background: #fff5f5; padding: 10px; border-radius: 6px; border-left: 3px solid #e74c3c; margin-top: 10px;">
                                 <strong style="color: #e74c3c;">Comentarios de revisión:</strong>
                                 <p style="margin: 5px 0 0 0; color: #666;">${report.feedback}</p>
@@ -601,8 +637,8 @@ function logout() {
 // === FUNCIONES AUXILIARES PARA PROYECTOS ===
 function openProjectReportModal(projectAssignmentId) {
     console.log('Abriendo modal de reporte para proyecto:', projectAssignmentId);
-    // Por ahora, usar el modal regular hasta que implementes uno específico para proyectos
-    openReportModal(projectAssignmentId);
+    // ✅ CORRECTO: Usar la función que realmente existe
+    openCreateReportModal(projectAssignmentId);
 }
 
 function viewProjectDetails(projectAssignmentId) {

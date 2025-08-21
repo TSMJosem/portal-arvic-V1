@@ -1,3 +1,5 @@
+let currentReportFilter = 'all';
+
 function diagnosticCompleteAdmin() {
     console.log('🔍 === DIAGNÓSTICO COMPLETO ===');
     
@@ -1625,43 +1627,267 @@ function generateAdminReport() {
     printWindow.document.close();
 }
 
-// === FUNCIONES EXPORTADAS GLOBALMENTE ===
-window.showSection = showSection;
-window.openUserModal = openUserModal;
-window.openCompanyModal = openCompanyModal;
-window.openSupportModal = openSupportModal;
-window.deleteSupport = deleteSupport;
-window.openProjectModal = openProjectModal;
-window.openModuleModal = openModuleModal;
-window.closeModal = closeModal;
-window.deleteUser = deleteUser;
-window.deleteCompany = deleteCompany;
-window.deleteProject = deleteProject;
-window.deleteModule = deleteModule;
-window.createAssignment = createAssignment;
-window.deleteAssignment = deleteAssignment;
-window.createProjectAssignment = createProjectAssignment;
-window.deleteProjectAssignment = deleteProjectAssignment;
-window.updateProjectAssignmentDropdowns = updateProjectAssignmentDropdowns;
-window.approveReport = approveReport;
-window.rejectReport = rejectReport;
-window.logout = logout;
-window.exportData = exportData;
-window.importData = importData;
-window.generateAdminReport = generateAdminReport;
-window.viewReport = viewReport;
-window.updateApprovedReportsList = updateApprovedReportsList;
-window.updateProjectsList = updateProjectsList;
-window.updateModulesList = updateModulesList;
-window.updateAssignmentsList = updateAssignmentsList;
-window.updateUsersList = updateUsersList;
-window.viewUserAssignments = viewUserAssignments;
-window.updateGeneratedReportsList = updateGeneratedReportsList;
-window.refreshGeneratedReportsList = refreshGeneratedReportsList;
-window.deleteGeneratedReportFromHistory = deleteGeneratedReportFromHistory;
+/**
+ * Detecta la categoría de un reporte (soporte o proyecto)
+ * @param {Object} report - Objeto del reporte
+ * @returns {string} - 'soporte', 'proyecto', o 'unknown'
+ */
+function getReportCategory(report) {
+    if (!report.assignmentId) {
+        return 'unknown';
+    }
+    
+    // Verificar si es asignación de soporte (assignments)
+    const supportAssignment = currentData.assignments[report.assignmentId];
+    if (supportAssignment && supportAssignment.supportId) {
+        return 'soporte';
+    }
+    
+    // Verificar si es asignación de proyecto (project_assignments)
+    const projectAssignments = currentData.projectAssignments || {};
+    const projectAssignment = projectAssignments[report.assignmentId];
+    if (projectAssignment && projectAssignment.projectId) {
+        return 'proyecto';
+    }
+    
+    return 'unknown';
+}
 
-console.log('✅ Funciones de asignación de proyectos cargadas');
-console.log('✅ Funciones del administrador exportadas globalmente');/**
+/**
+ * Filtra reportes por categoría y actualiza la interfaz
+ * @param {string} category - 'all', 'soporte', 'proyecto'
+ */
+function filterReportsByCategory(category) {
+    console.log(`🔍 Filtrando reportes por categoría: ${category}`);
+    
+    currentReportFilter = category;
+    
+    // Actualizar botones activos
+    updateCategoryFilterButtons(category);
+    
+    // Actualizar tabla con filtro aplicado
+    updateReportsListWithFilter();
+    
+    // Animación de filtrado
+    const table = document.querySelector('.reports-table');
+    if (table) {
+        table.classList.add('filtering');
+        setTimeout(() => {
+            table.classList.remove('filtering');
+        }, 300);
+    }
+}
+
+/**
+ * Actualiza el estado visual de los botones de filtro
+ * @param {string} activeCategory - Categoría activa
+ */
+function updateCategoryFilterButtons(activeCategory) {
+    document.querySelectorAll('.category-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.category === activeCategory) {
+            btn.classList.add('active');
+        }
+    });
+}
+
+/**
+ * Actualiza la lista de reportes aplicando el filtro actual
+ */
+function updateReportsListWithFilter() {
+    const reportsTableBody = document.getElementById('reportsTableBody');
+    if (!reportsTableBody) return;
+    
+    const allReports = Object.values(currentData.reports);
+    const pendingReports = allReports.filter(r => r.status === 'Pendiente');
+    
+    // Aplicar filtro por categoría
+    let filteredReports = pendingReports;
+    if (currentReportFilter !== 'all') {
+        filteredReports = pendingReports.filter(report => {
+            const category = getReportCategory(report);
+            return category === currentReportFilter;
+        });
+    }
+    
+    // Actualizar contadores
+    updateReportCategoryCounts(pendingReports);
+    
+    // Renderizar reportes filtrados
+    if (filteredReports.length === 0) {
+        const emptyMessage = getEmptyStateMessage(currentReportFilter);
+        reportsTableBody.innerHTML = `
+            <tr>
+                <td colspan="10" class="empty-table-message">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">${emptyMessage.icon}</div>
+                        <div class="empty-state-title">${emptyMessage.title}</div>
+                        <div class="empty-state-desc">${emptyMessage.desc}</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    } else {
+        reportsTableBody.innerHTML = '';
+        filteredReports.forEach(report => {
+            const reportRow = createReportTableRow(report);
+            reportsTableBody.appendChild(reportRow);
+        });
+    }
+}
+
+/**
+ * Actualiza los contadores en los botones de filtro
+ * @param {Array} allPendingReports - Todos los reportes pendientes
+ */
+function updateReportCategoryCounts(allPendingReports) {
+    const counts = {
+        all: allPendingReports.length,
+        soporte: 0,
+        proyecto: 0
+    };
+    
+    allPendingReports.forEach(report => {
+        const category = getReportCategory(report);
+        if (counts[category] !== undefined) {
+            counts[category]++;
+        }
+    });
+    
+    // Actualizar elementos del DOM
+    const allCountElement = document.getElementById('filterCountAll');
+    const soporteCountElement = document.getElementById('filterCountSoporte');
+    const proyectoCountElement = document.getElementById('filterCountProyecto');
+    
+    if (allCountElement) allCountElement.textContent = counts.all;
+    if (soporteCountElement) soporteCountElement.textContent = counts.soporte;
+    if (proyectoCountElement) proyectoCountElement.textContent = counts.proyecto;
+}
+
+/**
+ * Genera el mensaje de estado vacío según la categoría
+ * @param {string} category - Categoría actual
+ * @returns {Object} - Objeto con icon, title y desc
+ */
+function getEmptyStateMessage(category) {
+    switch (category) {
+        case 'soporte':
+            return {
+                icon: '📞',
+                title: 'No hay reportes de soporte pendientes',
+                desc: 'Los reportes de soporte aparecerán aquí para su revisión'
+            };
+        case 'proyecto':
+            return {
+                icon: '📋',
+                title: 'No hay reportes de proyecto pendientes',
+                desc: 'Los reportes de proyecto aparecerán aquí para su revisión'
+            };
+        default:
+            return {
+                icon: '📄',
+                title: 'No hay reportes pendientes',
+                desc: 'Los reportes enviados por consultores aparecerán aquí'
+            };
+    }
+}
+
+/**
+ * Crea una fila de la tabla para un reporte
+ * @param {Object} report - Objeto del reporte
+ * @returns {HTMLElement} - Elemento tr de la tabla
+ */
+function createReportTableRow(report) {
+    const user = currentData.users[report.userId];
+    
+    let assignment = null;
+    let company = null;
+    let support = null;
+    let project = null;
+    let module = null;
+    
+    // Determinar tipo de asignación y obtener datos
+    if (report.assignmentId) {
+        // Verificar asignación de soporte
+        assignment = currentData.assignments[report.assignmentId];
+        if (assignment) {
+            company = currentData.companies[assignment.companyId];
+            support = currentData.supports[assignment.supportId];
+            module = currentData.modules[assignment.moduleId];
+        } else {
+            // Verificar asignación de proyecto
+            const projectAssignments = currentData.projectAssignments || {};
+            assignment = projectAssignments[report.assignmentId];
+            if (assignment) {
+                company = currentData.companies[assignment.companyId];
+                project = currentData.projects[assignment.projectId];
+                module = currentData.modules[assignment.moduleId];
+            }
+        }
+    }
+    
+    const row = document.createElement('tr');
+    
+    // Determinar qué mostrar en columna "Soporte"
+    const soporteContent = support ? support.name : (project ? project.name : 'Sin asignación');
+    const tipoSoporte = support ? support.type || 'N/A' : (project ? 'Proyecto' : 'Sin tipo');
+    
+    row.innerHTML = `
+        <td><span class="consultant-id">${user?.id || 'N/A'}</span></td>
+        <td><span class="consultant-name">${user?.name || 'Usuario no encontrado'}</span></td>
+        <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
+        <td><span class="project-name">${soporteContent}</span></td>
+        <td>${tipoSoporte}</td>
+        <td>${module ? module.name : 'Sin módulo'}</td>
+        <td><span class="hours-badge">${report.hours || 0} hrs</span></td>
+        <td>${window.DateUtils ? window.DateUtils.formatDate(report.createdAt) : new Date(report.createdAt).toLocaleDateString()}</td>
+        <td><span class="status-badge status-pending">Pendiente</span></td>
+        <td>
+            <div class="action-buttons">
+                <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
+                    👁️ Ver
+                </button>
+                <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
+                    ✅ Aprobar
+                </button>
+                <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
+                    ❌ Rechazar
+                </button>
+            </div>
+        </td>
+    `;
+    
+    return row;
+}
+
+/**
+ * Modifica la función existente updateReportsList para usar el nuevo sistema
+ */
+function updateReportsList() {
+    console.log('📊 Actualizando lista de reportes con sistema de filtros...');
+    
+    // Cargar datos actuales
+    currentData.reports = window.PortalDB.getReports();
+    
+    // Aplicar filtro actual
+    updateReportsListWithFilter();
+}
+
+// Inicializar filtros cuando se carga la sección
+function initializeReportsFilters() {
+    console.log('🎯 Inicializando filtros de reportes...');
+    
+    // Resetear filtro a 'all'
+    currentReportFilter = 'all';
+    
+    // Actualizar botones
+    updateCategoryFilterButtons('all');
+    
+    // Cargar reportes
+    updateReportsList();
+}
+
+/**
 
  * === LÓGICA DEL PANEL DE ADMINISTRADOR REORGANIZADO ===
  * Maneja todas las funciones administrativas del portal con sidebar
@@ -1850,7 +2076,7 @@ function loadSectionData(sectionName) {
                 updateAssignmentsList();
                 break;
             case 'reportes-pendientes':
-                updateReportsList();
+                initializeReportsFilters();
                 break;
             case 'asignar-proyectos':
                 updateProjectAssignmentDropdowns();
@@ -3713,6 +3939,48 @@ function deleteGeneratedReportFromHistory(reportId) {
 }
 
 console.log('✅ Funciones de generación de reportes cargadas correctamente');
+
+// === FUNCIONES EXPORTADAS GLOBALMENTE ===
+window.showSection = showSection;
+window.openUserModal = openUserModal;
+window.openCompanyModal = openCompanyModal;
+window.openSupportModal = openSupportModal;
+window.deleteSupport = deleteSupport;
+window.openProjectModal = openProjectModal;
+window.openModuleModal = openModuleModal;
+window.closeModal = closeModal;
+window.deleteUser = deleteUser;
+window.deleteCompany = deleteCompany;
+window.deleteProject = deleteProject;
+window.deleteModule = deleteModule;
+window.createAssignment = createAssignment;
+window.deleteAssignment = deleteAssignment;
+window.createProjectAssignment = createProjectAssignment;
+window.deleteProjectAssignment = deleteProjectAssignment;
+window.updateProjectAssignmentDropdowns = updateProjectAssignmentDropdowns;
+window.approveReport = approveReport;
+window.rejectReport = rejectReport;
+window.logout = logout;
+window.exportData = exportData;
+window.importData = importData;
+window.generateAdminReport = generateAdminReport;
+window.viewReport = viewReport;
+window.updateApprovedReportsList = updateApprovedReportsList;
+window.updateProjectsList = updateProjectsList;
+window.updateModulesList = updateModulesList;
+window.updateAssignmentsList = updateAssignmentsList;
+window.updateUsersList = updateUsersList;
+window.viewUserAssignments = viewUserAssignments;
+window.updateGeneratedReportsList = updateGeneratedReportsList;
+window.refreshGeneratedReportsList = refreshGeneratedReportsList;
+window.deleteGeneratedReportFromHistory = deleteGeneratedReportFromHistory;
+window.filterReportsByCategory = filterReportsByCategory;
+window.initializeReportsFilters = initializeReportsFilters;
+window.getReportCategory = getReportCategory;
+window.updateReportsListWithFilter = updateReportsListWithFilter;
+
+console.log('✅ Funciones de asignación de proyectos cargadas');
+console.log('✅ Funciones del administrador exportadas globalmente');
 
 // CÓDIGO TEMPORAL DE DIAGNÓSTICO
 window.addEventListener('load', function() {

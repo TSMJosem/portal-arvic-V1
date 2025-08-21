@@ -78,7 +78,7 @@
                             </div>
 
                             <div class="sidebar-menu-item" data-section="asignar-proyectos">
-                                <span class="menu-icon">🎯</span>
+                                <span class="menu-icon">➕</span>
                                 <span class="menu-text">Asignar Proyectos</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="lista-proyectos-asignados">
@@ -344,6 +344,28 @@
                         <div class="section-header">
                             <h2 class="section-title">📊 Reportes Pendientes</h2>
                         </div>
+                        
+                        <!-- ✨ NUEVO: Filtros por Categoría -->
+                        <div class="reports-category-filters">
+                            <div class="filter-buttons-group">
+                                <button class="category-filter-btn active" data-category="all" onclick="filterReportsByCategory('all')">
+                                    <span class="filter-icon">📊</span>
+                                    <span class="filter-text">Todos</span>
+                                    <span class="filter-count" id="filterCountAll">0</span>
+                                </button>
+                                <button class="category-filter-btn" data-category="soporte" onclick="filterReportsByCategory('soporte')">
+                                    <span class="filter-icon">📞</span>
+                                    <span class="filter-text">Soporte</span>
+                                    <span class="filter-count" id="filterCountSoporte">0</span>
+                                </button>
+                                <button class="category-filter-btn" data-category="proyecto" onclick="filterReportsByCategory('proyecto')">
+                                    <span class="filter-icon">📋</span>
+                                    <span class="filter-text">Proyecto</span>
+                                    <span class="filter-count" id="filterCountProyecto">0</span>
+                                </button>
+                            </div>
+                        </div>
+                        
                         <div class="reports-table-container">
                             <table class="admin-table reports-table" id="reportsTable">
                                 <thead>

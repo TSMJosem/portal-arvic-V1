@@ -485,6 +485,49 @@ function updateApprovedReportsList() {
         approvedReportsTableBody.appendChild(row);
     });
 }
+
+// === SOLUCIÓN SIMPLE: HEADERS Y COLUMNAS DINÁMICAS ===
+
+/**
+ * 1. NUEVA FUNCIÓN: Actualiza headers dinámicamente según filtro
+ */
+function updateTableHeaders() {
+    const thead = document.querySelector('#reportsTable thead tr');
+    if (!thead) return;
+    
+    if (currentReportFilter === 'proyecto') {
+        // Headers para PROYECTO (9 columnas - sin "Tipo Soporte")
+        thead.innerHTML = `
+            <th>ID Consultor</th>
+            <th>Nombre Consultor</th>
+            <th>Cliente (Empresa)</th>
+            <th>Proyecto</th>
+            <th>Módulo</th>
+            <th>Horas Reportadas</th>
+            <th>Fecha Reporte</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        `;
+    } else {
+        // Headers para SOPORTE y TODOS (10 columnas - con "Tipo Soporte")
+        const soporteLabel = currentReportFilter === 'all' ? 'Asignación' : 'Soporte';
+        const tipoLabel = currentReportFilter === 'all' ? 'Tipo' : 'Tipo Soporte';
+        
+        thead.innerHTML = `
+            <th>ID Consultor</th>
+            <th>Nombre Consultor</th>
+            <th>Cliente (Empresa)</th>
+            <th>${soporteLabel}</th>
+            <th>${tipoLabel}</th>
+            <th>Módulo</th>
+            <th>Horas Reportadas</th>
+            <th>Fecha Reporte</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        `;
+    }
+}
+
 function updateCompaniesList() {
     const container = document.getElementById('companiesList');
     const companies = Object.values(currentData.companies);
@@ -523,10 +566,6 @@ function updateCompaniesList() {
     });
 }
 
-// === FUNCIONES FALTANTES QUE NECESITAS AGREGAR A TU ADMIN.JS ===
-
-// Agregar estas funciones DESPUÉS de la función updateCompaniesList()
-
 function updateProjectsList() {
     const container = document.getElementById('projectsList');
     const projects = Object.values(currentData.projects);
@@ -547,22 +586,12 @@ function updateProjectsList() {
         const projectDiv = document.createElement('div');
         projectDiv.className = 'item hover-lift';
         
-        // Determinar color del estado
-        const statusColors = {
-            'Planificación': '#f39c12',
-            'En Progreso': '#3498db',
-            'En Pausa': '#e67e22',
-            'Completado': '#27ae60'
-        };
-        
         projectDiv.innerHTML = `
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                     <span class="item-id">${project.id}</span>
                     <strong>${project.name}</strong>
-                    <span class="custom-badge" style="background: ${statusColors[project.status]}20; color: ${statusColors[project.status]}; border: 1px solid ${statusColors[project.status]};">
-                        ${project.status}
-                    </span>
+                    <!-- ✅ Sin badge de status -->
                 </div>
                 <small style="color: #666;">
                     📅 Creado: ${window.DateUtils.formatDate(project.createdAt)}
@@ -723,7 +752,7 @@ function updateProjectAssignmentDropdowns() {
             id: 'assignProjectProject',
             defaultOption: 'Seleccionar proyecto',
             data: Object.values(currentData.projects),
-            getLabel: (project) => `${project.name} (${project.status})`
+            getLabel: (project) => `${project.name}`
         },
         {
             id: 'assignProjectCompany',
@@ -833,8 +862,6 @@ function updateProjectAssignmentsList() {
                 <p><strong>🏢 Cliente:</strong> ${company?.name || 'No asignado'}</p>
                 <p><strong>🧩 Módulo:</strong> ${module?.name || 'No asignado'}</p>
                 <p><strong>👤 Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId})</p>
-                <p><strong>📅 Período:</strong> ${assignment.startDate || 'No definido'} → ${assignment.endDate || 'No definido'}</p>
-                <p><strong>📊 Estado:</strong> <span class="status-badge">${assignment.status}</span></p>
             </div>
             
             <div class="assignment-actions">
@@ -1664,6 +1691,9 @@ function filterReportsByCategory(category) {
     
     // Actualizar botones activos
     updateCategoryFilterButtons(category);
+
+    // Actualizar encabezados de la tabla
+    updateTableHeaders();
     
     // Actualizar tabla con filtro aplicado
     updateReportsListWithFilter();
@@ -1716,9 +1746,13 @@ function updateReportsListWithFilter() {
     // Renderizar reportes filtrados
     if (filteredReports.length === 0) {
         const emptyMessage = getEmptyStateMessage(currentReportFilter);
+        
+        // Colspan dinámico según número de columnas
+        const colspan = currentReportFilter === 'proyecto' ? '9' : '10';
+        
         reportsTableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="empty-table-message">
+                <td colspan="${colspan}" class="empty-table-message">
                     <div class="empty-state">
                         <div class="empty-state-icon">${emptyMessage.icon}</div>
                         <div class="empty-state-title">${emptyMessage.title}</div>
@@ -1797,6 +1831,7 @@ function getEmptyStateMessage(category) {
  * @param {Object} report - Objeto del reporte
  * @returns {HTMLElement} - Elemento tr de la tabla
  */
+
 function createReportTableRow(report) {
     const user = currentData.users[report.userId];
     
@@ -1828,34 +1863,62 @@ function createReportTableRow(report) {
     
     const row = document.createElement('tr');
     
-    // Determinar qué mostrar en columna "Soporte"
-    const soporteContent = support ? support.name : (project ? project.name : 'Sin asignación');
-    const tipoSoporte = support ? support.type || 'N/A' : (project ? 'Proyecto' : 'Sin tipo');
-    
-    row.innerHTML = `
-        <td><span class="consultant-id">${user?.id || 'N/A'}</span></td>
-        <td><span class="consultant-name">${user?.name || 'Usuario no encontrado'}</span></td>
-        <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
-        <td><span class="project-name">${soporteContent}</span></td>
-        <td>${tipoSoporte}</td>
-        <td>${module ? module.name : 'Sin módulo'}</td>
-        <td><span class="hours-badge">${report.hours || 0} hrs</span></td>
-        <td>${window.DateUtils ? window.DateUtils.formatDate(report.createdAt) : new Date(report.createdAt).toLocaleDateString()}</td>
-        <td><span class="status-badge status-pending">Pendiente</span></td>
-        <td>
-            <div class="action-buttons">
-                <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
-                    👁️ Ver
-                </button>
-                <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
-                    ✅ Aprobar
-                </button>
-                <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
-                    ❌ Rechazar
-                </button>
-            </div>
-        </td>
-    `;
+    // Generar HTML según el filtro actual
+    if (currentReportFilter === 'proyecto') {
+        // HTML para PROYECTO (9 columnas - sin columna tipo)
+        row.innerHTML = `
+            <td><span class="consultant-id">${user?.id || 'N/A'}</span></td>
+            <td><span class="consultant-name">${user?.name || 'Usuario no encontrado'}</span></td>
+            <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
+            <td><span class="project-name">${project ? project.name : 'Sin proyecto'}</span></td>
+            <td>${module ? module.name : 'Sin módulo'}</td>
+            <td><span class="hours-badge">${report.hours || 0} hrs</span></td>
+            <td>${window.DateUtils ? window.DateUtils.formatDate(report.createdAt) : new Date(report.createdAt).toLocaleDateString()}</td>
+            <td><span class="status-badge status-pending">Pendiente</span></td>
+            <td>
+                <div class="action-buttons">
+                    <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
+                        👁️ Ver
+                    </button>
+                    <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
+                        ✅ Aprobar
+                    </button>
+                    <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
+                        ❌ Rechazar
+                    </button>
+                </div>
+            </td>
+        `;
+    } else {
+        // HTML para SOPORTE y TODOS (10 columnas - con columna tipo)
+        const asignacionContent = support ? support.name : (project ? project.name : 'Sin asignación');
+        const tipoContent = support ? support.type || 'N/A' : (project ? 'Proyecto' : 'Sin tipo');
+        
+        row.innerHTML = `
+            <td><span class="consultant-id">${user?.id || 'N/A'}</span></td>
+            <td><span class="consultant-name">${user?.name || 'Usuario no encontrado'}</span></td>
+            <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
+            <td><span class="project-name">${asignacionContent}</span></td>
+            <td>${tipoContent}</td>
+            <td>${module ? module.name : 'Sin módulo'}</td>
+            <td><span class="hours-badge">${report.hours || 0} hrs</span></td>
+            <td>${window.DateUtils ? window.DateUtils.formatDate(report.createdAt) : new Date(report.createdAt).toLocaleDateString()}</td>
+            <td><span class="status-badge status-pending">Pendiente</span></td>
+            <td>
+                <div class="action-buttons">
+                    <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
+                        👁️ Ver
+                    </button>
+                    <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
+                        ✅ Aprobar
+                    </button>
+                    <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
+                        ❌ Rechazar
+                    </button>
+                </div>
+            </td>
+        `;
+    }
     
     return row;
 }
@@ -2236,14 +2299,13 @@ function handleCreateProject(e) {
     
     const name = document.getElementById('projectName').value.trim();
     const description = document.getElementById('projectDescription').value.trim();
-    const status = document.getElementById('projectStatus').value;
     
     if (!name) {
         window.NotificationUtils.error('El nombre del proyecto es requerido');
         return;
     }
 
-    const projectData = { name: name, description: description, status: status };
+    const projectData = { name: name, description: description};
     const result = window.PortalDB.createProject(projectData);
     
     if (result.success) {

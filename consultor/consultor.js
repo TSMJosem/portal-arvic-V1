@@ -312,7 +312,6 @@ function updateAssignmentsList() {
                         <p><strong>🎯 Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
                         <p><strong>🧩 Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
                         <p><strong>📋 Descripción:</strong> ${project?.description || 'Sin descripción'}</p>
-                        <p><strong>📊 Estado:</strong> <span class="status-badge">${project?.status || 'No definido'}</span></p>
                         <p><small>📅 Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
                     </div>
                     
@@ -490,7 +489,6 @@ function viewAssignmentReports(assignmentId) {
                         <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
                         <p><strong>🎯 Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
                         <p><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
-                        <p><strong>📊 Estado:</strong> <span class="status-badge">${project?.status || 'No definido'}</span></p>
                         <p><strong>📝 Descripción:</strong> ${project?.description || 'Sin descripción'}</p>
                     </div>
                 `;
@@ -658,7 +656,6 @@ function viewProjectDetails(projectAssignmentId) {
 📋 Proyecto: ${project?.name || 'No encontrado'}
 🏢 Cliente: ${company?.name || 'No encontrado'}  
 🧩 Módulo: ${module?.name || 'No encontrado'}
-📊 Estado: ${project?.status || 'No definido'}
 📝 Descripción: ${project?.description || 'Sin descripción'}
 📅 Fecha de asignación: ${window.DateUtils.formatDate(assignment.createdAt)}
 🆔 ID de asignación: ${assignment.id}

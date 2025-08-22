@@ -112,7 +112,6 @@ class PortalDatabase {
                 id: '0001',
                 name: 'Sistema de Gestión Empresarial',
                 description: 'ERP completo para gestión de recursos empresariales',
-                status: 'En Progreso',
                 createdAt: new Date().toISOString(),
                 isActive: true
             },
@@ -120,7 +119,6 @@ class PortalDatabase {
                 id: '0002',
                 name: 'Portal Web Corporativo',
                 description: 'Desarrollo de sitio web institucional con CMS',
-                status: 'En Progreso',
                 createdAt: new Date().toISOString(),
                 isActive: true
             },
@@ -128,7 +126,6 @@ class PortalDatabase {
                 id: '0003',
                 name: 'App Móvil de Ventas',
                 description: 'Aplicación móvil para gestión de ventas y clientes',
-                status: 'Planificación',
                 createdAt: new Date().toISOString(),
                 isActive: true
             }
@@ -470,7 +467,6 @@ class PortalDatabase {
             id: projectId,
             name: projectData.name,
             description: projectData.description || '',
-            status: projectData.status || 'Planificación',
             createdAt: new Date().toISOString(),
             isActive: true
         };

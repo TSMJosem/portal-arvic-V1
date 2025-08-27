@@ -457,173 +457,47 @@
                         </div>
                     </div>
 
-                    <!-- Sección de Generar Reporte -->
-                    <div id="generar-reporte-section" class="content-section">
-                        <div class="section-header">
-                            <h2 class="section-title">📋 Generar Reportes</h2>
-                        </div>
-                        
-                        <div class="report-generator">
-                            <!-- Selector de Tipo de Reporte -->
-                            <div class="report-type-selector">
-                                <h3>Seleccionar Tipo de Reporte</h3>
-                                <div class="report-type-options">
-                                    <div class="report-type-card" onclick="selectReportType('actividades')">
-                                        <div class="report-type-icon">📊</div>
-                                        <h4>Reporte de Actividades</h4>
-                                        <p>Reporte de horas trabajadas por consultor y asignación</p>
-                                    </div>
-                                    <div class="report-type-card" onclick="selectReportType('pagos')">
-                                        <div class="report-type-icon">💰</div>
-                                        <h4>Reporte de Pago Consultores</h4>
-                                        <p>Reporte de pagos con tarifas editables por consultor</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Configuración Reporte de Actividades -->
-                            <div id="actividades-config" class="report-config" style="display: none;">
-                                <h3>📊 Configuración - Reporte de Actividades</h3>
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label for="actividadesTimeFilter">Período:</label>
-                                        <select id="actividadesTimeFilter">
-                                            <option value="week">Esta Semana</option>
-                                            <option value="month">Este Mes</option>
-                                            <option value="custom">Rango Personalizado</option>
-                                            <option value="all">Todas las Fechas</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group" id="actividadesCustomDateRange" style="display: none;">
-                                        <label for="actividadesStartDate">Fecha Inicio:</label>
-                                        <input type="date" id="actividadesStartDate">
-                                        
-                                        <label for="actividadesEndDate">Fecha Fin:</label>
-                                        <input type="date" id="actividadesEndDate">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <button type="button" class="btn btn-primary" onclick="generateActividadesReport()">
-                                            📊 Generar Reporte de Actividades
-                                        </button>
-                                        <button type="button" class="btn btn-secondary" onclick="previewActividadesReport()">
-                                            👁️ Vista Previa
-                                        </button>
-                                    </div>
+                            <!-- Sección de Generar Reporte -->
+                            <div id="generar-reporte-section" class="content-section">
+                                <div class="section-header">
+                                    <h2 class="section-title">📋 Sistema de Reportes ARVIC</h2>
+                                    <p class="section-subtitle">Genere reportes detallados según documentación oficial</p>
                                 </div>
                                 
-                                <!-- Vista Previa Actividades -->
-                                <div id="actividadesPreview" class="report-preview" style="display: none;">
-                                    <h4>Vista Previa - Reporte de Actividades</h4>
-                                    <div class="preview-table-container">
-                                        <table class="preview-table" id="actividadesPreviewTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID Consultor</th>
-                                                    <th>Nombre Consultor</th>
-                                                    <th>ID Cliente</th>
-                                                    <th>Cliente (Empresa)</th>
-                                                    <th>Proyecto</th>
-                                                    <th>Tarea</th>
-                                                    <th>Módulo</th>
-                                                    <th>Horas Totales</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="actividadesPreviewBody"></tbody>
-                                        </table>
+                                <!-- Selector de Reportes -->
+                                <div class="report-selector">
+                                    <h3>🎯 Seleccionar Tipo de Reporte</h3>
+                                    <div class="report-grid" id="reportGrid">
+                                        <!-- Se generará dinámicamente con JavaScript -->
                                     </div>
                                 </div>
-                            </div>
 
-                            <!-- Configuración Reporte de Pagos -->
-                            <div id="pagos-config" class="report-config" style="display: none;">
-                                <h3>💰 Configuración - Reporte de Pago Consultores</h3>
-                                <div class="config-form">
-                                    <div class="form-group">
-                                        <label for="pagosTimeFilter">Período:</label>
-                                        <select id="pagosTimeFilter">
-                                            <option value="week">Esta Semana</option>
-                                            <option value="month">Este Mes</option>
-                                            <option value="custom">Rango Personalizado</option>
-                                            <option value="all">Todas las Fechas</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group" id="pagosCustomDateRange" style="display: none;">
-                                        <label for="pagosStartDate">Fecha Inicio:</label>
-                                        <input type="date" id="pagosStartDate">
-                                        
-                                        <label for="pagosEndDate">Fecha Fin:</label>
-                                        <input type="date" id="pagosEndDate">
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <button type="button" class="btn btn-primary" onclick="loadPagosConfiguration()">
-                                            🔧 Configurar Tarifas y Generar
-                                        </button>
-                                    </div>
+                                <!-- Panel de Configuración Dinámico -->
+                                <div class="report-config-panel" id="reportConfigPanel" style="display: none;">
+                                    <!-- Se generará dinámicamente según el reporte seleccionado -->
                                 </div>
-                                
-                                <!-- Configuración de Tarifas -->
-                                <div id="pagosConfiguration" class="pagos-configuration" style="display: none;">
-                                    <h4>Configuración de Tarifas por Consultor</h4>
-                                    <div class="tariff-info">
-                                        <p><strong>Instrucciones:</strong> Ajuste las horas y tarifas por consultor. El total se calculará automáticamente.</p>
-                                    </div>
-                                    <div class="tariff-table-container">
-                                        <table class="tariff-table" id="tariffConfigTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>ID Consultor</th>
-                                                    <th>Nombre Consultor</th>
-                                                    <th>Cliente</th>
-                                                    <th>Proyecto</th>
-                                                    <th>Horas Reportadas</th>
-                                                    <th>Horas Ajustadas</th>
-                                                    <th>Tarifa por Hora ($)</th>
-                                                    <th>Total ($)</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody id="tariffConfigBody"></tbody>
-                                        </table>
-                                    </div>
-                                    <div class="tariff-actions">
-                                        <button type="button" class="btn btn-success" onclick="generatePagosReport()">
-                                            💰 Generar Reporte Final de Pagos
-                                        </button>
-                                        <button type="button" class="btn btn-secondary" onclick="resetTariffs()">
-                                            🔄 Restablecer Tarifas
-                                        </button>
-                                    </div>
-                                    <div class="tariff-summary">
-                                        <div class="summary-item">
-                                            <strong>Total Horas: <span id="totalHours">0</span></strong>
-                                        </div>
-                                        <div class="summary-item">
-                                            <strong>Total a Pagar: $<span id="totalAmount">0.00</span></strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
 
-                            <!-- Opciones Generales -->
-                            <div class="report-options">
-                                <h3>Opciones Generales</h3>
-                                <div class="form-group">
-                                    <button type="button" class="btn btn-secondary" onclick="exportData()">
-                                        💾 Exportar Datos Completos
-                                    </button>
-                                    <button type="button" class="btn btn-secondary" onclick="importData()">
-                                        📁 Importar Datos
-                                    </button>
-                                    <button type="button" class="btn btn-info" onclick="generateAdminReport()">
-                                        📋 Reporte Administrativo
-                                    </button>
+                                <!-- Vista Previa Editable -->
+                                <div class="preview-panel" id="reportPreviewPanel" style="display: none;">
+                                    <!-- Se generará dinámicamente según los datos -->
+                                </div>
+
+                                <!-- Opciones Generales (MANTENER) -->
+                                <div class="report-options">
+                                    <h3>Opciones Generales</h3>
+                                    <div class="form-group">
+                                        <button type="button" class="btn btn-secondary" onclick="exportData()">
+                                            💾 Exportar Datos Completos
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" onclick="importData()">
+                                            📁 Importar Datos
+                                        </button>
+                                        <button type="button" class="btn btn-info" onclick="generateAdminReport()">
+                                            📋 Reporte Administrativo
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
 
                     <!-- Sección de Historial de Reportes Generados -->
                     <div id="historial-reportes-section" class="content-section">
@@ -666,8 +540,7 @@
                             </div>
                         </div>
                         
-                        
-
+                    
                         <!-- Tabla de Reportes Generados -->
                         <div class="reports-table-container">
                             <table class="admin-table reports-table" id="generatedReportsTable">

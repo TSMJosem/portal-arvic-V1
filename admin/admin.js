@@ -1,5 +1,86 @@
 let currentReportFilter = 'all';
 
+// === CONFIGURACIÓN DE REPORTES ARVIC ===
+const ARVIC_REPORTS = {
+    'pago-consultor-general': {
+        name: 'Pago Consultor Soporte (General)',
+        icon: '💰',
+        description: 'Información general de todos los soportes con cálculo de pagos para consultores',
+        audience: '👑 Administradores y Gerentes',
+        filters: ['time', 'support'],
+        structure: ['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
+        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        excelTitle: 'RESUMEN DE PAGO A CONSULTOR'
+    },
+    'pago-consultor-especifico': {
+        name: 'Pago Consultor Soporte (Consultor)',
+        icon: '👤',
+        description: 'Datos de soportes de un consultor específico con filtros flexibles',
+        audience: '👤 Consultores y Supervisores',
+        filters: ['consultant', 'support', 'time'],
+        structure: ['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
+        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        excelTitle: 'PAGO A CONSULTOR'
+    },
+    'cliente-soporte': {
+        name: 'Cliente Soporte (Cliente)',
+        icon: '📞',
+        description: 'Soportes brindados a un cliente específico para transparencia de servicios',
+        audience: '🏢 Clientes y Atención al Cliente',
+        filters: ['client', 'support', 'time'],
+        structure: ['Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
+        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        excelTitle: 'Cliente: [Nombre]'
+    },
+    'remanente': {
+        name: 'Reporte Remanente',
+        icon: '📊',
+        description: 'Información acumulada de reportes aprobados dividida por semanas del mes',
+        audience: '👑 Administradores - Seguimiento',
+        filters: ['client', 'supportType', 'month'],
+        structure: ['Total de Horas', 'SEMANA 1', 'SEMANA 2', 'SEMANA 3', 'SEMANA 4'],
+        editableFields: ['TIEMPO', 'TARIFA'],
+        excelTitle: 'REPORTE REMANENTE',
+        specialFormat: 'weekly'
+    },
+    'proyecto-general': {
+        name: 'Proyecto (General)',
+        icon: '📋',
+        description: 'Información general de todos los proyectos con recursos asignados',
+        audience: '👑 Administradores y Gerentes',
+        filters: ['time', 'project'],
+        structure: ['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
+        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        excelTitle: 'Proyecto: [Nombre]'
+    },
+    'proyecto-cliente': {
+        name: 'Proyecto (Cliente)',
+        icon: '🏢',
+        description: 'Proyectos de un cliente específico con vista simplificada para presentación externa',
+        audience: '🏢 Clientes',
+        filters: ['client', 'project', 'time'],
+        structure: ['Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
+        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        excelTitle: 'Proyecto: [Nombre]'
+    },
+    'proyecto-consultor': {
+        name: 'Proyecto (Consultor)',
+        icon: '👤',
+        description: 'Proyectos asignados a un consultor específico para seguimiento personal',
+        audience: '👤 Consultores',
+        filters: ['consultant', 'project', 'time'],
+        structure: ['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
+        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        excelTitle: 'Proyecto: [Nombre]'
+    }
+};
+
+// Variables globales para el nuevo sistema de reportes
+let currentReportType = null;
+let currentReportData = null;
+let currentReportConfig = null;
+let editablePreviewData = {};
+
 function diagnosticCompleteAdmin() {
     console.log('🔍 === DIAGNÓSTICO COMPLETO ===');
     
@@ -2053,6 +2134,12 @@ function setupSidebarNavigation() {
             });
         }
     });
+
+        document.addEventListener('click', function(e) {
+        if (e.target.closest('[data-section="generar-reporte"]')) {
+            setTimeout(ensureReportSelectorInitialized, 100);
+        }
+    });
 }
 
 // === NAVEGACIÓN DE SECCIONES ===
@@ -2922,842 +3009,6 @@ function updateUsersList() {
 
 // === FUNCIONES PARA GENERACIÓN DE REPORTES ===
 
-// Variables globales para reportes
-let selectedReportType = null;
-let currentReportData = [];
-let tariffConfiguration = {};
-
-// Función para seleccionar tipo de reporte
-function selectReportType(type) {
-    selectedReportType = type;
-    
-    // Limpiar selecciones anteriores
-    document.querySelectorAll('.report-type-card').forEach(card => {
-        card.classList.remove('selected');
-    });
-    
-    // Marcar como seleccionado
-    event.target.closest('.report-type-card').classList.add('selected');
-    
-    // Ocultar todas las configuraciones
-    document.getElementById('actividades-config').style.display = 'none';
-    document.getElementById('pagos-config').style.display = 'none';
-    
-    // Mostrar configuración correspondiente
-    if (type === 'actividades') {
-        document.getElementById('actividades-config').style.display = 'block';
-        setupActividadesTimeFilter();
-    } else if (type === 'pagos') {
-        document.getElementById('pagos-config').style.display = 'block';
-        setupPagosTimeFilter();
-    }
-}
-
-// Configurar filtros de tiempo para actividades
-function setupActividadesTimeFilter() {
-    const timeFilter = document.getElementById('actividadesTimeFilter');
-    const customDateRange = document.getElementById('actividadesCustomDateRange');
-    
-    timeFilter.addEventListener('change', function() {
-        if (this.value === 'custom') {
-            customDateRange.style.display = 'block';
-        } else {
-            customDateRange.style.display = 'none';
-        }
-    });
-}
-
-// Configurar filtros de tiempo para pagos
-function setupPagosTimeFilter() {
-    const timeFilter = document.getElementById('pagosTimeFilter');
-    const customDateRange = document.getElementById('pagosCustomDateRange');
-    
-    timeFilter.addEventListener('change', function() {
-        if (this.value === 'custom') {
-            customDateRange.style.display = 'block';
-        } else {
-            customDateRange.style.display = 'none';
-        }
-    });
-}
-
-// Obtener reportes filtrados por fecha
-function getFilteredReports(timeFilterId, startDateId, endDateId) {
-    const timeFilter = document.getElementById(timeFilterId);
-    const startDate = document.getElementById(startDateId);
-    const endDate = document.getElementById(endDateId);
-    
-    const reports = Object.values(currentData.reports);
-    const approvedReports = reports.filter(r => r.status === 'Aprobado');
-    
-    let filteredReports = [];
-    const now = new Date();
-    
-    switch(timeFilter.value) {
-        case 'week':
-            const startOfWeek = new Date(now);
-            startOfWeek.setDate(now.getDate() - now.getDay());
-            startOfWeek.setHours(0, 0, 0, 0);
-            
-            const endOfWeek = new Date(startOfWeek);
-            endOfWeek.setDate(startOfWeek.getDate() + 6);
-            endOfWeek.setHours(23, 59, 59, 999);
-            
-            filteredReports = approvedReports.filter(report => {
-                const reportDate = new Date(report.createdAt);
-                return reportDate >= startOfWeek && reportDate <= endOfWeek;
-            });
-            break;
-            
-        case 'month':
-            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-            const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-            endOfMonth.setHours(23, 59, 59, 999);
-            
-            filteredReports = approvedReports.filter(report => {
-                const reportDate = new Date(report.createdAt);
-                return reportDate >= startOfMonth && reportDate <= endOfMonth;
-            });
-            break;
-            
-        case 'custom':
-            if (startDate && endDate && startDate.value && endDate.value) {
-                const customStart = new Date(startDate.value);
-                customStart.setHours(0, 0, 0, 0);
-                
-                const customEnd = new Date(endDate.value);
-                customEnd.setHours(23, 59, 59, 999);
-                
-                filteredReports = approvedReports.filter(report => {
-                    const reportDate = new Date(report.createdAt);
-                    return reportDate >= customStart && reportDate <= customEnd;
-                });
-            } else {
-                filteredReports = approvedReports;
-            }
-            break;
-            
-        default: // 'all'
-            filteredReports = approvedReports;
-            break;
-    }
-    
-    return filteredReports;
-}
-
-// Procesar datos para reporte de actividades
-function processActividadesData(filteredReports) {
-    const assignmentSummary = {};
-    
-    filteredReports.forEach(report => {
-        const user = currentData.users[report.userId];
-        
-        let assignment = null;
-        if (report.assignmentId) {
-            assignment = currentData.assignments[report.assignmentId];
-        } else {
-            assignment = Object.values(currentData.assignments).find(a => 
-                a.userId === report.userId && a.isActive
-            );
-        }
-        
-        if (user && assignment) {
-            const key = assignment.id;
-            
-            if (!assignmentSummary[key]) {
-                const company = currentData.companies[assignment.companyId];
-                const support = currentData.supports[assignment.supportId]; // Cambiar de taskId
-                const module = currentData.modules[assignment.moduleId];
-                
-                assignmentSummary[key] = {
-                    idConsultor: user.id,
-                    nombreConsultor: user.name,
-                    idCliente: assignment.companyId,
-                    cliente: company ? company.name : 'No asignado',
-                    soporte: support ? support.name : 'No asignado', // Cambiar de proyecto
-                    tipoSoporte: support ? support.type : 'No especificado', // Nuevo campo
-                    modulo: module ? module.name : 'No asignado',
-                    horasTotales: 0
-                };
-            }
-            
-            assignmentSummary[key].horasTotales += parseFloat(report.hours || 0);
-        }
-    });
-    
-    return Object.values(assignmentSummary);
-}
-
-// Vista previa del reporte de actividades
-function previewActividadesReport() {
-    const filteredReports = getFilteredReports(
-        'actividadesTimeFilter', 
-        'actividadesStartDate', 
-        'actividadesEndDate'
-    );
-    
-    const reportData = processActividadesData(filteredReports);
-    currentReportData = reportData;
-    
-    const previewContainer = document.getElementById('actividadesPreview');
-    const previewBody = document.getElementById('actividadesPreviewBody');
-    
-    previewBody.innerHTML = '';
-    
-    if (reportData.length === 0) {
-        previewBody.innerHTML = `
-            <tr>
-                <td colspan="8" style="text-align: center; padding: 20px; color: #666;">
-                    No hay datos para mostrar en el período seleccionado
-                </td>
-            </tr>
-        `;
-    } else {
-        reportData.forEach(row => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${row.idConsultor}</td>
-                <td>${row.nombreConsultor}</td>
-                <td>${row.idCliente}</td>
-                <td>${row.cliente}</td>
-                <td>${row.proyecto}</td>
-                <td>${row.tarea}</td>
-                <td>${row.modulo}</td>
-                <td>${row.horasTotales.toFixed(1)}</td>
-            `;
-            previewBody.appendChild(tr);
-        });
-    }
-    
-    previewContainer.style.display = 'block';
-    previewContainer.scrollIntoView({ behavior: 'smooth' });
-}
-
-// === FUNCIÓN PARA GENERAR REPORTE DE ACTIVIDADES CON DISEÑO Y LOGO ===
-function generateActividadesReport() {
-    if (!currentReportData || currentReportData.length === 0) {
-        window.NotificationUtils.error('No hay datos para generar el reporte. Primero haga una vista previa.');
-        return;
-    }
-    
-    try {
-        // Crear workbook
-        const wb = XLSX.utils.book_new();
-        
-        // Obtener fechas del filtro (mantener lógica existente...)
-        const timeFilter = document.getElementById('actividadesTimeFilter');
-        let startDateFormatted = '';
-        let endDateFormatted = '';
-        
-        if (timeFilter) {
-            const today = new Date();
-            
-            switch(timeFilter.value) {
-                case 'week':
-                    const startOfWeek = new Date(today);
-                    startOfWeek.setDate(today.getDate() - today.getDay());
-                    const endOfWeek = new Date(startOfWeek);
-                    endOfWeek.setDate(startOfWeek.getDate() + 6);
-                    
-                    startDateFormatted = startOfWeek.toLocaleDateString('es-ES');
-                    endDateFormatted = endOfWeek.toLocaleDateString('es-ES');
-                    break;
-                    
-                case 'month':
-                    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                    
-                    startDateFormatted = startOfMonth.toLocaleDateString('es-ES');
-                    endDateFormatted = endOfMonth.toLocaleDateString('es-ES');
-                    break;
-                    
-                case 'custom':
-                    const startDate = document.getElementById('actividadesStartDate');
-                    const endDate = document.getElementById('actividadesEndDate');
-                    if (startDate && endDate && startDate.value && endDate.value) {
-                        const customStart = new Date(startDate.value);
-                        const customEnd = new Date(endDate.value);
-                        startDateFormatted = customStart.toLocaleDateString('es-ES');
-                        endDateFormatted = customEnd.toLocaleDateString('es-ES');
-                    }
-                    break;
-                    
-                default:
-                    startDateFormatted = new Date().toLocaleDateString('es-ES');
-                    endDateFormatted = new Date().toLocaleDateString('es-ES');
-                    break;
-            }
-        }
-        
-        // Crear datos para Excel
-        const wsData = [];
-        
-        // Fila 1: Header con logo y título
-        const headerRow = Array(15).fill('');
-        headerRow[0] = ''; // Espacio para logo
-        headerRow[7] = 'REPORTE DE ACTIVIDADES';
-        wsData.push(headerRow);
-        
-        // Filas 2-4: Espaciado
-        for (let i = 0; i < 3; i++) {
-            wsData.push(Array(15).fill(''));
-        }
-        
-        // Fila 5: Información del consultor
-        const consultorRow = Array(15).fill('');
-        consultorRow[1] = 'NOMBRE:';
-        consultorRow[3] = 'ID 001 Hèctor Pèrez';
-        consultorRow[11] = startDateFormatted;
-        consultorRow[13] = endDateFormatted;
-        wsData.push(consultorRow);
-        
-        // Fila 6: Espaciado
-        wsData.push(Array(15).fill(''));
-        
-        // Fila 7: Información del soporte (cambiar de proyecto)
-        const supportRow = Array(15).fill('');
-        if (currentReportData.length > 0) {
-            supportRow[1] = 'SOPORTE:';
-            supportRow[3] = currentReportData[0].soporte; // Cambiar de proyecto
-            supportRow[8] = 'CLIENTE';
-            supportRow[10] = currentReportData[0].cliente;
-        }
-        wsData.push(supportRow);
-        
-        // Fila 8: Headers de la tabla actualizados
-        const tableHeaders = [
-            'ID CLIENTE',
-            'ID CONSULTOR', 
-            'SOPORTE',
-            'TIPO SOPORTE',
-            'FECHA',
-            'ACTIVIDAD',
-            'HORAS pago consultor',
-            'LIDER',
-            'Horas A cobrar a Cliente'
-        ];
-        
-        const headerTableRow = Array(15).fill('');
-        headerTableRow[0] = tableHeaders[0];
-        headerTableRow[1] = tableHeaders[1];
-        headerTableRow[2] = tableHeaders[2];
-        headerTableRow[3] = tableHeaders[3];
-        headerTableRow[4] = tableHeaders[4];
-        headerTableRow[5] = tableHeaders[5];
-        headerTableRow[6] = tableHeaders[6];
-        headerTableRow[7] = tableHeaders[7];
-        headerTableRow[8] = tableHeaders[8];
-        wsData.push(headerTableRow);
-        
-        // Agregar datos de actividades con nueva estructura
-        currentReportData.forEach(row => {
-            const dataRow = Array(15).fill('');
-            dataRow[0] = `${row.idCliente} CLIENTE ${row.cliente.toUpperCase()}`;
-            dataRow[1] = `${row.idConsultor} ${row.nombreConsultor.toUpperCase()}`;
-            dataRow[2] = row.soporte || 'SOPORTE NO ESPECIFICADO'; // Cambiar de proyecto
-            dataRow[3] = row.tipoSoporte || 'TÉCNICO'; // Nuevo campo
-            dataRow[4] = new Date().toLocaleDateString('es-ES');
-            dataRow[5] = `Actividades realizadas en ${row.soporte} - ${row.modulo}`;
-            dataRow[6] = row.horasTotales;
-            dataRow[7] = ''; // LIDER vacío
-            dataRow[8] = row.horasTotales;
-            wsData.push(dataRow);
-        });
-        
-        // Agregar filas vacías para completar el formato
-        for (let i = 0; i < 10; i++) {
-            const emptyRow = Array(15).fill('');
-            if (i === 0) {
-                const totalHours = currentReportData.reduce((sum, row) => sum + row.horasTotales, 0);
-                emptyRow[6] = totalHours;
-                emptyRow[8] = totalHours;
-            }
-            wsData.push(emptyRow);
-        }
-        
-        // Crear worksheet
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        
-        // Configurar anchos de columna
-        ws['!cols'] = [
-            {wch: 20}, // ID CLIENTE
-            {wch: 20}, // ID CONSULTOR
-            {wch: 25}, // SOPORTE
-            {wch: 15}, // TIPO SOPORTE
-            {wch: 12}, // FECHA
-            {wch: 60}, // ACTIVIDAD
-            {wch: 18}, // HORAS pago consultor
-            {wch: 10}, // LIDER
-            {wch: 20}, // Horas A cobrar a Cliente
-            {wch: 8}, {wch: 8}, {wch: 12}, {wch: 8}, {wch: 12}, {wch: 8}
-        ];
-        
-        // Aplicar estilos al worksheet (mantener lógica existente...)
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        
-        // Estilo para el título principal
-        const titleCell = 'H1';
-        if (!ws[titleCell]) ws[titleCell] = {};
-        ws[titleCell].s = {
-            font: { bold: true, sz: 16, color: { rgb: "000000" } },
-            alignment: { horizontal: "center", vertical: "center" },
-            fill: { bgColor: { indexed: 22 } }
-        };
-        
-        // Estilo para los headers de la tabla (fila 8)
-        for (let col = 0; col < 9; col++) {
-            const cellRef = XLSX.utils.encode_cell({r: 7, c: col});
-            if (!ws[cellRef]) ws[cellRef] = {};
-            ws[cellRef].s = {
-                font: { bold: true, color: { rgb: "FFFFFF" } },
-                fill: { bgColor: { rgb: "4472C4" } },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "thin", color: { rgb: "000000" } },
-                    bottom: { style: "thin", color: { rgb: "000000" } },
-                    left: { style: "thin", color: { rgb: "000000" } },
-                    right: { style: "thin", color: { rgb: "000000" } }
-                }
-            };
-        }
-        
-        // Estilo para las celdas de datos
-        for (let row = 8; row < wsData.length; row++) {
-            for (let col = 0; col < 9; col++) {
-                const cellRef = XLSX.utils.encode_cell({r: row, c: col});
-                if (!ws[cellRef]) ws[cellRef] = {};
-                ws[cellRef].s = {
-                    border: {
-                        top: { style: "thin", color: { rgb: "000000" } },
-                        bottom: { style: "thin", color: { rgb: "000000" } },
-                        left: { style: "thin", color: { rgb: "000000" } },
-                        right: { style: "thin", color: { rgb: "000000" } }
-                    },
-                    alignment: { vertical: "center" }
-                };
-                
-                // Alternar colores de fila
-                if (row % 2 === 0) {
-                    ws[cellRef].s.fill = { bgColor: { rgb: "F2F2F2" } };
-                }
-            }
-        }
-        
-        // Configurar merge cells para el título
-        ws['!merges'] = [
-            { s: { r: 0, c: 6 }, e: { r: 0, c: 10 } } // Merge título
-        ];
-        
-        // Agregar worksheet al workbook
-        XLSX.utils.book_append_sheet(wb, ws, "REPORTE DE ACTIVIDADES");
-        
-        // Generar archivo Excel
-        const today = new Date();
-        const fileName = `REPORTE_ACTIVIDADES_HPEREZ_${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}.xlsx`;
-        
-        XLSX.writeFile(wb, fileName);
-
-        // Guardar en historial
-        const totalHours = currentReportData.reduce((sum, row) => sum + row.horasTotales, 0);
-        const reportData = {
-            fileName: fileName,
-            reportType: 'actividades',
-            generatedBy: 'Hector Perez',
-            dateRange: getDateRangeText('actividadesTimeFilter', 'actividadesStartDate', 'actividadesEndDate'),
-            recordCount: currentReportData.length,
-            totalHours: totalHours,
-            totalAmount: 0
-        };
-
-        const saveResult = window.PortalDB.saveGeneratedReport(reportData);
-        if (saveResult.success) {
-            updateSidebarCounts();
-        }
-
-        window.NotificationUtils.success(`Reporte de actividades generado: ${fileName}`);
-
-    } catch (error) {
-        console.error('Error generando reporte:', error);
-        window.NotificationUtils.error('Error al generar el reporte de actividades');
-    }
-}
-
-// Cargar configuración de pagos
-function loadPagosConfiguration() {
-    const filteredReports = getFilteredReports(
-        'pagosTimeFilter', 
-        'pagosStartDate', 
-        'pagosEndDate'
-    );
-    
-    const reportData = processActividadesData(filteredReports);
-    
-    if (reportData.length === 0) {
-        window.NotificationUtils.warning('No hay datos para el período seleccionado');
-        return;
-    }
-    
-    // Mostrar configuración de tarifas
-    document.getElementById('pagosConfiguration').style.display = 'block';
-    
-    const tbody = document.getElementById('tariffConfigBody');
-    tbody.innerHTML = '';
-    
-    // Inicializar configuración de tarifas
-    tariffConfiguration = {};
-    
-    reportData.forEach((row, index) => {
-        const configId = `config_${index}`;
-        tariffConfiguration[configId] = {
-            ...row,
-            horasAjustadas: row.horasTotales,
-            tarifaPorHora: 500, // Tarifa por defecto
-            total: row.horasTotales * 500
-        };
-        
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${row.idConsultor}</td>
-            <td>${row.nombreConsultor}</td>
-            <td>${row.cliente}</td>
-            <td>${row.soporte}</td>
-            <td>${row.horasTotales.toFixed(1)}</td>
-            <td>
-                <input type="number" 
-                       class="tariff-input hours" 
-                       id="hours_${configId}" 
-                       value="${row.horasTotales.toFixed(1)}" 
-                       min="0" 
-                       step="0.1"
-                       onchange="updateTariffCalculation('${configId}')">
-            </td>
-            <td>
-                <input type="number" 
-                       class="tariff-input rate" 
-                       id="rate_${configId}" 
-                       value="500" 
-                       min="0" 
-                       step="10"
-                       onchange="updateTariffCalculation('${configId}')">
-            </td>
-            <td class="total-cell" id="total_${configId}">${(row.horasTotales * 500).toFixed(2)}</td>
-        `;
-        tbody.appendChild(tr);
-    });
-    
-    updateTotals();
-    document.getElementById('pagosConfiguration').scrollIntoView({ behavior: 'smooth' });
-}
-
-// Actualizar cálculo de tarifas
-function updateTariffCalculation(configId) {
-    const hoursInput = document.getElementById(`hours_${configId}`);
-    const rateInput = document.getElementById(`rate_${configId}`);
-    const totalCell = document.getElementById(`total_${configId}`);
-    
-    const hours = parseFloat(hoursInput.value) || 0;
-    const rate = parseFloat(rateInput.value) || 0;
-    const total = hours * rate;
-    
-    // Actualizar configuración
-    tariffConfiguration[configId].horasAjustadas = hours;
-    tariffConfiguration[configId].tarifaPorHora = rate;
-    tariffConfiguration[configId].total = total;
-    
-    // Actualizar celda de total
-    totalCell.textContent = `${total.toFixed(2)}`;
-    
-    // Actualizar totales generales
-    updateTotals();
-}
-
-// Actualizar totales generales
-function updateTotals() {
-    let totalHours = 0;
-    let totalAmount = 0;
-    
-    Object.values(tariffConfiguration).forEach(config => {
-        totalHours += config.horasAjustadas;
-        totalAmount += config.total;
-    });
-    
-    document.getElementById('totalHours').textContent = totalHours.toFixed(1);
-    document.getElementById('totalAmount').textContent = totalAmount.toFixed(2);
-}
-
-// Restablecer tarifas a valores por defecto
-function resetTariffs() {
-    if (!confirm('¿Está seguro de restablecer todas las tarifas a los valores por defecto?')) {
-        return;
-    }
-    
-    Object.keys(tariffConfiguration).forEach(configId => {
-        const config = tariffConfiguration[configId];
-        config.horasAjustadas = config.horasTotales;
-        config.tarifaPorHora = 500;
-        config.total = config.horasTotales * 500;
-        
-        // Actualizar inputs
-        document.getElementById(`hours_${configId}`).value = config.horasTotales.toFixed(1);
-        document.getElementById(`rate_${configId}`).value = '500';
-        document.getElementById(`total_${configId}`).textContent = `${config.total.toFixed(2)}`;
-    });
-    
-    updateTotals();
-    window.NotificationUtils.info('Tarifas restablecidas a valores por defecto');
-}
-
-// === FUNCIÓN PARA GENERAR REPORTE DE PAGOS CON DISEÑO Y LOGO ===
-function generatePagosReport() {
-    if (!tariffConfiguration || Object.keys(tariffConfiguration).length === 0) {
-        window.NotificationUtils.error('No hay configuración de tarifas. Primero configure las tarifas.');
-        return;
-    }
-    
-    try {
-        // Crear workbook
-        const wb = XLSX.utils.book_new();
-        
-        // Obtener fechas del filtro (mantener lógica existente...)
-        const timeFilter = document.getElementById('pagosTimeFilter');
-        let startDateFormatted = '';
-        let endDateFormatted = '';
-        
-        if (timeFilter) {
-            const today = new Date();
-            
-            switch(timeFilter.value) {
-                case 'week':
-                    const startOfWeek = new Date(today);
-                    startOfWeek.setDate(today.getDate() - today.getDay());
-                    const endOfWeek = new Date(startOfWeek);
-                    endOfWeek.setDate(startOfWeek.getDate() + 6);
-                    
-                    startDateFormatted = startOfWeek.toLocaleDateString('es-ES');
-                    endDateFormatted = endOfWeek.toLocaleDateString('es-ES');
-                    break;
-                    
-                case 'month':
-                    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-                    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                    
-                    startDateFormatted = startOfMonth.toLocaleDateString('es-ES');
-                    endDateFormatted = endOfMonth.toLocaleDateString('es-ES');
-                    break;
-                    
-                case 'custom':
-                    const startDate = document.getElementById('pagosStartDate');
-                    const endDate = document.getElementById('pagosEndDate');
-                    if (startDate && endDate && startDate.value && endDate.value) {
-                        const customStart = new Date(startDate.value);
-                        const customEnd = new Date(endDate.value);
-                        startDateFormatted = customStart.toLocaleDateString('es-ES');
-                        endDateFormatted = customEnd.toLocaleDateString('es-ES');
-                    }
-                    break;
-                    
-                default:
-                    startDateFormatted = new Date().toLocaleDateString('es-ES');
-                    endDateFormatted = new Date().toLocaleDateString('es-ES');
-                    break;
-            }
-        }
-        
-        // Crear datos para Excel
-        const wsData = [];
-        
-        // Fila 1: Header con logo y título
-        const headerRow = Array(12).fill('');
-        headerRow[0] = ''; // Espacio para logo
-        headerRow[5] = 'REPORTE DE PAGO CONSULTORES';
-        wsData.push(headerRow);
-        
-        // Filas 2-4: Espaciado
-        for (let i = 0; i < 3; i++) {
-            wsData.push(Array(12).fill(''));
-        }
-        
-        // Fila 5: Información del generador
-        const generadorRow = Array(12).fill('');
-        generadorRow[1] = 'GENERADO POR:';
-        generadorRow[3] = 'ID 001 Hèctor Pèrez';
-        generadorRow[8] = startDateFormatted;
-        generadorRow[10] = endDateFormatted;
-        wsData.push(generadorRow);
-        
-        // Fila 6: Espaciado
-        wsData.push(Array(12).fill(''));
-        
-        // Fila 7: Información del período
-        const periodoRow = Array(12).fill('');
-        periodoRow[1] = 'PERÍODO:';
-        periodoRow[3] = `${startDateFormatted} - ${endDateFormatted}`;
-        wsData.push(periodoRow);
-        
-        // Fila 8: Headers de la tabla actualizados
-        const tableHeaders = [
-            'ID CONSULTOR',
-            'NOMBRE CONSULTOR',
-            'CLIENTE',
-            'SOPORTE',
-            'HORAS TRABAJADAS',
-            'TARIFA POR HORA',
-            'TOTAL A PAGAR'
-        ];
-        
-        const headerTableRow = Array(12).fill('');
-        headerTableRow[0] = tableHeaders[0];
-        headerTableRow[1] = tableHeaders[1];
-        headerTableRow[2] = tableHeaders[2];
-        headerTableRow[3] = tableHeaders[3];
-        headerTableRow[4] = tableHeaders[4];
-        headerTableRow[5] = tableHeaders[5];
-        headerTableRow[6] = tableHeaders[6];
-        wsData.push(headerTableRow);
-        
-        let grandTotal = 0;
-        
-        // Agregar datos de pagos con nueva estructura
-        Object.values(tariffConfiguration).forEach(config => {
-            const dataRow = Array(12).fill('');
-            dataRow[0] = config.idConsultor;
-            dataRow[1] = config.nombreConsultor;
-            dataRow[2] = config.cliente;
-            dataRow[3] = config.soporte; // Cambiar de proyecto
-            dataRow[4] = config.horasAjustadas;
-            dataRow[5] = `${config.tarifaPorHora.toFixed(2)}`;
-            dataRow[6] = `${config.total.toFixed(2)}`;
-            wsData.push(dataRow);
-            grandTotal += config.total;
-        });
-        
-        // Agregar filas vacías y total
-        for (let i = 0; i < 5; i++) {
-            const emptyRow = Array(12).fill('');
-            if (i === 1) {
-                emptyRow[5] = 'TOTAL GENERAL:';
-                emptyRow[6] = `${grandTotal.toFixed(2)}`;
-            }
-            wsData.push(emptyRow);
-        }
-        
-        // Crear worksheet
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        
-        // Configurar anchos de columna
-        ws['!cols'] = [
-            {wch: 15}, // ID CONSULTOR
-            {wch: 25}, // NOMBRE CONSULTOR
-            {wch: 25}, // CLIENTE
-            {wch: 25}, // SOPORTE
-            {wch: 15}, // HORAS TRABAJADAS
-            {wch: 15}, // TARIFA POR HORA
-            {wch: 15}, // TOTAL A PAGAR
-            {wch: 8}, {wch: 12}, {wch: 8}, {wch: 12}, {wch: 8}
-        ];
-        
-        // Aplicar estilos al worksheet (mantener lógica existente...)
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        
-        // Estilo para el título principal
-        const titleCell = 'F1';
-        if (!ws[titleCell]) ws[titleCell] = {};
-        ws[titleCell].s = {
-            font: { bold: true, sz: 16, color: { rgb: "000000" } },
-            alignment: { horizontal: "center", vertical: "center" },
-            fill: { bgColor: { indexed: 22 } }
-        };
-        
-        // Estilo para los headers de la tabla (fila 8)
-        for (let col = 0; col < 7; col++) {
-            const cellRef = XLSX.utils.encode_cell({r: 7, c: col});
-            if (!ws[cellRef]) ws[cellRef] = {};
-            ws[cellRef].s = {
-                font: { bold: true, color: { rgb: "FFFFFF" } },
-                fill: { bgColor: { rgb: "4472C4" } },
-                alignment: { horizontal: "center", vertical: "center" },
-                border: {
-                    top: { style: "thin", color: { rgb: "000000" } },
-                    bottom: { style: "thin", color: { rgb: "000000" } },
-                    left: { style: "thin", color: { rgb: "000000" } },
-                    right: { style: "thin", color: { rgb: "000000" } }
-                }
-            };
-        }
-        
-        // Estilo para las celdas de datos
-        for (let row = 8; row < wsData.length; row++) {
-            for (let col = 0; col < 7; col++) {
-                const cellRef = XLSX.utils.encode_cell({r: row, c: col});
-                if (!ws[cellRef]) ws[cellRef] = {};
-                ws[cellRef].s = {
-                    border: {
-                        top: { style: "thin", color: { rgb: "000000" } },
-                        bottom: { style: "thin", color: { rgb: "000000" } },
-                        left: { style: "thin", color: { rgb: "000000" } },
-                        right: { style: "thin", color: { rgb: "000000" } }
-                    },
-                    alignment: { vertical: "center" }
-                };
-                
-                // Alternar colores de fila
-                if (row % 2 === 0) {
-                    ws[cellRef].s.fill = { bgColor: { rgb: "F2F2F2" } };
-                }
-            }
-        }
-        
-        // Configurar merge cells para el título
-        ws['!merges'] = [
-            { s: { r: 0, c: 4 }, e: { r: 0, c: 8 } } // Merge título
-        ];
-        
-        // Agregar worksheet al workbook
-        XLSX.utils.book_append_sheet(wb, ws, "PAGO CONSULTORES");
-        
-        // Generar archivo Excel
-        const today = new Date();
-        const fileName = `PAGO_CONSULTORES_HPEREZ_${today.getFullYear()}-${(today.getMonth()+1).toString().padStart(2,'0')}.xlsx`;
-        
-        XLSX.writeFile(wb, fileName);
-
-        // Calcular totales y guardar en historial
-        let totalHours = 0;
-        Object.values(tariffConfiguration).forEach(config => {
-            totalHours += config.horasAjustadas;
-        });
-
-        const reportData = {
-            fileName: fileName,
-            reportType: 'pagos',
-            generatedBy: 'Hector Perez',
-            dateRange: getDateRangeText('pagosTimeFilter', 'pagosStartDate', 'pagosEndDate'),
-            recordCount: Object.keys(tariffConfiguration).length,
-            totalHours: totalHours,
-            totalAmount: grandTotal
-        };
-
-        const saveResult = window.PortalDB.saveGeneratedReport(reportData);
-        if (saveResult.success) {
-            updateSidebarCounts();
-        }
-
-        window.NotificationUtils.success(`Reporte de pagos generado: ${fileName}`);
-
-    } catch (error) {
-        console.error('Error generando reporte de pagos:', error);
-        window.NotificationUtils.error('Error al generar el reporte de pagos');
-    }
-}
-
-// Funciones exportadas globalmente
-window.selectReportType = selectReportType;
-window.previewActividadesReport = previewActividadesReport;
-window.generateActividadesReport = generateActividadesReport;
-window.loadPagosConfiguration = loadPagosConfiguration;
-window.updateTariffCalculation = updateTariffCalculation;
-window.resetTariffs = resetTariffs;
-window.generatePagosReport = generatePagosReport;
 window.diagnosticAnimationState = diagnosticAnimationState;
 window.waitForAnimationComplete = waitForAnimationComplete;
 
@@ -3997,6 +3248,2107 @@ function deleteGeneratedReportFromHistory(reportId) {
         updateSidebarCounts();
     } else {
         window.NotificationUtils.error('Error: ' + result.message);
+    }
+}
+
+// === NUEVO SISTEMA DE REPORTES ARVIC ===
+
+/**
+ * Inicializar el selector de reportes dinámico
+ */
+function initializeReportSelector() {
+    console.log('🚀 Inicializando selector de reportes ARVIC...');
+    
+    const reportGrid = document.getElementById('reportGrid');
+    if (!reportGrid) {
+        console.error('❌ No se encontró el elemento reportGrid');
+        return;
+    }
+    
+    reportGrid.innerHTML = '';
+    
+    Object.entries(ARVIC_REPORTS).forEach(([key, report]) => {
+        const reportOption = document.createElement('div');
+        reportOption.className = 'report-option';
+        reportOption.dataset.report = key;
+        reportOption.innerHTML = `
+            <div class="report-icon">${report.icon}</div>
+            <div class="report-name">${report.name}</div>
+            <div class="report-description">${report.description}</div>
+            <div class="report-audience">${report.audience}</div>
+        `;
+        
+        reportOption.addEventListener('click', () => selectNewReportType(key));
+        reportGrid.appendChild(reportOption);
+    });
+    
+    console.log('✅ Selector de reportes inicializado con', Object.keys(ARVIC_REPORTS).length, 'reportes');
+}
+
+/**
+ * Seleccionar tipo de reporte nuevo
+ */
+function selectNewReportType(reportType) {
+    console.log('📋 Seleccionando reporte:', reportType);
+    
+    // 1. Ocultar paneles anteriores
+    const configPanel = document.getElementById('reportConfigPanel');
+    const previewPanel = document.getElementById('reportPreviewPanel');
+    
+    if (configPanel) configPanel.style.display = 'none';
+    if (previewPanel) previewPanel.style.display = 'none';
+    
+    // 2. Limpiar datos anteriores
+    currentReportData = null;
+    currentReportConfig = null;
+    editablePreviewData = {};
+    
+    // 3. Actualizar selector visual
+    document.querySelectorAll('.report-option').forEach(option => {
+        option.classList.remove('active');
+    });
+    
+    const selectedOption = document.querySelector(`[data-report="${reportType}"]`);
+    if (selectedOption) {
+        selectedOption.classList.add('active');
+    }
+    
+    // 4. Generar configuración específica
+    generateReportConfiguration(reportType);
+    
+    // 5. Actualizar variable global
+    currentReportType = reportType;
+    
+    console.log('✅ Reporte seleccionado:', ARVIC_REPORTS[reportType].name);
+}
+
+/**
+ * Generar configuración específica según el tipo de reporte
+ */
+function generateReportConfiguration(reportType) {
+    const report = ARVIC_REPORTS[reportType];
+    const configPanel = document.getElementById('reportConfigPanel');
+    
+    if (!configPanel || !report) return;
+    
+    console.log('🔧 Generando configuración para:', report.name);
+    
+    // Generar filtros según el tipo de reporte
+    let filtersHTML = '';
+    
+    // Filtro de tiempo (común para la mayoría)
+    if (report.filters.includes('time')) {
+        filtersHTML += `
+            <div class="form-group">
+                <label for="timeFilter">🕐 Período de Tiempo:</label>
+                <select id="timeFilter" onchange="handleTimeFilterChange()">
+                    <option value="week">Esta Semana</option>
+                    <option value="month">Este Mes</option>
+                    <option value="custom">Rango Personalizado</option>
+                    <option value="all">Todas las Fechas</option>
+                </select>
+            </div>
+        `;
+    }
+    
+    // Filtro por consultor específico
+    if (report.filters.includes('consultant')) {
+        filtersHTML += `
+            <div class="form-group">
+                <label for="consultantFilter">👤 Seleccionar Consultor: <span style="color: red;">*</span></label>
+                <select id="consultantFilter" required onchange="validateRequiredFilters()">
+                    <option value="">Seleccionar consultor...</option>
+                </select>
+            </div>
+        `;
+    }
+    
+    // Filtro por cliente específico
+    if (report.filters.includes('client')) {
+        filtersHTML += `
+            <div class="form-group">
+                <label for="clientFilter">🏢 Seleccionar Cliente: <span style="color: red;">*</span></label>
+                <select id="clientFilter" required onchange="validateRequiredFilters()">
+                    <option value="">Seleccionar cliente...</option>
+                </select>
+            </div>
+        `;
+    }
+    
+    // Filtro por soporte
+    if (report.filters.includes('support')) {
+        filtersHTML += `
+            <div class="form-group">
+                <label for="supportFilter">📞 Filtrar por Soporte:</label>
+                <select id="supportFilter">
+                    <option value="all">Todos los Soportes</option>
+                </select>
+            </div>
+        `;
+    }
+    
+    // Filtro por proyecto
+    if (report.filters.includes('project')) {
+        filtersHTML += `
+            <div class="form-group">
+                <label for="projectFilter">📋 Filtrar por Proyecto:</label>
+                <select id="projectFilter">
+                    <option value="all">Todos los Proyectos</option>
+                </select>
+            </div>
+        `;
+    }
+    
+    // Filtros especiales para Reporte Remanente
+    if (reportType === 'remanente') {
+        filtersHTML += `
+            <div class="form-group">
+                <label for="supportTypeFilter">📞 Tipo de Soporte: <span style="color: red;">*</span></label>
+                <select id="supportTypeFilter" required onchange="validateRequiredFilters()">
+                    <option value="">Seleccionar tipo de soporte...</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="monthFilter">📅 Mes de Análisis: <span style="color: red;">*</span></label>
+                <select id="monthFilter" required onchange="validateRequiredFilters()">
+                    <option value="">Seleccionar mes...</option>
+                </select>
+            </div>
+        `;
+    }
+    
+    // Rango de fechas personalizado (común)
+    let customDateRangeHTML = '';
+    if (report.filters.includes('time')) {
+        customDateRangeHTML = `
+            <div class="form-row" id="customDateRange" style="display: none;">
+                <div class="form-group">
+                    <label for="startDate">📅 Fecha Inicio:</label>
+                    <input type="date" id="startDate">
+                </div>
+                <div class="form-group">
+                    <label for="endDate">📅 Fecha Fin:</label>
+                    <input type="date" id="endDate">
+                </div>
+            </div>
+        `;
+    }
+    
+    // Generar HTML completo
+    configPanel.innerHTML = `
+        <div class="config-header">
+            <div class="config-title">${report.icon} ${report.name}</div>
+            <div class="config-subtitle">${report.description}</div>
+        </div>
+
+        <div class="warning-message">
+            <strong>📋 Estructura del Reporte:</strong> ${report.structure.join(' | ')}<br>
+            <strong>✏️ Campos Editables:</strong> ${report.editableFields.join(', ')} (modificables en vista previa)
+        </div>
+
+        <div class="config-form">
+            <div class="form-row">
+                ${filtersHTML}
+            </div>
+            ${customDateRangeHTML}
+            
+            <div class="actions-row">
+                <button class="btn btn-secondary" onclick="resetReportFilters()">
+                    🔄 Limpiar Filtros
+                </button>
+                <button class="btn btn-primary" onclick="generateReportPreview()" id="previewBtn" disabled>
+                    👁️ Vista Previa
+                </button>
+                <button class="btn btn-primary" onclick="generateFinalReport()" id="generateBtn" disabled>
+                    📊 Generar Excel
+                </button>
+            </div>
+        </div>
+    `;
+    
+    configPanel.style.display = 'block';
+    
+    // Poblar dropdowns con datos
+    populateFilterDropdowns(reportType);
+    
+    // Validar filtros iniciales
+    setTimeout(validateRequiredFilters, 100);
+}
+
+/**
+ * Poblar dropdowns con datos del sistema
+ */
+function populateFilterDropdowns(reportType) {
+    console.log('📊 Poblando filtros para:', reportType);
+    
+    // Poblar consultor
+    const consultantFilter = document.getElementById('consultantFilter');
+    if (consultantFilter && currentData.users) {
+        consultantFilter.innerHTML = '<option value="">Seleccionar consultor...</option>';
+        Object.values(currentData.users).forEach(user => {
+            if (user.role === 'consultor' && user.isActive !== false) {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = `${user.name} (${user.id})`;
+                consultantFilter.appendChild(option);
+            }
+        });
+    }
+    
+    // Poblar cliente
+    const clientFilter = document.getElementById('clientFilter');
+    if (clientFilter && currentData.companies) {
+        clientFilter.innerHTML = '<option value="">Seleccionar cliente...</option>';
+        Object.values(currentData.companies).forEach(company => {
+            const option = document.createElement('option');
+            option.value = company.id;
+            option.textContent = `${company.name} (${company.id})`;
+            clientFilter.appendChild(option);
+        });
+    }
+    
+    // Poblar soporte
+    const supportFilter = document.getElementById('supportFilter');
+    if (supportFilter && currentData.supports) {
+        supportFilter.innerHTML = '<option value="all">Todos los Soportes</option>';
+        Object.values(currentData.supports).forEach(support => {
+            const option = document.createElement('option');
+            option.value = support.id;
+            option.textContent = `${support.name} (${support.type || 'N/A'})`;
+            supportFilter.appendChild(option);
+        });
+    }
+    
+    // Poblar proyecto
+    const projectFilter = document.getElementById('projectFilter');
+    if (projectFilter && currentData.projects) {
+        projectFilter.innerHTML = '<option value="all">Todos los Proyectos</option>';
+        Object.values(currentData.projects).forEach(project => {
+            const option = document.createElement('option');
+            option.value = project.id;
+            option.textContent = project.name;
+            projectFilter.appendChild(option);
+        });
+    }
+    
+    // Poblar tipo de soporte (para remanente)
+    const supportTypeFilter = document.getElementById('supportTypeFilter');
+    if (supportTypeFilter && currentData.supports) {
+        supportTypeFilter.innerHTML = '<option value="">Seleccionar tipo de soporte...</option>';
+        const supportTypes = [...new Set(Object.values(currentData.supports).map(s => s.type).filter(Boolean))];
+        supportTypes.forEach(type => {
+            const option = document.createElement('option');
+            option.value = type;
+            option.textContent = type;
+            supportTypeFilter.appendChild(option);
+        });
+    }
+    
+    // Poblar meses (para remanente)
+    const monthFilter = document.getElementById('monthFilter');
+    if (monthFilter) {
+        monthFilter.innerHTML = '<option value="">Seleccionar mes...</option>';
+        const currentDate = new Date();
+        
+        // Últimos 12 meses
+        for (let i = 0; i < 12; i++) {
+            const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+            const monthKey = `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}`;
+            const monthName = date.toLocaleDateString('es-ES', { year: 'numeric', month: 'long' });
+            const option = document.createElement('option');
+            option.value = monthKey;
+            option.textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+            monthFilter.appendChild(option);
+        }
+    }
+}
+
+/**
+ * Validar filtros requeridos y habilitar/deshabilitar botones
+ */
+function validateRequiredFilters() {
+    const report = ARVIC_REPORTS[currentReportType];
+    if (!report) return;
+    
+    let isValid = true;
+    let missingFields = [];
+    
+    // Validar consultor requerido
+    if (report.filters.includes('consultant')) {
+        const consultantFilter = document.getElementById('consultantFilter');
+        if (!consultantFilter?.value) {
+            isValid = false;
+            missingFields.push('Consultor');
+        }
+    }
+    
+    // Validar cliente requerido
+    if (report.filters.includes('client')) {
+        const clientFilter = document.getElementById('clientFilter');
+        if (!clientFilter?.value) {
+            isValid = false;
+            missingFields.push('Cliente');
+        }
+    }
+    
+    // Validaciones especiales para remanente
+    if (currentReportType === 'remanente') {
+        const supportTypeFilter = document.getElementById('supportTypeFilter');
+        const monthFilter = document.getElementById('monthFilter');
+        
+        if (!supportTypeFilter?.value) {
+            isValid = false;
+            missingFields.push('Tipo de Soporte');
+        }
+        if (!monthFilter?.value) {
+            isValid = false;
+            missingFields.push('Mes');
+        }
+    }
+    
+    // Actualizar estado de botones
+    const previewBtn = document.getElementById('previewBtn');
+    const generateBtn = document.getElementById('generateBtn');
+    
+    if (previewBtn) {
+        previewBtn.disabled = !isValid;
+        previewBtn.title = isValid ? 'Generar vista previa' : `Faltan campos: ${missingFields.join(', ')}`;
+    }
+    
+    if (generateBtn) {
+        generateBtn.disabled = true; // Solo se habilita después de vista previa
+    }
+    
+    console.log('🔍 Validación de filtros:', isValid ? '✅ Válido' : `❌ Faltan: ${missingFields.join(', ')}`);
+}
+
+/**
+ * Manejar cambio en filtro de tiempo
+ */
+function handleTimeFilterChange() {
+    const timeFilter = document.getElementById('timeFilter');
+    const customDateRange = document.getElementById('customDateRange');
+    
+    if (timeFilter && customDateRange) {
+        customDateRange.style.display = timeFilter.value === 'custom' ? 'flex' : 'none';
+    }
+}
+
+/**
+ * Resetear todos los filtros del reporte actual
+ */
+function resetReportFilters() {
+    console.log('🔄 Reseteando filtros...');
+    
+    // Resetear todos los selects y inputs
+    const configPanel = document.getElementById('reportConfigPanel');
+    if (configPanel) {
+        const selects = configPanel.querySelectorAll('select');
+        const inputs = configPanel.querySelectorAll('input[type="date"]');
+        
+        selects.forEach(select => {
+            if (select.id === 'timeFilter') {
+                select.value = 'week';
+            } else if (select.options[0]) {
+                select.selectedIndex = 0;
+            }
+        });
+        
+        inputs.forEach(input => {
+            input.value = '';
+        });
+    }
+    
+    // Ocultar rango personalizado
+    const customDateRange = document.getElementById('customDateRange');
+    if (customDateRange) {
+        customDateRange.style.display = 'none';
+    }
+    
+    // Revalidar
+    validateRequiredFilters();
+    
+    window.NotificationUtils.info('Filtros restablecidos');
+}
+
+/**
+ * Generar vista previa con datos reales y tabla editable
+ */
+function generateReportPreview() {
+    console.log('👁️ Generando vista previa para:', currentReportType);
+    
+    const report = ARVIC_REPORTS[currentReportType];
+    const previewPanel = document.getElementById('reportPreviewPanel');
+    
+    if (!previewPanel || !report) {
+        console.error('❌ Panel de vista previa o configuración no encontrada');
+        return;
+    }
+    
+    try {
+        // 1. Obtener datos según filtros
+        const rawData = getReportDataByType(currentReportType);
+        
+        if (!rawData || rawData.length === 0) {
+            showEmptyPreview(previewPanel, report);
+            return;
+        }
+        
+        // 2. Procesar datos según estructura del reporte
+        currentReportData = processDataForReport(rawData, currentReportType);
+        
+        // 3. Inicializar datos editables
+        initializeEditableData();
+        
+        // 4. Generar tabla editable
+        generateEditableTable(previewPanel, report);
+        
+        // 5. Mostrar panel y habilitar generación
+        previewPanel.style.display = 'block';
+        previewPanel.scrollIntoView({ behavior: 'smooth' });
+        
+        const generateBtn = document.getElementById('generateBtn');
+        if (generateBtn) {
+            generateBtn.disabled = false;
+        }
+        
+        window.NotificationUtils.success(`Vista previa generada: ${currentReportData.length} registros`);
+        
+    } catch (error) {
+        console.error('❌ Error generando vista previa:', error);
+        window.NotificationUtils.error('Error al generar vista previa: ' + error.message);
+    }
+}
+
+/**
+ * Obtener datos según el tipo de reporte y filtros aplicados
+ */
+function getReportDataByType(reportType) {
+    console.log('📊 Obteniendo datos para:', reportType);
+    
+    // Obtener reportes aprobados
+    const allReports = Object.values(currentData.reports || {});
+    let approvedReports = allReports.filter(r => r.status === 'Aprobado');
+    
+    // Aplicar filtro de tiempo
+    approvedReports = applyTimeFilter(approvedReports);
+    
+    switch (reportType) {
+        case 'pago-consultor-general':
+            return getSoporteData(approvedReports, 'all', 'all');
+            
+        case 'pago-consultor-especifico':
+            const consultantId = document.getElementById('consultantFilter')?.value;
+            const supportId = document.getElementById('supportFilter')?.value || 'all';
+            return getSoporteData(approvedReports, consultantId, supportId);
+            
+        case 'cliente-soporte':
+            const clientId = document.getElementById('clientFilter')?.value;
+            const clientSupportId = document.getElementById('supportFilter')?.value || 'all';
+            return getClientSoporteData(approvedReports, clientId, clientSupportId);
+            
+        case 'remanente':
+            const remanenteClientId = document.getElementById('clientFilter')?.value;
+            const supportType = document.getElementById('supportTypeFilter')?.value;
+            const month = document.getElementById('monthFilter')?.value;
+            return getRemanenteData(approvedReports, remanenteClientId, supportType, month);
+            
+        case 'proyecto-general':
+            return getProyectoData(approvedReports, 'all', 'all');
+            
+        case 'proyecto-cliente':
+            const proyectoClientId = document.getElementById('clientFilter')?.value;
+            const projectId = document.getElementById('projectFilter')?.value || 'all';
+            return getClientProyectoData(approvedReports, proyectoClientId, projectId);
+            
+        case 'proyecto-consultor':
+            const proyectoConsultantId = document.getElementById('consultantFilter')?.value;
+            const consultantProjectId = document.getElementById('projectFilter')?.value || 'all';
+            return getConsultantProyectoData(approvedReports, proyectoConsultantId, consultantProjectId);
+            
+        default:
+            console.error('❌ Tipo de reporte no reconocido:', reportType);
+            return [];
+    }
+}
+
+/**
+ * Aplicar filtro de tiempo a los reportes
+ */
+function applyTimeFilter(reports) {
+    const timeFilter = document.getElementById('timeFilter');
+    if (!timeFilter) return reports;
+    
+    const now = new Date();
+    const timeValue = timeFilter.value;
+    
+    switch (timeValue) {
+        case 'week':
+            const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+            return reports.filter(r => new Date(r.createdAt) >= weekAgo);
+            
+        case 'month':
+            const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            return reports.filter(r => new Date(r.createdAt) >= monthAgo);
+            
+        case 'custom':
+            const startDate = document.getElementById('startDate')?.value;
+            const endDate = document.getElementById('endDate')?.value;
+            
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999); // Incluir todo el día final
+                
+                return reports.filter(r => {
+                    const reportDate = new Date(r.createdAt);
+                    return reportDate >= start && reportDate <= end;
+                });
+            }
+            return reports;
+            
+        case 'all':
+        default:
+            return reports;
+    }
+}
+
+/**
+ * Obtener datos de soporte
+ */
+function getSoporteData(reports, consultantId, supportId) {
+    const soporteData = [];
+    
+    reports.forEach(report => {
+        // Filtrar por consultor si especificado
+        if (consultantId !== 'all' && report.userId !== consultantId) return;
+        
+        const user = currentData.users[report.userId];
+        if (!user) return;
+        
+        // Buscar asignación de soporte
+        let assignment = null;
+        if (report.assignmentId) {
+            assignment = currentData.assignments[report.assignmentId];
+        } else {
+            assignment = Object.values(currentData.assignments || {}).find(a => 
+                a.userId === report.userId && a.isActive && a.supportId
+            );
+        }
+        
+        if (!assignment || !assignment.supportId) return;
+        
+        // Filtrar por soporte si especificado
+        if (supportId !== 'all' && assignment.supportId !== supportId) return;
+        
+        const company = currentData.companies[assignment.companyId];
+        const support = currentData.supports[assignment.supportId];
+        const module = currentData.modules[assignment.moduleId];
+        
+        soporteData.push({
+            reportId: report.id,
+            idEmpresa: assignment.companyId,
+            consultor: user.name,
+            soporte: support?.name || 'Sin soporte',
+            modulo: module?.name || 'Sin módulo',
+            tiempo: parseFloat(report.hours || 0),
+            tarifaModulo: 500, // Tarifa por defecto
+            total: parseFloat(report.hours || 0) * 500,
+            originalTime: parseFloat(report.hours || 0)
+        });
+    });
+    
+    return soporteData;
+}
+
+/**
+ * Obtener datos de soporte para cliente específico
+ */
+function getClientSoporteData(reports, clientId, supportId) {
+    const clientData = [];
+    
+    reports.forEach(report => {
+        let assignment = null;
+        if (report.assignmentId) {
+            assignment = currentData.assignments[report.assignmentId];
+        } else {
+            assignment = Object.values(currentData.assignments || {}).find(a => 
+                a.userId === report.userId && a.isActive && a.supportId
+            );
+        }
+        
+        if (!assignment || assignment.companyId !== clientId || !assignment.supportId) return;
+        
+        // Filtrar por soporte si especificado
+        if (supportId !== 'all' && assignment.supportId !== supportId) return;
+        
+        const support = currentData.supports[assignment.supportId];
+        const module = currentData.modules[assignment.moduleId];
+        
+        clientData.push({
+            reportId: report.id,
+            soporte: support?.name || 'Sin soporte',
+            modulo: module?.name || 'Sin módulo',
+            tiempo: parseFloat(report.hours || 0),
+            tarifaModulo: 500,
+            total: parseFloat(report.hours || 0) * 500,
+            originalTime: parseFloat(report.hours || 0)
+        });
+    });
+    
+    return clientData;
+}
+
+/**
+ * Calcular distribución de semanas según días del mes (según documentación oficial)
+ */
+function calculateMonthWeekDistribution(year, month) {
+    const daysInMonth = new Date(year, month, 0).getDate();
+    
+    console.log(`📅 Calculando distribución para ${year}-${month}: ${daysInMonth} días`);
+    
+    let weekStructure;
+    
+    switch (daysInMonth) {
+        case 28:
+            weekStructure = {
+                totalWeeks: 4,
+                distribution: [7, 7, 7, 7], // 4 semanas exactas
+                description: '4 semanas exactas (7 días cada una)'
+            };
+            break;
+        case 29:
+            weekStructure = {
+                totalWeeks: 5,
+                distribution: [7, 7, 7, 7, 1], // 4 semanas completas + 1 día
+                description: '4 semanas completas + 1 día en quinta semana'
+            };
+            break;
+        case 30:
+            weekStructure = {
+                totalWeeks: 5,
+                distribution: [7, 7, 7, 7, 2], // 4 semanas completas + 2 días
+                description: '4 semanas completas + 2 días en quinta semana'
+            };
+            break;
+        case 31:
+            weekStructure = {
+                totalWeeks: 5,
+                distribution: [7, 7, 7, 7, 3], // 4 semanas completas + 3 días
+                description: '4 semanas completas + 3 días en quinta semana'
+            };
+            break;
+        default:
+            // Fallback para casos excepcionales
+            weekStructure = {
+                totalWeeks: 4,
+                distribution: [7, 7, 7, 7],
+                description: 'Distribución por defecto (4 semanas)'
+            };
+    }
+    
+    console.log(`✅ ${weekStructure.description}`);
+    return weekStructure;
+}
+
+/**
+ * Determinar a qué semana pertenece un día específico del mes
+ */
+function getDayWeekNumber(day, weekDistribution) {
+    let currentDay = 1;
+    
+    for (let week = 0; week < weekDistribution.length; week++) {
+        const weekDays = weekDistribution[week];
+        
+        if (day >= currentDay && day < currentDay + weekDays) {
+            return week + 1; // Retornar 1-based (semana 1, 2, 3, etc.)
+        }
+        
+        currentDay += weekDays;
+    }
+    
+    // Fallback: si algo sale mal, asignar a última semana
+    return weekDistribution.length;
+}
+
+
+/**
+ * Obtener datos para reporte remanente (estructura especial por semanas) - VERSIÓN CORREGIDA
+ */
+function getRemanenteData(reports, clientId, supportType, monthKey) {
+    console.log('📊 Generando reporte remanente con lógica de semanas corregida');
+    
+    const [year, month] = monthKey.split('-').map(Number);
+    const monthStart = new Date(year, month - 1, 1);
+    const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+    
+    // ✅ NUEVO: Calcular distribución correcta de semanas
+    const weekStructure = calculateMonthWeekDistribution(year, month);
+    console.log(`📅 Estructura del mes: ${weekStructure.totalWeeks} semanas`);
+    
+    // Filtrar reportes del mes y cliente específicos
+    const monthReports = reports.filter(report => {
+        const reportDate = new Date(report.createdAt);
+        
+        // Buscar asignación correspondiente
+        let assignment = null;
+        if (report.assignmentId) {
+            assignment = currentData.assignments[report.assignmentId];
+        } else {
+            assignment = Object.values(currentData.assignments || {}).find(a => 
+                a.userId === report.userId && a.isActive
+            );
+        }
+        
+        if (!assignment || assignment.companyId !== clientId) return false;
+        
+        // Verificar tipo de soporte
+        const support = currentData.supports[assignment.supportId];
+        if (!support || support.type !== supportType) return false;
+        
+        return reportDate >= monthStart && reportDate <= monthEnd;
+    });
+    
+    console.log(`📋 ${monthReports.length} reportes encontrados para el período`);
+    
+    // Agrupar por módulo y distribuir por semanas dinámicamente
+    const moduleData = {};
+    
+    monthReports.forEach(report => {
+        let assignment = currentData.assignments[report.assignmentId];
+        if (!assignment) {
+            assignment = Object.values(currentData.assignments || {}).find(a => 
+                a.userId === report.userId && a.isActive
+            );
+        }
+        
+        const module = currentData.modules[assignment?.moduleId];
+        const moduleName = module?.name || 'Sin módulo';
+        
+        // ✅ NUEVO: Inicializar estructura dinámica de semanas
+        if (!moduleData[moduleName]) {
+            moduleData[moduleName] = {
+                modulo: moduleName,
+                totalHoras: 0,
+                monthStructure: weekStructure
+            };
+            
+            // Crear semanas dinámicamente
+            for (let i = 1; i <= weekStructure.totalWeeks; i++) {
+                moduleData[moduleName][`semana${i}`] = {
+                    tiempo: 0,
+                    tarifa: 550,
+                    total: 0
+                };
+            }
+        }
+        
+        // ✅ NUEVO: Calcular semana correcta según distribución
+        const reportDay = new Date(report.createdAt).getDate();
+        const correctWeekNum = getDayWeekNumber(reportDay, weekStructure.distribution);
+        const semanaKey = `semana${correctWeekNum}`;
+        
+        console.log(`📅 Día ${reportDay} → ${semanaKey}`);
+        
+        const hours = parseFloat(report.hours || 0);
+        
+        if (moduleData[moduleName][semanaKey]) {
+            moduleData[moduleName][semanaKey].tiempo += hours;
+            moduleData[moduleName][semanaKey].total = 
+                moduleData[moduleName][semanaKey].tiempo * moduleData[moduleName][semanaKey].tarifa;
+            moduleData[moduleName].totalHoras += hours;
+        }
+    });
+    
+    console.log(`✅ Datos procesados para ${Object.keys(moduleData).length} módulos`);
+    return Object.values(moduleData);
+}
+/**
+ * Obtener datos de proyecto
+ */
+function getProyectoData(reports, consultantId, projectId) {
+    const proyectoData = [];
+    
+    reports.forEach(report => {
+        // Filtrar por consultor si especificado
+        if (consultantId !== 'all' && report.userId !== consultantId) return;
+        
+        const user = currentData.users[report.userId];
+        if (!user) return;
+        
+        // Buscar asignación de proyecto
+        let projectAssignment = null;
+        if (report.assignmentId) {
+            projectAssignment = (currentData.projectAssignments || {})[report.assignmentId];
+        }
+        
+        if (!projectAssignment) return;
+        
+        // Filtrar por proyecto si especificado
+        if (projectId !== 'all' && projectAssignment.projectId !== projectId) return;
+        
+        const company = currentData.companies[projectAssignment.companyId];
+        const module = currentData.modules[projectAssignment.moduleId];
+        
+        proyectoData.push({
+            reportId: report.id,
+            idEmpresa: projectAssignment.companyId,
+            consultor: user.name,
+            modulo: module?.name || 'Sin módulo',
+            tiempo: parseFloat(report.hours || 0),
+            tarifaModulo: 600, // Tarifa diferente para proyectos
+            total: parseFloat(report.hours || 0) * 600,
+            originalTime: parseFloat(report.hours || 0)
+        });
+    });
+    
+    return proyectoData;
+}
+
+/**
+ * Funciones adicionales para proyecto-cliente y proyecto-consultor
+ */
+function getClientProyectoData(reports, clientId, projectId) {
+    const clientData = [];
+    
+    reports.forEach(report => {
+        let projectAssignment = (currentData.projectAssignments || {})[report.assignmentId];
+        
+        if (!projectAssignment || projectAssignment.companyId !== clientId) return;
+        if (projectId !== 'all' && projectAssignment.projectId !== projectId) return;
+        
+        const module = currentData.modules[projectAssignment.moduleId];
+        
+        clientData.push({
+            reportId: report.id,
+            modulo: module?.name || 'Sin módulo',
+            tiempo: parseFloat(report.hours || 0),
+            tarifaModulo: 600,
+            total: parseFloat(report.hours || 0) * 600,
+            originalTime: parseFloat(report.hours || 0)
+        });
+    });
+    
+    return clientData;
+}
+
+function getConsultantProyectoData(reports, consultantId, projectId) {
+    const consultantData = [];
+    
+    reports.forEach(report => {
+        if (report.userId !== consultantId) return;
+        
+        let projectAssignment = (currentData.projectAssignments || {})[report.assignmentId];
+        if (!projectAssignment) return;
+        if (projectId !== 'all' && projectAssignment.projectId !== projectId) return;
+        
+        const company = currentData.companies[projectAssignment.companyId];
+        const module = currentData.modules[projectAssignment.moduleId];
+        
+        consultantData.push({
+            reportId: report.id,
+            idEmpresa: projectAssignment.companyId,
+            consultor: currentData.users[consultantId]?.name || 'Consultor',
+            modulo: module?.name || 'Sin módulo',
+            tiempo: parseFloat(report.hours || 0),
+            tarifaModulo: 600,
+            total: parseFloat(report.hours || 0) * 600,
+            originalTime: parseFloat(report.hours || 0)
+        });
+    });
+    
+    return consultantData;
+}
+
+/**
+ * Procesar datos según estructura específica del reporte
+ */
+function processDataForReport(rawData, reportType) {
+    console.log('🔧 Procesando', rawData.length, 'registros para', reportType);
+    
+    // Los datos ya vienen en el formato correcto desde las funciones get*Data
+    return rawData;
+}
+
+/**
+ * Inicializar datos editables
+ */
+function initializeEditableData() {
+    editablePreviewData = {};
+    
+    currentReportData.forEach((row, index) => {
+        editablePreviewData[index] = {
+            ...row,
+            editedTime: row.tiempo,
+            editedTariff: row.tarifaModulo,
+            editedTotal: row.total
+        };
+    });
+    
+    console.log('✅ Datos editables inicializados:', Object.keys(editablePreviewData).length, 'registros');
+}
+
+/**
+ * Mostrar vista previa vacía
+ */
+function showEmptyPreview(previewPanel, report) {
+    previewPanel.innerHTML = `
+        <div class="preview-header">
+            <div class="preview-title">👁️ Vista Previa - ${report.name}</div>
+            <div class="preview-info">Sin datos</div>
+        </div>
+        <div class="empty-preview">
+            <div class="empty-preview-icon">📊</div>
+            <div><strong>No hay datos disponibles</strong></div>
+            <div>Verifique los filtros aplicados o el período seleccionado</div>
+        </div>
+    `;
+    
+    previewPanel.style.display = 'block';
+    window.NotificationUtils.warning('No se encontraron datos para los filtros aplicados');
+}
+
+/**
+ * Generar tabla editable
+ */
+function generateEditableTable(previewPanel, report) {
+    const totalHours = currentReportData.reduce((sum, row) => sum + row.tiempo, 0);
+    const totalAmount = Object.values(editablePreviewData).reduce((sum, row) => sum + row.editedTotal, 0);
+    
+    let tableHTML = '';
+    
+    if (currentReportType === 'remanente') {
+        tableHTML = generateRemanenteTable();
+    } else {
+        tableHTML = generateStandardTable(report);
+    }
+    
+    previewPanel.innerHTML = `
+        <div class="preview-header">
+            <div class="preview-title">👁️ Vista Previa - ${report.name}</div>
+            <div class="preview-info">
+                ${currentReportData.length} registros | 
+                ${totalHours.toFixed(1)} horas | 
+                $${totalAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}
+            </div>
+        </div>
+
+        <div class="warning-message">
+            <strong>✏️ Vista Previa Editable:</strong> Haga clic en las celdas amarillas para modificar TIEMPO y TARIFA. 
+            Los totales se recalculan automáticamente. <br>
+            <strong>📋 Estructura:</strong> ${report.structure.join(' | ')}
+        </div>
+
+        ${tableHTML}
+
+        <div class="actions-row">
+            <button class="btn btn-secondary" onclick="restoreOriginalValues()">
+                ↩️ Restaurar Valores Originales
+            </button>
+            <button class="btn btn-primary" onclick="generateFinalReport()">
+                📊 Generar Reporte Excel Final
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Generar tabla estándar
+ */
+function generateStandardTable(report) {
+    let tableHTML = '<table class="preview-table"><thead><tr>';
+    
+    // Generar headers según estructura del reporte
+    report.structure.forEach(header => {
+        tableHTML += `<th>${header}</th>`;
+    });
+    
+    tableHTML += '</tr></thead><tbody>';
+    
+    // Generar filas
+    Object.entries(editablePreviewData).forEach(([index, row]) => {
+        tableHTML += '<tr>';
+        
+        report.structure.forEach(header => {
+            let cellContent = '';
+            let isEditable = report.editableFields.includes(header);
+            
+            switch (header) {
+                case 'ID Empresa':
+                    cellContent = row.idEmpresa || 'N/A';
+                    break;
+                case 'Consultor':
+                    cellContent = row.consultor || 'N/A';
+                    break;
+                case 'Soporte':
+                    cellContent = row.soporte || 'N/A';
+                    break;
+                case 'Modulo':
+                    cellContent = row.modulo || 'N/A';
+                    break;
+                case 'TIEMPO':
+                    cellContent = `<input type="number" class="editable-input" value="${row.editedTime}" 
+                                         step="0.1" min="0" max="24" 
+                                         onchange="updateRowCalculation(${index}, 'time', this.value)">`;
+                    break;
+                case 'TARIFA de Modulo':
+                    cellContent = `<input type="number" class="editable-input" value="${row.editedTariff}" 
+                                         step="50" min="100" max="2000" 
+                                         onchange="updateRowCalculation(${index}, 'tariff', this.value)">`;
+                    break;
+                case 'TOTAL':
+                    cellContent = `<strong>$${row.editedTotal.toLocaleString('es-MX', {minimumFractionDigits: 2})}</strong>`;
+                    break;
+                default:
+                    cellContent = 'N/A';
+            }
+            
+            const cellClass = isEditable ? 'editable-cell' : '';
+            tableHTML += `<td class="${cellClass}">${cellContent}</td>`;
+        });
+        
+        tableHTML += '</tr>';
+    });
+    
+    // Fila de totales
+    const totalHours = Object.values(editablePreviewData).reduce((sum, row) => sum + row.editedTime, 0);
+    const totalAmount = Object.values(editablePreviewData).reduce((sum, row) => sum + row.editedTotal, 0);
+    
+    tableHTML += '<tr style="background: #f1f5f9; font-weight: bold;">';
+    report.structure.forEach((header, index) => {
+        if (index === 0) {
+            tableHTML += '<td>TOTALES</td>';
+        } else if (header === 'TIEMPO') {
+            tableHTML += `<td>${totalHours.toFixed(1)} hrs</td>`;
+        } else if (header === 'TOTAL') {
+            tableHTML += `<td>$${totalAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>`;
+        } else {
+            tableHTML += '<td>-</td>';
+        }
+    });
+    tableHTML += '</tr>';
+    
+    tableHTML += '</tbody></table>';
+    return tableHTML;
+}
+
+/**
+ * Generar tabla para reporte remanente (estructura dinámica por semanas) - VERSIÓN CORREGIDA
+ */
+function generateRemanenteTable() {
+    console.log('📊 Generando tabla remanente con semanas dinámicas');
+    
+    // Obtener estructura de semanas del primer módulo (todos tienen la misma)
+    const firstModule = Object.values(editablePreviewData)[0];
+    if (!firstModule || !firstModule.monthStructure) {
+        console.error('❌ No se encontró estructura de semanas');
+        return '<p>Error: No se pudo determinar la estructura del mes</p>';
+    }
+    
+    const weekStructure = firstModule.monthStructure;
+    console.log(`📅 Generando tabla para ${weekStructure.totalWeeks} semanas`);
+    
+    let tableHTML = `
+        <div style="margin-bottom: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0ea5e9;">
+            <strong>📅 Distribución del Mes:</strong> ${weekStructure.description}<br>
+            <strong>🔢 Total de Semanas:</strong> ${weekStructure.totalWeeks}
+        </div>
+        <table class="preview-table">
+            <thead>
+                <tr>
+                    <th rowspan="2">Total de Horas</th>
+    `;
+    
+    // Headers dinámicos para cada semana
+    for (let i = 1; i <= weekStructure.totalWeeks; i++) {
+        const daysInWeek = weekStructure.distribution[i - 1];
+        tableHTML += `<th colspan="4">SEMANA ${i} (${daysInWeek} días)</th>`;
+    }
+    
+    tableHTML += `
+                </tr>
+                <tr>
+    `;
+    
+    // Sub-headers para cada semana
+    for (let i = 1; i <= weekStructure.totalWeeks; i++) {
+        tableHTML += `
+            <th>MODULO</th>
+            <th>TIEMPO</th>
+            <th>TARIFA</th>
+            <th>TOTAL</th>
+        `;
+    }
+    
+    tableHTML += `
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    // Filas de datos
+    Object.entries(editablePreviewData).forEach(([index, row]) => {
+        tableHTML += `<tr>
+            <td><strong>${row.totalHoras.toFixed(1)}</strong></td>
+        `;
+        
+        // Generar columnas para cada semana dinámicamente
+        for (let semana = 1; semana <= weekStructure.totalWeeks; semana++) {
+            const semanaKey = `semana${semana}`;
+            const semanaData = row[semanaKey];
+            
+            if (semanaData) {
+                tableHTML += `
+                    <td>${row.modulo}</td>
+                    <td class="editable-cell">
+                        <input type="number" class="editable-input" value="${semanaData.tiempo}" 
+                               step="0.1" min="0" max="40" 
+                               onchange="updateRemanenteCalculation(${index}, ${semana}, 'time', this.value)">
+                    </td>
+                    <td class="editable-cell">
+                        <input type="number" class="editable-input" value="${semanaData.tarifa}" 
+                               step="50" min="100" max="2000" 
+                               onchange="updateRemanenteCalculation(${index}, ${semana}, 'tariff', this.value)">
+                    </td>
+                    <td><strong>$${semanaData.total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</strong></td>
+                `;
+            } else {
+                // Si no existe la semana (caso excepcional), mostrar vacío
+                tableHTML += `
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>-</td>
+                `;
+            }
+        }
+        
+        tableHTML += '</tr>';
+    });
+    
+    // Fila de totales
+    tableHTML += '<tr style="background: #f1f5f9; font-weight: bold;"><td>TOTALES</td>';
+    
+    for (let semana = 1; semana <= weekStructure.totalWeeks; semana++) {
+        const semanaTotalHours = Object.values(editablePreviewData)
+            .reduce((sum, row) => {
+                const semanaData = row[`semana${semana}`];
+                return sum + (semanaData ? parseFloat(semanaData.tiempo || 0) : 0);
+            }, 0);
+            
+        const semanaTotalAmount = Object.values(editablePreviewData)
+            .reduce((sum, row) => {
+                const semanaData = row[`semana${semana}`];
+                return sum + (semanaData ? parseFloat(semanaData.total || 0) : 0);
+            }, 0);
+        
+        tableHTML += `
+            <td>TOTAL</td>
+            <td>${semanaTotalHours.toFixed(1)}</td>
+            <td>-</td>
+            <td>$${semanaTotalAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}</td>
+        `;
+    }
+    
+    tableHTML += '</tr></tbody></table>';
+    return tableHTML;
+}
+
+/**
+ * Actualizar cálculos cuando se edita una celda (tabla estándar)
+ */
+function updateRowCalculation(rowIndex, field, value) {
+    const numValue = parseFloat(value) || 0;
+    
+    if (!editablePreviewData[rowIndex]) return;
+    
+    // Actualizar valor editado
+    if (field === 'time') {
+        editablePreviewData[rowIndex].editedTime = numValue;
+    } else if (field === 'tariff') {
+        editablePreviewData[rowIndex].editedTariff = numValue;
+    }
+    
+    // Recalcular total
+    editablePreviewData[rowIndex].editedTotal = 
+        editablePreviewData[rowIndex].editedTime * editablePreviewData[rowIndex].editedTariff;
+    
+    // Actualizar display del total en la fila
+    updateRowTotalDisplay(rowIndex);
+    
+    // Actualizar totales generales
+    updateGeneralTotals();
+    
+    console.log('💰 Fila', rowIndex, 'actualizada:', 
+               editablePreviewData[rowIndex].editedTime, 'hrs x $', 
+               editablePreviewData[rowIndex].editedTariff, '= $', 
+               editablePreviewData[rowIndex].editedTotal.toFixed(2));
+}
+
+/**
+ * Actualizar cálculos para reporte remanente (versión corregida para 4 o 5 semanas)
+ */
+function updateRemanenteCalculation(rowIndex, semana, field, value) {
+    const numValue = parseFloat(value) || 0;
+    const semanaKey = `semana${semana}`;
+    
+    if (!editablePreviewData[rowIndex] || !editablePreviewData[rowIndex][semanaKey]) {
+        console.error(`❌ No se encontró datos para fila ${rowIndex}, ${semanaKey}`);
+        return;
+    }
+    
+    // Actualizar valor editado
+    if (field === 'time') {
+        editablePreviewData[rowIndex][semanaKey].tiempo = numValue;
+    } else if (field === 'tariff') {
+        editablePreviewData[rowIndex][semanaKey].tarifa = numValue;
+    }
+    
+    // Recalcular total de la semana
+    editablePreviewData[rowIndex][semanaKey].total = 
+        editablePreviewData[rowIndex][semanaKey].tiempo * editablePreviewData[rowIndex][semanaKey].tarifa;
+    
+    // ✅ NUEVO: Recalcular total considerando todas las semanas dinámicamente
+    const weekStructure = editablePreviewData[rowIndex].monthStructure;
+    let totalHoras = 0;
+    
+    for (let i = 1; i <= weekStructure.totalWeeks; i++) {
+        const weekData = editablePreviewData[rowIndex][`semana${i}`];
+        if (weekData) {
+            totalHoras += parseFloat(weekData.tiempo || 0);
+        }
+    }
+    
+    editablePreviewData[rowIndex].totalHoras = totalHoras;
+    
+    // Actualizar displays
+    updateRemanenteRowDisplay(rowIndex, semana);
+    updateGeneralTotals();
+    
+    console.log(`📊 Remanente fila ${rowIndex} semana ${semana} actualizada:`, 
+               editablePreviewData[rowIndex][semanaKey].tiempo, 'hrs x $', 
+               editablePreviewData[rowIndex][semanaKey].tarifa, '= $', 
+               editablePreviewData[rowIndex][semanaKey].total.toFixed(2));
+}
+
+/**
+ * Actualizar display del total en una fila específica
+ */
+function updateRowTotalDisplay(rowIndex) {
+    const table = document.querySelector('.preview-table');
+    if (!table) return;
+    
+    const rows = table.querySelectorAll('tbody tr');
+    if (!rows[rowIndex]) return;
+    
+    const cells = rows[rowIndex].querySelectorAll('td');
+    const totalCell = cells[cells.length - 1]; // Última columna es TOTAL
+    
+    if (totalCell) {
+        const total = editablePreviewData[rowIndex].editedTotal;
+        totalCell.innerHTML = `<strong>$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</strong>`;
+    }
+}
+
+/**
+ * Actualizar display para fila de remanente
+ */
+function updateRemanenteRowDisplay(rowIndex, semana) {
+    const table = document.querySelector('.preview-table');
+    if (!table) return;
+    
+    const rows = table.querySelectorAll('tbody tr');
+    if (!rows[rowIndex]) return;
+    
+    const cells = rows[rowIndex].querySelectorAll('td');
+    
+    // Actualizar total de horas (primera celda)
+    if (cells[0]) {
+        cells[0].innerHTML = `<strong>${editablePreviewData[rowIndex].totalHoras.toFixed(1)}</strong>`;
+    }
+    
+    // Actualizar total de la semana específica
+    const semanaStartCol = 1 + ((semana - 1) * 4); // Cada semana tiene 4 columnas
+    const totalCol = semanaStartCol + 3; // La 4ta columna de cada semana es el total
+    
+    if (cells[totalCol]) {
+        const total = editablePreviewData[rowIndex][`semana${semana}`].total;
+        cells[totalCol].innerHTML = `<strong>$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}</strong>`;
+    }
+}
+
+/**
+ * Actualizar totales generales en el header
+ */
+function updateGeneralTotals() {
+    const previewInfo = document.querySelector('.preview-info');
+    if (!previewInfo) return;
+    
+    let totalHours, totalAmount;
+    
+    if (currentReportType === 'remanente') {
+        // Para remanente, sumar todas las semanas
+        totalHours = Object.values(editablePreviewData).reduce((sum, row) => sum + row.totalHoras, 0);
+        totalAmount = Object.values(editablePreviewData).reduce((sum, row) => {
+            return sum + row.semana1.total + row.semana2.total + row.semana3.total + row.semana4.total;
+        }, 0);
+    } else {
+        // Para reportes estándar
+        totalHours = Object.values(editablePreviewData).reduce((sum, row) => sum + row.editedTime, 0);
+        totalAmount = Object.values(editablePreviewData).reduce((sum, row) => sum + row.editedTotal, 0);
+    }
+    
+    previewInfo.innerHTML = `
+        ${Object.keys(editablePreviewData).length} registros | 
+        ${totalHours.toFixed(1)} horas | 
+        $${totalAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}
+    `;
+    
+    // Actualizar fila de totales en tabla estándar
+    if (currentReportType !== 'remanente') {
+        const table = document.querySelector('.preview-table');
+        const totalRow = table?.querySelector('tbody tr:last-child');
+        
+        if (totalRow) {
+            const cells = totalRow.querySelectorAll('td');
+            const report = ARVIC_REPORTS[currentReportType];
+            
+            report.structure.forEach((header, index) => {
+                if (header === 'TIEMPO') {
+                    cells[index].innerHTML = `${totalHours.toFixed(1)} hrs`;
+                } else if (header === 'TOTAL') {
+                    cells[index].innerHTML = `$${totalAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
+                }
+            });
+        }
+    }
+}
+
+/**
+ * Restaurar valores originales
+ */
+function restoreOriginalValues() {
+    if (!confirm('¿Está seguro de restaurar todos los valores originales? Se perderán los cambios realizados.')) {
+        return;
+    }
+    
+    console.log('↩️ Restaurando valores originales...');
+    
+    // Reinicializar datos editables con valores originales
+    initializeEditableData();
+    
+    // Regenerar tabla
+    const previewPanel = document.getElementById('reportPreviewPanel');
+    const report = ARVIC_REPORTS[currentReportType];
+    generateEditableTable(previewPanel, report);
+    
+    window.NotificationUtils.success('Valores originales restaurados');
+}
+
+/**
+ * Generar reporte Excel final con formato específico según el tipo
+ */
+function generateFinalReport() {
+    if (!currentReportType || !editablePreviewData || Object.keys(editablePreviewData).length === 0) {
+        window.NotificationUtils.error('No hay datos para generar el reporte Excel');
+        return;
+    }
+    
+    console.log('📊 Generando Excel para:', currentReportType);
+    
+    try {
+        const report = ARVIC_REPORTS[currentReportType];
+        
+        switch (currentReportType) {
+            case 'pago-consultor-general':
+                generatePagoGeneralExcel();
+                break;
+            case 'pago-consultor-especifico':
+                generatePagoConsultorExcel();
+                break;
+            case 'cliente-soporte':
+                generateClienteSoporteExcel();
+                break;
+            case 'remanente':
+                generateRemanenteExcel();
+                break;
+            case 'proyecto-general':
+                generateProyectoGeneralExcel();
+                break;
+            case 'proyecto-cliente':
+                generateProyectoClienteExcel();
+                break;
+            case 'proyecto-consultor':
+                generateProyectoConsultorExcel();
+                break;
+            default:
+                throw new Error(`Tipo de reporte no implementado: ${currentReportType}`);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error generando Excel:', error);
+        window.NotificationUtils.error('Error al generar Excel: ' + error.message);
+    }
+}
+
+/**
+ * Generar Excel para Pago Consultor Soporte (General)
+ */
+function generatePagoGeneralExcel() {
+    console.log('💰 Generando Excel - Pago Consultor General');
+    
+    const wb = XLSX.utils.book_new();
+    const wsData = [];
+    
+    // Fila 1: Título fusionado
+    wsData.push(['', '', '', 'RESUMEN DE PAGO A CONSULTOR', '', '', '']);
+    
+    // Fila 2: Espacio
+    wsData.push(['', '', '', '', '', '', '']);
+    
+    // Fila 3: Headers
+    wsData.push(['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    
+    // Filas de datos
+    let totalHours = 0;
+    let totalAmount = 0;
+    
+    Object.values(editablePreviewData).forEach(row => {
+        wsData.push([
+            row.idEmpresa || 'N/A',
+            row.consultor || 'N/A',
+            row.soporte || 'N/A',
+            row.modulo || 'N/A',
+            parseFloat(row.editedTime || 0),
+            parseFloat(row.editedTariff || 0),
+            parseFloat(row.editedTotal || 0)
+        ]);
+        
+        totalHours += parseFloat(row.editedTime || 0);
+        totalAmount += parseFloat(row.editedTotal || 0);
+    });
+    
+    // Fila de totales
+    wsData.push(['', '', '', 'TOTALES', totalHours, '', totalAmount]);
+    
+    // Crear worksheet
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    
+    // Aplicar estilos
+    applyExcelStyling(ws, wsData, 'general');
+    
+    // Configurar merge para título
+    ws['!merges'] = [{ s: { r: 0, c: 3 }, e: { r: 0, c: 6 } }];
+    
+    // Agregar al workbook
+    XLSX.utils.book_append_sheet(wb, ws, "PAGO CONSULTOR GENERAL");
+    
+    // Generar archivo
+    const fileName = generateFileName('PagoConsultorGeneral');
+    XLSX.writeFile(wb, fileName);
+    
+    // Guardar en historial
+    saveToReportHistory(fileName, 'pago-consultor-general', totalHours, totalAmount);
+    
+    window.NotificationUtils.success(`Excel generado: ${fileName}`);
+}
+
+/**
+ * Generar Excel para Pago Consultor Específico
+ */
+function generatePagoConsultorExcel() {
+    console.log('👤 Generando Excel - Pago Consultor Específico');
+    
+    const consultantName = document.getElementById('consultantFilter')?.selectedOptions[0]?.text || 'Consultor';
+    
+    const wb = XLSX.utils.book_new();
+    const wsData = [];
+    
+    // Fila 1: Título
+    wsData.push(['', '', '', 'PAGO A CONSULTOR', '', '', '']);
+    
+    // Fila 2: Información del consultor
+    wsData.push(['', `CONSULTOR: ${consultantName}`, '', '', '', '', '']);
+    
+    // Fila 3: Espacio
+    wsData.push(['', '', '', '', '', '', '']);
+    
+    // Fila 4: Headers
+    wsData.push(['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    
+    // Datos y totales
+    let totalHours = 0;
+    let totalAmount = 0;
+    
+    Object.values(editablePreviewData).forEach(row => {
+        wsData.push([
+            row.idEmpresa || 'N/A',
+            row.consultor || 'N/A',
+            row.soporte || 'N/A',
+            row.modulo || 'N/A',
+            parseFloat(row.editedTime || 0),
+            parseFloat(row.editedTariff || 0),
+            parseFloat(row.editedTotal || 0)
+        ]);
+        
+        totalHours += parseFloat(row.editedTime || 0);
+        totalAmount += parseFloat(row.editedTotal || 0);
+    });
+    
+    wsData.push(['', '', '', 'TOTALES', totalHours, '', totalAmount]);
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    applyExcelStyling(ws, wsData, 'consultor');
+    
+    ws['!merges'] = [
+        { s: { r: 0, c: 3 }, e: { r: 0, c: 6 } }, // Título
+        { s: { r: 1, c: 1 }, e: { r: 1, c: 4 } }  // Nombre consultor
+    ];
+    
+    XLSX.utils.book_append_sheet(wb, ws, "PAGO CONSULTOR");
+    
+    const fileName = generateFileName('PagoConsultor');
+    XLSX.writeFile(wb, fileName);
+    saveToReportHistory(fileName, 'pago-consultor-especifico', totalHours, totalAmount);
+    
+    window.NotificationUtils.success(`Excel generado: ${fileName}`);
+}
+
+/**
+ * Generar Excel para Cliente Soporte (vista simplificada)
+ */
+function generateClienteSoporteExcel() {
+    console.log('📞 Generando Excel - Cliente Soporte');
+    
+    const clientName = document.getElementById('clientFilter')?.selectedOptions[0]?.text || 'Cliente';
+    
+    const wb = XLSX.utils.book_new();
+    const wsData = [];
+    
+    // Fila 1: Información del cliente
+    wsData.push(['', `Cliente: ${clientName}`, '', '', '']);
+    
+    // Fila 2: Espacio
+    wsData.push(['', '', '', '', '']);
+    
+    // Fila 3: Headers (estructura simplificada - sin ID Empresa ni Consultor)
+    wsData.push(['Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    
+    // Datos
+    let totalHours = 0;
+    let totalAmount = 0;
+    
+    Object.values(editablePreviewData).forEach(row => {
+        wsData.push([
+            row.soporte || 'N/A',
+            row.modulo || 'N/A',
+            parseFloat(row.editedTime || 0),
+            parseFloat(row.editedTariff || 0),
+            parseFloat(row.editedTotal || 0)
+        ]);
+        
+        totalHours += parseFloat(row.editedTime || 0);
+        totalAmount += parseFloat(row.editedTotal || 0);
+    });
+    
+    wsData.push(['', 'TOTALES', totalHours, '', totalAmount]);
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    applyExcelStyling(ws, wsData, 'cliente');
+    
+    ws['!merges'] = [{ s: { r: 0, c: 1 }, e: { r: 0, c: 3 } }]; // Cliente info
+    
+    XLSX.utils.book_append_sheet(wb, ws, "CLIENTE SOPORTE");
+    
+    const fileName = generateFileName('ClienteSoporte');
+    XLSX.writeFile(wb, fileName);
+    saveToReportHistory(fileName, 'cliente-soporte', totalHours, totalAmount);
+    
+    window.NotificationUtils.success(`Excel generado: ${fileName}`);
+}
+
+/**
+ * Generar Excel para Reporte Remanente (estructura dinámica por semanas) - VERSIÓN CORREGIDA
+ */
+function generateRemanenteExcel() {
+    console.log('📊 Generando Excel - Reporte Remanente con semanas dinámicas');
+    
+    const clientName = document.getElementById('clientFilter')?.selectedOptions[0]?.text || 'Cliente';
+    const supportType = document.getElementById('supportTypeFilter')?.value || 'N/A';
+    const monthName = document.getElementById('monthFilter')?.selectedOptions[0]?.text || 'Mes';
+    
+    // Obtener estructura de semanas
+    const firstModule = Object.values(editablePreviewData)[0];
+    const weekStructure = firstModule.monthStructure;
+    
+    console.log(`📅 Excel para ${weekStructure.totalWeeks} semanas: ${weekStructure.description}`);
+    
+    const wb = XLSX.utils.book_new();
+    const wsData = [];
+    
+    // Fila 1: Título
+    const titleRowLength = 1 + (weekStructure.totalWeeks * 4); // 1 + 4 columnas por semana
+    const titleRow = Array(titleRowLength).fill('');
+    titleRow[Math.floor(titleRowLength / 2)] = 'REPORTE REMANENTE';
+    wsData.push(titleRow);
+    
+    // Fila 2: Información
+    const infoRow = Array(titleRowLength).fill('');
+    infoRow[1] = `Cliente: ${clientName}`;
+    infoRow[4] = `Tipo: ${supportType}`;
+    infoRow[7] = `Mes: ${monthName}`;
+    infoRow[10] = `Semanas: ${weekStructure.totalWeeks}`;
+    wsData.push(infoRow);
+    
+    // Fila 3: Espacio
+    wsData.push(Array(titleRowLength).fill(''));
+    
+    // Filas 4-5: Headers dinámicos para semanas
+    const headerRow1 = ['Total de Horas'];
+    const headerRow2 = [''];
+    
+    for (let i = 1; i <= weekStructure.totalWeeks; i++) {
+        const daysInWeek = weekStructure.distribution[i - 1];
+        headerRow1.push(`SEMANA ${i} (${daysInWeek}d)`, '', '', '');
+        headerRow2.push('MODULO', 'TIEMPO', 'TARIFA', 'TOTAL');
+    }
+    
+    wsData.push(headerRow1);
+    wsData.push(headerRow2);
+    
+    // Datos por módulo y semana
+    let grandTotalHours = 0;
+    let grandTotalAmount = 0;
+    
+    Object.values(editablePreviewData).forEach(row => {
+        const dataRow = [row.totalHoras.toFixed(1)];
+        
+        for (let semana = 1; semana <= weekStructure.totalWeeks; semana++) {
+            const semanaData = row[`semana${semana}`];
+            
+            if (semanaData) {
+                dataRow.push(
+                    row.modulo,
+                    parseFloat(semanaData.tiempo || 0),
+                    parseFloat(semanaData.tarifa || 0),
+                    parseFloat(semanaData.total || 0)
+                );
+                grandTotalAmount += parseFloat(semanaData.total || 0);
+            } else {
+                // Para casos excepcionales donde no existe la semana
+                dataRow.push('-', 0, 0, 0);
+            }
+        }
+        
+        wsData.push(dataRow);
+        grandTotalHours += row.totalHoras;
+    });
+    
+    // Fila de totales dinámicos
+    const totalsRow = [grandTotalHours.toFixed(1)];
+    
+    for (let semana = 1; semana <= weekStructure.totalWeeks; semana++) {
+        const semanaTotalHours = Object.values(editablePreviewData)
+            .reduce((sum, row) => {
+                const semanaData = row[`semana${semana}`];
+                return sum + (semanaData ? parseFloat(semanaData.tiempo || 0) : 0);
+            }, 0);
+            
+        const semanaTotalAmount = Object.values(editablePreviewData)
+            .reduce((sum, row) => {
+                const semanaData = row[`semana${semana}`];
+                return sum + (semanaData ? parseFloat(semanaData.total || 0) : 0);
+            }, 0);
+        
+        totalsRow.push('TOTALES', semanaTotalHours, '', semanaTotalAmount);
+    }
+    
+    wsData.push(totalsRow);
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    applyExcelStyling(ws, wsData, 'remanente');
+    
+    // ✅ NUEVO: Merges dinámicos según número de semanas
+    const merges = [
+        { s: { r: 0, c: 4 }, e: { r: 0, c: Math.min(8, titleRowLength - 1) } }, // Título
+        { s: { r: 1, c: 1 }, e: { r: 1, c: 2 } }, // Cliente
+        { s: { r: 1, c: 4 }, e: { r: 1, c: 5 } }, // Tipo
+        { s: { r: 1, c: 7 }, e: { r: 1, c: 8 } }  // Mes
+    ];
+    
+    // Merges para headers de semanas
+    for (let semana = 1; semana <= weekStructure.totalWeeks; semana++) {
+        const startCol = 1 + ((semana - 1) * 4);
+        const endCol = startCol + 3;
+        merges.push({ s: { r: 3, c: startCol }, e: { r: 3, c: endCol } });
+    }
+    
+    ws['!merges'] = merges;
+    
+    XLSX.utils.book_append_sheet(wb, ws, "REPORTE REMANENTE");
+    
+    const fileName = generateFileName('ReporteRemanente');
+    XLSX.writeFile(wb, fileName);
+    saveToReportHistory(fileName, 'remanente', grandTotalHours, grandTotalAmount);
+    
+    window.NotificationUtils.success(`Excel Remanente generado: ${fileName} (${weekStructure.totalWeeks} semanas)`);
+}
+
+/**
+ * Generar Excel para Proyecto General
+ */
+function generateProyectoGeneralExcel() {
+    console.log('📋 Generando Excel - Proyecto General');
+    
+    const wb = XLSX.utils.book_new();
+    const wsData = [];
+    
+    wsData.push(['', '', 'Proyecto: General', '', '', '']);
+    wsData.push(['', '', '', '', '', '']);
+    wsData.push(['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    
+    let totalHours = 0;
+    let totalAmount = 0;
+    
+    Object.values(editablePreviewData).forEach(row => {
+        wsData.push([
+            row.idEmpresa || 'N/A',
+            row.consultor || 'N/A',
+            row.modulo || 'N/A',
+            parseFloat(row.editedTime || 0),
+            parseFloat(row.editedTariff || 0),
+            parseFloat(row.editedTotal || 0)
+        ]);
+        
+        totalHours += parseFloat(row.editedTime || 0);
+        totalAmount += parseFloat(row.editedTotal || 0);
+    });
+    
+    wsData.push(['', '', 'TOTALES', totalHours, '', totalAmount]);
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    applyExcelStyling(ws, wsData, 'proyecto');
+    
+    ws['!merges'] = [{ s: { r: 0, c: 2 }, e: { r: 0, c: 4 } }];
+    
+    XLSX.utils.book_append_sheet(wb, ws, "PROYECTO GENERAL");
+    
+    const fileName = generateFileName('ProyectoGeneral');
+    XLSX.writeFile(wb, fileName);
+    saveToReportHistory(fileName, 'proyecto-general', totalHours, totalAmount);
+    
+    window.NotificationUtils.success(`Excel generado: ${fileName}`);
+}
+
+/**
+ * Generar Excel para Proyecto Cliente (vista simplificada)
+ */
+function generateProyectoClienteExcel() {
+    console.log('🏢 Generando Excel - Proyecto Cliente');
+    
+    const clientName = document.getElementById('clientFilter')?.selectedOptions[0]?.text || 'Cliente';
+    
+    const wb = XLSX.utils.book_new();
+    const wsData = [];
+    
+    wsData.push(['', `Proyecto: ${clientName}`, '', '']);
+    wsData.push(['', '', '', '']);
+    wsData.push(['Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    
+    let totalHours = 0;
+    let totalAmount = 0;
+    
+    Object.values(editablePreviewData).forEach(row => {
+        wsData.push([
+            row.modulo || 'N/A',
+            parseFloat(row.editedTime || 0),
+            parseFloat(row.editedTariff || 0),
+            parseFloat(row.editedTotal || 0)
+        ]);
+        
+        totalHours += parseFloat(row.editedTime || 0);
+        totalAmount += parseFloat(row.editedTotal || 0);
+    });
+    
+    wsData.push(['TOTALES', totalHours, '', totalAmount]);
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    applyExcelStyling(ws, wsData, 'proyecto-cliente');
+    
+    ws['!merges'] = [{ s: { r: 0, c: 1 }, e: { r: 0, c: 2 } }];
+    
+    XLSX.utils.book_append_sheet(wb, ws, "PROYECTO CLIENTE");
+    
+    const fileName = generateFileName('ProyectoCliente');
+    XLSX.writeFile(wb, fileName);
+    saveToReportHistory(fileName, 'proyecto-cliente', totalHours, totalAmount);
+    
+    window.NotificationUtils.success(`Excel generado: ${fileName}`);
+}
+
+/**
+ * Generar Excel para Proyecto Consultor
+ */
+function generateProyectoConsultorExcel() {
+    console.log('👤 Generando Excel - Proyecto Consultor');
+    
+    const consultantName = document.getElementById('consultantFilter')?.selectedOptions[0]?.text || 'Consultor';
+    
+    const wb = XLSX.utils.book_new();
+    const wsData = [];
+    
+    wsData.push(['', '', `Proyecto: ${consultantName}`, '', '', '']);
+    wsData.push(['', '', '', '', '', '']);
+    wsData.push(['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    
+    let totalHours = 0;
+    let totalAmount = 0;
+    
+    Object.values(editablePreviewData).forEach(row => {
+        wsData.push([
+            row.idEmpresa || 'N/A',
+            row.consultor || 'N/A',
+            row.modulo || 'N/A',
+            parseFloat(row.editedTime || 0),
+            parseFloat(row.editedTariff || 0),
+            parseFloat(row.editedTotal || 0)
+        ]);
+        
+        totalHours += parseFloat(row.editedTime || 0);
+        totalAmount += parseFloat(row.editedTotal || 0);
+    });
+    
+    wsData.push(['', '', 'TOTALES', totalHours, '', totalAmount]);
+    
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    applyExcelStyling(ws, wsData, 'proyecto-consultor');
+    
+    ws['!merges'] = [{ s: { r: 0, c: 2 }, e: { r: 0, c: 4 } }];
+    
+    XLSX.utils.book_append_sheet(wb, ws, "PROYECTO CONSULTOR");
+    
+    const fileName = generateFileName('ProyectoConsultor');
+    XLSX.writeFile(wb, fileName);
+    saveToReportHistory(fileName, 'proyecto-consultor', totalHours, totalAmount);
+    
+    window.NotificationUtils.success(`Excel generado: ${fileName}`);
+}
+
+/**
+ * Aplicar estilos básicos a worksheet de Excel
+ */
+function applyExcelStyling(ws, wsData, reportType) {
+    // Configurar anchos de columna
+    const colWidths = [];
+    
+    switch (reportType) {
+        case 'remanente':
+            // Columnas más anchas para estructura semanal
+            colWidths.push(
+                { wch: 15 }, // Total Horas
+                { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, // Semana 1
+                { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, // Semana 2
+                { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 12 }, // Semana 3
+                { wch: 15 }, { wch: 10 }, { wch: 10 }, { wch: 12 }  // Semana 4
+            );
+            break;
+        case 'cliente':
+        case 'proyecto-cliente':
+            // Estructura simplificada
+            colWidths.push(
+                { wch: 25 }, // Soporte/Modulo
+                { wch: 15 }, // Modulo/Tiempo
+                { wch: 10 }, // Tiempo/Tarifa
+                { wch: 15 }, // Tarifa/Total
+                { wch: 15 }  // Total
+            );
+            break;
+        default:
+            // Estructura estándar
+            colWidths.push(
+                { wch: 12 }, // ID Empresa
+                { wch: 20 }, // Consultor
+                { wch: 25 }, // Soporte/Modulo
+                { wch: 20 }, // Modulo
+                { wch: 10 }, // Tiempo
+                { wch: 15 }, // Tarifa
+                { wch: 15 }  // Total
+            );
+    }
+    
+    ws['!cols'] = colWidths;
+    
+    // Aplicar estilos básicos a celdas
+    const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:A1');
+    
+    for (let row = range.s.r; row <= range.e.r; row++) {
+        for (let col = range.s.c; col <= range.e.c; col++) {
+            const cellAddress = XLSX.utils.encode_cell({ r: row, c: col });
+            const cell = ws[cellAddress];
+            
+            if (!cell) continue;
+            
+            // Inicializar estilo si no existe
+            if (!cell.s) cell.s = {};
+            
+            // Estilos para headers (fila 2 o 3 según reporte)
+            const headerRow = reportType === 'remanente' ? 4 : (reportType === 'cliente' ? 2 : 2);
+            if (row === headerRow) {
+                cell.s = {
+                    fill: { bgColor: { rgb: "4A90E2" } },
+                    font: { bold: true, color: { rgb: "FFFFFF" } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: {
+                        top: { style: "thin", color: { rgb: "000000" } },
+                        bottom: { style: "thin", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    }
+                };
+            }
+            // Estilos para títulos (primera fila)
+            else if (row === 0) {
+                cell.s = {
+                    font: { bold: true, size: 14, color: { rgb: "1E40AF" } },
+                    alignment: { horizontal: "center", vertical: "center" }
+                };
+            }
+            // Estilos para fila de totales (última fila)
+            else if (row === range.e.r) {
+                cell.s = {
+                    fill: { bgColor: { rgb: "F1F5F9" } },
+                    font: { bold: true },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: {
+                        top: { style: "medium", color: { rgb: "000000" } },
+                        bottom: { style: "medium", color: { rgb: "000000" } },
+                        left: { style: "thin", color: { rgb: "000000" } },
+                        right: { style: "thin", color: { rgb: "000000" } }
+                    }
+                };
+            }
+            // Estilos para datos normales
+            else if (row > headerRow) {
+                cell.s = {
+                    alignment: { horizontal: "center", vertical: "center" },
+                    border: {
+                        top: { style: "thin", color: { rgb: "E5E7EB" } },
+                        bottom: { style: "thin", color: { rgb: "E5E7EB" } },
+                        left: { style: "thin", color: { rgb: "E5E7EB" } },
+                        right: { style: "thin", color: { rgb: "E5E7EB" } }
+                    }
+                };
+                
+                // Alternar colores de fila
+                if ((row - headerRow) % 2 === 0) {
+                    cell.s.fill = { bgColor: { rgb: "F9FAFB" } };
+                }
+            }
+            
+            // Formato de moneda para columnas de dinero
+            if (typeof cell.v === 'number' && (col === range.e.c || cellAddress.includes('TOTAL'))) {
+                cell.s.numFmt = '"$"#,##0.00';
+            }
+        }
+    }
+}
+
+/**
+ * Generar nombre de archivo único
+ */
+function generateFileName(reportPrefix) {
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+    const timeStr = now.toTimeString().slice(0, 5).replace(':', ''); // HHMM
+    
+    // Obtener información adicional según filtros
+    let suffix = '';
+    
+    if (currentReportType.includes('consultor-especifico') || currentReportType.includes('proyecto-consultor')) {
+        const consultantName = document.getElementById('consultantFilter')?.selectedOptions[0]?.text?.split(' ')[0] || 'Consultor';
+        suffix = `_${consultantName}`;
+    } else if (currentReportType.includes('cliente')) {
+        const clientName = document.getElementById('clientFilter')?.selectedOptions[0]?.text?.split(' ')[0] || 'Cliente';
+        suffix = `_${clientName}`;
+    } else if (currentReportType === 'remanente') {
+        const monthValue = document.getElementById('monthFilter')?.value || '';
+        suffix = `_${monthValue.replace('-', '')}`;
+    }
+    
+    return `${reportPrefix}${suffix}_HPEREZ_${dateStr}_${timeStr}.xlsx`;
+}
+
+/**
+ * Guardar reporte en historial
+ */
+function saveToReportHistory(fileName, reportType, totalHours, totalAmount) {
+    try {
+        const reportData = {
+            fileName: fileName,
+            reportType: reportType,
+            generatedBy: 'Hector Perez',
+            dateRange: getDateRangeText(),
+            recordCount: Object.keys(editablePreviewData).length,
+            totalHours: totalHours,
+            totalAmount: totalAmount
+        };
+        
+        const saveResult = window.PortalDB.saveGeneratedReport(reportData);
+        
+        if (saveResult.success) {
+            console.log('✅ Reporte guardado en historial:', fileName);
+            // Actualizar contadores del sidebar
+            if (typeof updateSidebarCounts === 'function') {
+                updateSidebarCounts();
+            }
+        } else {
+            console.error('❌ Error guardando en historial:', saveResult.message);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error guardando reporte en historial:', error);
+    }
+}
+
+/**
+ * Obtener texto descriptivo del rango de fechas actual
+ */
+function getDateRangeText() {
+    const timeFilter = document.getElementById('timeFilter');
+    if (!timeFilter) return 'Período no especificado';
+    
+    switch (timeFilter.value) {
+        case 'week':
+            return 'Esta Semana';
+        case 'month':
+            return 'Este Mes';
+        case 'custom':
+            const startDate = document.getElementById('startDate')?.value;
+            const endDate = document.getElementById('endDate')?.value;
+            if (startDate && endDate) {
+                return `${startDate} al ${endDate}`;
+            }
+            return 'Rango personalizado';
+        case 'all':
+            return 'Todas las fechas';
+        default:
+            return 'Período no especificado';
+    }
+}
+
+// Inicializar cuando se carga la sección
+document.addEventListener('DOMContentLoaded', function() {
+    // Esperamos un poco para asegurar que todo esté cargado
+    setTimeout(() => {
+        initializeReportSelector();
+    }, 500);
+});
+
+// Asegurar inicialización cuando se cambia a la sección de reportes
+function ensureReportSelectorInitialized() {
+    const reportGrid = document.getElementById('reportGrid');
+    if (reportGrid && reportGrid.children.length === 0) {
+        initializeReportSelector();
     }
 }
 

@@ -1717,3 +1717,270 @@
         padding: 6px;
     }
 }
+
+/* === ESTILOS PARA NUEVO SISTEMA DE REPORTES === */
+
+/* Selector de Reportes */
+.report-selector {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.report-selector h3 {
+    color: #1e40af;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    text-align: center;
+}
+
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.report-option {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: #fafafa;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.report-option:hover {
+    border-color: #3b82f6;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(59, 130, 246, 0.15);
+}
+
+.report-option.active {
+    border-color: #059669;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+}
+
+.report-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.report-name {
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.report-description {
+    font-size: 0.875rem;
+    color: #64748b;
+    margin-bottom: 1rem;
+    line-height: 1.4;
+}
+
+.report-audience {
+    font-size: 0.75rem;
+    color: #059669;
+    font-weight: 500;
+    background: rgba(5, 150, 105, 0.1);
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    display: inline-block;
+}
+
+/* Panel de Configuración */
+.report-config-panel {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+    animation: slideIn 0.3s ease;
+}
+
+.config-header {
+    border-bottom: 2px solid #3b82f6;
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.config-title {
+    color: #1e40af;
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.config-subtitle {
+    color: #64748b;
+    font-size: 0.875rem;
+}
+
+.config-form {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.actions-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    padding-top: 1rem;
+    border-top: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+}
+
+/* Vista Previa */
+.preview-panel {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    animation: slideIn 0.3s ease;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e5e7eb;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.preview-title {
+    color: #1e40af;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.preview-info {
+    font-size: 0.875rem;
+    color: #64748b;
+    text-align: right;
+}
+
+.preview-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+    margin-bottom: 1.5rem;
+}
+
+.preview-table th {
+    background: #f1f5f9;
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border: 1px solid #e5e7eb;
+    font-size: 0.8rem;
+}
+
+.preview-table td {
+    padding: 0.75rem;
+    border: 1px solid #e5e7eb;
+    vertical-align: middle;
+}
+
+.preview-table tbody tr:nth-child(even) {
+    background: #f9fafb;
+}
+
+.editable-cell {
+    background: #fef3c7 !important;
+    position: relative;
+}
+
+.editable-input {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 0.875rem;
+    padding: 0.25rem;
+    text-align: center;
+    font-weight: 500;
+}
+
+.editable-input:focus {
+    outline: 2px solid #f59e0b;
+    background: white;
+    border-radius: 4px;
+}
+
+/* Estados especiales */
+.warning-message {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border-left: 4px solid #f59e0b;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.875rem;
+}
+
+.warning-message strong {
+    color: #92400e;
+}
+
+.empty-preview {
+    text-align: center;
+    padding: 3rem;
+    color: #64748b;
+}
+
+.empty-preview-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Animaciones */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .report-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .actions-row {
+        flex-direction: column;
+    }
+    
+    .preview-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .preview-info {
+        text-align: center;
+    }
+}

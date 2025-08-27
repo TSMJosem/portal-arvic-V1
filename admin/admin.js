@@ -5396,6 +5396,7 @@ window.updateReportsListWithFilter = updateReportsListWithFilter;
 console.log('✅ Funciones de asignación de proyectos cargadas');
 console.log('✅ Funciones del administrador exportadas globalmente');
 
+////
 // CÓDIGO TEMPORAL DE DIAGNÓSTICO
 window.addEventListener('load', function() {
     setTimeout(() => {

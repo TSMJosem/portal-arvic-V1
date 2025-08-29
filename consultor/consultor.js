@@ -299,6 +299,10 @@ function updateAssignmentsList() {
                 const project = window.PortalDB.getProject(assignment.projectId);
                 const module = window.PortalDB.getModule(assignment.moduleId);
                 
+                // Obtener reportes de esta asignación de proyecto
+                const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
+                const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+                
                 assignmentDiv.innerHTML = `
                     <div class="assignment-header">
                         <h3 style="margin: 0; color: #2c3e50;">
@@ -311,13 +315,16 @@ function updateAssignmentsList() {
                     <div class="assignment-details">
                         <p><strong>🎯 Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
                         <p><strong>🧩 Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                        <p><strong>📋 Descripción:</strong> ${project?.description || 'Sin descripción'}</p>
+                        <p><strong>📊 Reportes:</strong> ${assignmentReports.length} reportes | <strong>⏰ Total:</strong> ${totalHours.toFixed(1)} hrs</p>
                         <p><small>📅 Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
                     </div>
                     
                     <div class="assignment-actions">
                         <button class="btn btn-success" onclick="openProjectReportModal('${assignment.id}')">
-                            📝 Reporte de Proyecto
+                            📝 Crear Reporte
+                        </button>
+                        <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
+                            📊 Ver Reportes (${assignmentReports.length})
                         </button>
                         <button class="btn btn-info" onclick="viewProjectDetails('${assignment.id}')">
                             ℹ️ Detalles del Proyecto

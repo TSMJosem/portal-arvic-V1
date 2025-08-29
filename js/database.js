@@ -139,9 +139,6 @@ class PortalDatabase {
             id: '0001',
             name: 'Soporte técnico sistema ERP',
             description: 'Soporte para configuración y resolución de problemas del ERP',
-            status: 'Activo',
-            priority: 'Alta',
-            type: 'Técnico',
             createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
             isActive: true
         },
@@ -149,9 +146,6 @@ class PortalDatabase {
             id: '0002',
             name: 'Soporte funcional módulo ventas',
             description: 'Apoyo en el uso y configuración del módulo de ventas',
-            status: 'Activo',
-            priority: 'Media',
-            type: 'Funcional',
             createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
             isActive: true
         },
@@ -159,9 +153,6 @@ class PortalDatabase {
             id: '0003',
             name: 'Mantenimiento preventivo sistema',
             description: 'Revisión y mantenimiento del sistema completo',
-            status: 'Activo',
-            priority: 'Baja',
-            type: 'Mantenimiento',
             createdAt: new Date().toISOString(),
             isActive: true
         }
@@ -175,7 +166,6 @@ class PortalDatabase {
                 id: '0001',
                 name: 'Módulo de Autenticación',
                 description: 'Manejo de login, logout y sesiones de usuario',
-                category: 'Backend',
                 status: 'Completado',
                 createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
                 isActive: true
@@ -184,7 +174,6 @@ class PortalDatabase {
                 id: '0002',
                 name: 'Panel de Administración',
                 description: 'Interfaz para gestión de usuarios y configuración',
-                category: 'Frontend',
                 status: 'En Desarrollo',
                 createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
                 isActive: true
@@ -193,7 +182,6 @@ class PortalDatabase {
                 id: '0003',
                 name: 'API de Reportes',
                 description: 'Endpoints para creación y gestión de reportes',
-                category: 'API',
                 status: 'Planificación',
                 createdAt: new Date().toISOString(),
                 isActive: true
@@ -524,9 +512,6 @@ createSupport(supportData) {
         id: supportId,
         name: supportData.name,
         description: supportData.description || '',
-        status: supportData.status || 'Activo',
-        priority: supportData.priority || 'Media',
-        type: supportData.type || 'Técnico',
         createdAt: new Date().toISOString(),
         isActive: true
     };
@@ -581,8 +566,6 @@ deleteSupport(supportId) {
             id: moduleId,
             name: moduleData.name,
             description: moduleData.description || '',
-            category: moduleData.category || 'Otros',
-            status: moduleData.status || 'Planificación',
             createdAt: new Date().toISOString(),
             isActive: true
         };
@@ -870,13 +853,7 @@ canUserCreateReport(userId) {
             activeUsers: Object.values(users).filter(u => u.isActive && u.role === 'consultor').length,
             pendingReports: Object.values(reports).filter(r => r.status === 'Pendiente').length,
             approvedReports: Object.values(reports).filter(r => r.status === 'Aprobado').length,
-            rejectedReports: Object.values(reports).filter(r => r.status === 'Rechazado').length,
-            completedTasks: Object.values(tasks).filter(t => t.status === 'Completada').length,
-            pendingTasks: Object.values(tasks).filter(t => t.status === 'Pendiente').length,
-            inProgressTasks: Object.values(tasks).filter(t => t.status === 'En Progreso').length,
-            completedModules: Object.values(modules).filter(m => m.status === 'Completado').length,
-            inDevelopmentModules: Object.values(modules).filter(m => m.status === 'En Desarrollo').length,
-            plannedModules: Object.values(modules).filter(m => m.status === 'Planificación').length
+            rejectedReports: Object.values(reports).filter(r => r.status === 'Rechazado').length
         };
     }
 
@@ -952,15 +929,6 @@ canUserCreateReport(userId) {
             if (criteria.name) {
                 matches = matches && module.name.toLowerCase().includes(criteria.name.toLowerCase());
             }
-            
-            if (criteria.category) {
-                matches = matches && module.category === criteria.category;
-            }
-            
-            if (criteria.status) {
-                matches = matches && module.status === criteria.status;
-            }
-            
             return matches;
         });
     }
@@ -1004,16 +972,6 @@ canUserCreateReport(userId) {
             errors.push('El nombre del módulo no puede exceder 100 caracteres');
         }
         
-        const validCategories = ['Frontend', 'Backend', 'Base de Datos', 'API', 'Integración', 'Otros'];
-        if (moduleData.category && !validCategories.includes(moduleData.category)) {
-            errors.push('Categoría no válida');
-        }
-        
-        const validStatuses = ['Planificación', 'En Desarrollo', 'Completado'];
-        if (moduleData.status && !validStatuses.includes(moduleData.status)) {
-            errors.push('Estado del módulo no válido');
-        }
-        
         return {
             isValid: errors.length === 0,
             errors: errors
@@ -1021,19 +979,6 @@ canUserCreateReport(userId) {
     }
 
     // === REPORTES AVANZADOS ===
-    getModulesByCategory() {
-        const modules = Object.values(this.getModules());
-        const grouped = {};
-        
-        modules.forEach(module => {
-            if (!grouped[module.category]) {
-                grouped[module.category] = [];
-            }
-            grouped[module.category].push(module);
-        });
-        
-        return grouped;
-    }
 
     getTasksByPriority() {
         const tasks = Object.values(this.getTasks());
@@ -1055,57 +1000,16 @@ canUserCreateReport(userId) {
         const modules = Object.values(this.getModules());
         const reports = Object.values(this.getReports());
         
-        // Calcular métricas de tareas
-        const totalTasks = tasks.length;
-        const completedTasks = tasks.filter(t => t.status === 'Completada').length;
-        const taskCompletionRate = totalTasks > 0 ? (completedTasks / totalTasks * 100).toFixed(1) : 0;
-        
-        // Tareas por prioridad
-        const tasksByPriority = {
-            alta: tasks.filter(t => t.priority === 'Alta').length,
-            media: tasks.filter(t => t.priority === 'Media').length,
-            baja: tasks.filter(t => t.priority === 'Baja').length
-        };
-        
-        // Calcular métricas de módulos
-        const totalModules = modules.length;
-        const completedModules = modules.filter(m => m.status === 'Completado').length;
-        const moduleCompletionRate = totalModules > 0 ? (completedModules / totalModules * 100).toFixed(1) : 0;
-        
-        // Módulos por categoría
-        const modulesByCategory = {
-            frontend: modules.filter(m => m.category === 'Frontend').length,
-            backend: modules.filter(m => m.category === 'Backend').length,
-            database: modules.filter(m => m.category === 'Base de Datos').length,
-            api: modules.filter(m => m.category === 'API').length,
-            integration: modules.filter(m => m.category === 'Integración').length,
-            others: modules.filter(m => m.category === 'Otros').length
-        };
-        
         // Métricas de reportes
         const totalReports = reports.length;
         const approvedReports = reports.filter(r => r.status === 'Aprobado').length;
         const reportApprovalRate = totalReports > 0 ? (approvedReports / totalReports * 100).toFixed(1) : 0;
         
         return {
-            tasks: {
-                total: totalTasks,
-                completed: completedTasks,
-                completionRate: taskCompletionRate,
-                byPriority: tasksByPriority
-            },
-            modules: {
-                total: totalModules,
-                completed: completedModules,
-                completionRate: moduleCompletionRate,
-                byCategory: modulesByCategory
-            },
-            reports: {
-                total: totalReports,
-                approved: approvedReports,
-                approvalRate: reportApprovalRate
-            },
-            generatedAt: new Date().toISOString()
+            totalModules: modules.length,
+            totalTasks: tasks.length,
+            totalReports: totalReports,
+            reportApprovalRate: reportApprovalRate
         };
     }
 
@@ -1296,8 +1200,19 @@ deleteGeneratedReport(reportId) {
 
     // === FUNCIONES AUXILIARES ===
     getRecentAssignments(limit = 5) {
-        const assignments = Object.values(this.getAssignments());
-        return assignments
+        const supportAssignments = Object.values(this.getAssignments()).map(assignment => ({
+            ...assignment,
+            assignmentType: 'support'
+        }));
+        
+        const projectAssignments = Object.values(this.getProjectAssignments()).map(assignment => ({
+            ...assignment,
+            assignmentType: 'project'
+        }));
+        
+        const allAssignments = [...supportAssignments, ...projectAssignments];
+        
+        return allAssignments
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
             .slice(0, limit);
     }

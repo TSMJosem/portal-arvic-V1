@@ -1,4 +1,5 @@
 let currentReportFilter = 'all';
+let currentApprovedReportFilter = 'all';
 
 // === CONFIGURACIÓN DE REPORTES ARVIC ===
 const ARVIC_REPORTS = {
@@ -372,12 +373,6 @@ function updateSupportsList() {
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                     <span class="item-id">${support.id}</span>
                     <strong>${support.name}</strong>
-                    <span class="custom-badge" style="background: ${typeColors[support.type]}20; color: ${typeColors[support.type]}; border: 1px solid ${typeColors[support.type]};">
-                        ${support.type}
-                    </span>
-                    <span class="custom-badge" style="background: ${priorityColors[support.priority]}20; color: ${priorityColors[support.priority]}; border: 1px solid ${priorityColors[support.priority]}; font-size: 11px;">
-                        ${support.priority}
-                    </span>
                 </div>
                 <small style="color: #666;">
                     📅 Creado: ${window.DateUtils.formatDate(support.createdAt)}
@@ -423,11 +418,11 @@ function updateApprovedReportsList() {
         switch(timeFilter.value) {
             case 'week':
                 const startOfWeek = new Date(now);
-                startOfWeek.setDate(now.getDate() - now.getDay()); // Domingo
+                startOfWeek.setDate(now.getDate() - now.getDay());
                 startOfWeek.setHours(0, 0, 0, 0);
                 
                 const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6); // Sábado
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
                 endOfWeek.setHours(23, 59, 59, 999);
                 
                 filteredReports = approvedReports.filter(report => {
@@ -473,7 +468,7 @@ function updateApprovedReportsList() {
                 }
                 break;
                 
-            default: // 'all'
+            default:
                 filteredReports = approvedReports;
                 filterText = 'Todas las fechas';
                 break;
@@ -483,15 +478,29 @@ function updateApprovedReportsList() {
         filterText = 'Esta semana';
     }
     
+    // Filtrar por categoría si existe
+    let categoryFilteredReports = filteredReports;
+    if (typeof currentApprovedReportFilter !== 'undefined' && currentApprovedReportFilter !== 'all') {
+        categoryFilteredReports = filteredReports.filter(report => {
+            const category = getReportCategory(report);
+            return category === currentApprovedReportFilter;
+        });
+    }
+    
+    // Actualizar contadores si existe la función
+    if (typeof updateApprovedReportCategoryCounts === 'function') {
+        updateApprovedReportCategoryCounts(filteredReports);
+    }
+
     // Actualizar texto informativo
     if (filterInfo) {
         filterInfo.textContent = `Mostrando: ${filterText}`;
     }
     
-    if (filteredReports.length === 0) {
+    if (categoryFilteredReports.length === 0) {
         approvedReportsTableBody.innerHTML = `
             <tr>
-                <td colspan="8" class="empty-table-message">
+                <td colspan="7" class="empty-table-message">
                     <div class="empty-state">
                         <div class="empty-state-icon">✅</div>
                         <div class="empty-state-title">No hay reportes aprobados</div>
@@ -503,65 +512,71 @@ function updateApprovedReportsList() {
         return;
     }
     
-    // *** CAMBIO PRINCIPAL: Agrupar por ASIGNACIÓN, no por usuario ***
+    // Agrupar por asignación Y contar reportes
     const assignmentSummary = {};
+    const reportCounts = {};
     
-    filteredReports.forEach(report => {
+    categoryFilteredReports.forEach(report => {
         const user = currentData.users[report.userId];
         
-        // Determinar la asignación específica del reporte
         let assignment = null;
         if (report.assignmentId) {
-            // Nuevo sistema: reporte vinculado a asignación específica
             assignment = currentData.assignments[report.assignmentId];
         } else {
-            // Sistema legado: buscar primera asignación activa del usuario
             assignment = Object.values(currentData.assignments).find(a => 
                 a.userId === report.userId && a.isActive
             );
         }
         
         if (user && assignment) {
-            // Usar assignmentId como clave única para agrupar
             const key = assignment.id;
             
+            // Contar reportes por asignación
+            if (!reportCounts[key]) {
+                reportCounts[key] = 0;
+            }
+            reportCounts[key]++;
+            
+            // Crear resumen de asignación
             if (!assignmentSummary[key]) {
                 const company = currentData.companies[assignment.companyId];
-                const project = currentData.projects[assignment.projectId];
-                const task = currentData.tasks[assignment.taskId];
+                const support = currentData.supports[assignment.supportId];
                 const module = currentData.modules[assignment.moduleId];
-                
+
                 assignmentSummary[key] = {
                     assignmentId: assignment.id,
                     consultantId: user.id,
                     consultantName: user.name,
                     companyId: assignment.companyId,
                     companyName: company ? company.name : 'No asignado',
-                    projectName: project ? project.name : 'No asignado',
-                    taskName: task ? task.name : 'No asignada',
+                    supportName: support ? support.name : 'No asignado',
                     moduleName: module ? module.name : 'No asignado',
                     totalHours: 0
                 };
             }
             
-            // Acumular horas por asignación específica
             assignmentSummary[key].totalHours += parseFloat(report.hours || 0);
         }
     });
     
-    // Generar tabla agrupada por asignación
+    // Generar tabla con TODAS las columnas (6 columnas para coincidir con el header)
     approvedReportsTableBody.innerHTML = '';
     Object.values(assignmentSummary).forEach(summary => {
+        const reportCount = reportCounts[summary.assignmentId];
         const row = document.createElement('tr');
         row.innerHTML = `
             <td><span class="consultant-id">${summary.consultantId}</span></td>
             <td><span class="consultant-name">${summary.consultantName}</span></td>
             <td><span class="consultant-id">${summary.companyId}</span></td>
             <td><span class="company-name">${summary.companyName}</span></td>
-            <td><span class="project-name">${summary.projectName}</span></td>
-            <td>${summary.taskName}</td>
+            <td><span class="project-name">${summary.supportName}</span></td>
             <td>${summary.moduleName}</td>
-            <td><span class="hours-reported">${summary.totalHours.toFixed(1)} hrs</span></td>
+            <td>
+                <span class="hours-reported">${summary.totalHours.toFixed(1)} hrs</span>
+                <small style="color: #666; display: block; font-size: 0.8em;">
+                    📊 ${reportCount} reporte${reportCount > 1 ? 's' : ''} agrupado${reportCount > 1 ? 's' : ''}
+                </small>
+            </td>
         `;
         approvedReportsTableBody.appendChild(row);
     });
@@ -592,14 +607,12 @@ function updateTableHeaders() {
     } else {
         // Headers para SOPORTE y TODOS (10 columnas - con "Tipo Soporte")
         const soporteLabel = currentReportFilter === 'all' ? 'Asignación' : 'Soporte';
-        const tipoLabel = currentReportFilter === 'all' ? 'Tipo' : 'Tipo Soporte';
         
         thead.innerHTML = `
             <th>ID Consultor</th>
             <th>Nombre Consultor</th>
             <th>Cliente (Empresa)</th>
             <th>${soporteLabel}</th>
-            <th>${tipoLabel}</th>
             <th>Módulo</th>
             <th>Horas Reportadas</th>
             <th>Fecha Reporte</th>
@@ -767,35 +780,11 @@ function updateModulesList() {
         const moduleDiv = document.createElement('div');
         moduleDiv.className = 'item hover-lift';
         
-        // Determinar colores por categoría y estado
-        const categoryColors = {
-            'Frontend': '#e74c3c',
-            'Backend': '#3498db',
-            'Base de Datos': '#9b59b6',
-            'API': '#f39c12',
-            'Integración': '#1abc9c',
-            'Otros': '#95a5a6'
-        };
-        
-        const statusColors = {
-            'Planificación': '#f39c12',
-            'En Desarrollo': '#3498db',
-            'Completado': '#27ae60'
-        };
-        
         moduleDiv.innerHTML = `
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                     <span class="item-id">${module.id}</span>
                     <strong>${module.name}</strong>
-                    <span class="custom-badge" style="background: ${categoryColors[module.category]}20; color: ${categoryColors[module.category]}; border: 1px solid ${categoryColors[module.category]};">
-                        ${module.category}
-                    </span>
-                    ${module.status ? `
-                        <span class="custom-badge" style="background: ${statusColors[module.status]}20; color: ${statusColors[module.status]}; border: 1px solid ${statusColors[module.status]}; font-size: 11px;">
-                            ${module.status}
-                        </span>
-                    ` : ''}
                 </div>
                 <small style="color: #666;">
                     📅 Creado: ${window.DateUtils.formatDate(module.createdAt)}
@@ -1006,10 +995,8 @@ function updateAssignmentsList() {
     
     // Actualizar asignaciones recientes (últimas 5)
     if (recentContainer) {
-        const recentAssignments = assignments
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-            .slice(0, 5);
-            
+        const recentAssignments = window.PortalDB.getRecentAssignments(5);
+        
         if (recentAssignments.length === 0) {
             recentContainer.innerHTML = `
                 <div class="empty-state">
@@ -1021,27 +1008,63 @@ function updateAssignmentsList() {
         } else {
             recentContainer.innerHTML = '';
             recentAssignments.forEach(assignment => {
-                const user = currentData.users[assignment.userId];
-                const company = currentData.companies[assignment.companyId];
-                const support = currentData.supports[assignment.supportId]; // Cambiar de projectId
                 
-                if (user && company && support) {
-                    const assignmentDiv = document.createElement('div');
-                    assignmentDiv.className = 'item hover-lift';
-                    assignmentDiv.innerHTML = `
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                                <strong>${user.name}</strong>
-                                <span class="custom-badge badge-success">
-                                    ${window.DateUtils.formatRelativeTime(assignment.createdAt)}
-                                </span>
+                const assignmentDiv = document.createElement('div');
+                assignmentDiv.className = 'item hover-lift';
+                
+                if (assignment.assignmentType === 'support') {
+                   
+                    const user = currentData.users[assignment.userId];
+                    const company = currentData.companies[assignment.companyId];
+                    const support = currentData.supports[assignment.supportId];
+                    const module = currentData.modules[assignment.moduleId];
+                    
+                    if (user && company && support && module) {
+                        assignmentDiv.innerHTML = `
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                    <strong>${user.name}</strong>
+                                    <span class="custom-badge" style="background: #3498db20; color: #3498db; border: 1px solid #3498db;">
+                                        📞 SOPORTE
+                                    </span>
+                                    <span class="custom-badge badge-success">
+                                        ${window.DateUtils.formatRelativeTime(assignment.createdAt)}
+                                    </span>
+                                </div>
+                                <small style="color: #666;">
+                                    🏢 ${company.name} | 📞 ${support.name} | 🧩 ${module.name}
+                                </small>
                             </div>
-                            <small style="color: #666;">
-                                🏢 ${company.name} | 📞 ${support.name}
-                            </small>
-                        </div>
-                    `;
-                    recentContainer.appendChild(assignmentDiv);
+                        `;
+                        recentContainer.appendChild(assignmentDiv);
+                    }
+                    
+                } else if (assignment.assignmentType === 'project') {
+                    
+                    const consultor = currentData.users[assignment.consultorId];
+                    const company = currentData.companies[assignment.companyId];
+                    const project = currentData.projects[assignment.projectId];
+                    const module = currentData.modules[assignment.moduleId];
+                    
+                    if (consultor && company && project && module) {
+                        assignmentDiv.innerHTML = `
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                    <strong>${consultor.name}</strong>
+                                    <span class="custom-badge" style="background: #e74c3c20; color: #e74c3c; border: 1px solid #e74c3c;">
+                                        📋 PROYECTO
+                                    </span>
+                                    <span class="custom-badge badge-success">
+                                        ${window.DateUtils.formatRelativeTime(assignment.createdAt)}
+                                    </span>
+                                </div>
+                                <small style="color: #666;">
+                                    🏢 ${company.name} | 📋 ${project.name} | 🧩 ${module.name}
+                                </small>
+                            </div>
+                        `;
+                        recentContainer.appendChild(assignmentDiv);
+                    }
                 }
             });
         }
@@ -1059,7 +1082,7 @@ function updateReportsList() {
     if (pendingReports.length === 0) {
         reportsTableBody.innerHTML = `
             <tr>
-                <td colspan="10" class="empty-table-message">
+                <td colspan="9" class="empty-table-message">
                     <div class="empty-state">
                         <div class="empty-state-icon">📄</div>
                         <div class="empty-state-title">No hay reportes pendientes</div>
@@ -1101,7 +1124,6 @@ function updateReportsList() {
                     <td><span class="consultant-name">${user.name}</span></td>
                     <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
                     <td><span class="project-name">${support ? support.name : 'Sin soporte'}</span></td>
-                    <td>${support ? support.type || 'N/A' : 'Sin tipo'}</td>
                     <td>${module ? module.name : 'Sin módulo'}</td>
                     <td><span class="hours-reported">${report.hours || '0'} hrs</span></td>
                     <td><span class="report-date">${window.DateUtils.formatDate(report.createdAt)}</span></td>
@@ -1129,176 +1151,6 @@ function updateReportsList() {
         });
     }
 }
-
-function updateApprovedReportsList() {
-    const approvedReportsTableBody = document.getElementById('approvedReportsTableBody');
-    const timeFilter = document.getElementById('timeFilter');
-    const customDateRange = document.getElementById('customDateRange');
-    const startDate = document.getElementById('startDate');
-    const endDate = document.getElementById('endDate');
-    const filterInfo = document.getElementById('filterInfo');
-    
-    if (!approvedReportsTableBody) return;
-    
-    // Mostrar/ocultar rango personalizado
-    if (timeFilter && customDateRange) {
-        if (timeFilter.value === 'custom') {
-            customDateRange.style.display = 'flex';
-        } else {
-            customDateRange.style.display = 'none';
-        }
-    }
-    
-    const reports = Object.values(currentData.reports);
-    const approvedReports = reports.filter(r => r.status === 'Aprobado');
-    
-    // Filtrar reportes por fecha (lógica existente...)
-    let filteredReports = [];
-    const now = new Date();
-    let filterText = '';
-    
-    if (timeFilter) {
-        switch(timeFilter.value) {
-            case 'week':
-                const startOfWeek = new Date(now);
-                startOfWeek.setDate(now.getDate() - now.getDay());
-                startOfWeek.setHours(0, 0, 0, 0);
-                
-                const endOfWeek = new Date(startOfWeek);
-                endOfWeek.setDate(startOfWeek.getDate() + 6);
-                endOfWeek.setHours(23, 59, 59, 999);
-                
-                filteredReports = approvedReports.filter(report => {
-                    const reportDate = new Date(report.createdAt);
-                    return reportDate >= startOfWeek && reportDate <= endOfWeek;
-                });
-                
-                filterText = `Esta semana (${window.DateUtils.formatDate(startOfWeek)} - ${window.DateUtils.formatDate(endOfWeek)})`;
-                break;
-                
-            case 'month':
-                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-                endOfMonth.setHours(23, 59, 59, 999);
-                
-                filteredReports = approvedReports.filter(report => {
-                    const reportDate = new Date(report.createdAt);
-                    return reportDate >= startOfMonth && reportDate <= endOfMonth;
-                });
-                
-                const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-                filterText = `${monthNames[now.getMonth()]} ${now.getFullYear()}`;
-                break;
-                
-            case 'custom':
-                if (startDate && endDate && startDate.value && endDate.value) {
-                    const customStart = new Date(startDate.value);
-                    customStart.setHours(0, 0, 0, 0);
-                    
-                    const customEnd = new Date(endDate.value);
-                    customEnd.setHours(23, 59, 59, 999);
-                    
-                    filteredReports = approvedReports.filter(report => {
-                        const reportDate = new Date(report.createdAt);
-                        return reportDate >= customStart && reportDate <= customEnd;
-                    });
-                    
-                    filterText = `${window.DateUtils.formatDate(customStart)} - ${window.DateUtils.formatDate(customEnd)}`;
-                } else {
-                    filteredReports = approvedReports;
-                    filterText = 'Rango personalizado (seleccione fechas)';
-                }
-                break;
-                
-            default: // 'all'
-                filteredReports = approvedReports;
-                filterText = 'Todas las fechas';
-                break;
-        }
-    } else {
-        filteredReports = approvedReports;
-        filterText = 'Esta semana';
-    }
-    
-    // Actualizar texto informativo
-    if (filterInfo) {
-        filterInfo.textContent = `Mostrando: ${filterText}`;
-    }
-    
-    if (filteredReports.length === 0) {
-        approvedReportsTableBody.innerHTML = `
-            <tr>
-                <td colspan="8" class="empty-table-message">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">✅</div>
-                        <div class="empty-state-title">No hay reportes aprobados</div>
-                        <div class="empty-state-desc">No se encontraron reportes aprobados en el período seleccionado</div>
-                    </div>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-    
-    // Agrupar por ASIGNACIÓN
-    const assignmentSummary = {};
-    
-    filteredReports.forEach(report => {
-        const user = currentData.users[report.userId];
-        
-        let assignment = null;
-        if (report.assignmentId) {
-            assignment = currentData.assignments[report.assignmentId];
-        } else {
-            assignment = Object.values(currentData.assignments).find(a => 
-                a.userId === report.userId && a.isActive
-            );
-        }
-        
-        if (user && assignment) {
-            const key = assignment.id;
-            
-            if (!assignmentSummary[key]) {
-                const company = currentData.companies[assignment.companyId];
-                const support = currentData.supports[assignment.supportId]; // Cambiar de taskId
-                const module = currentData.modules[assignment.moduleId];
-                
-                assignmentSummary[key] = {
-                    assignmentId: assignment.id,
-                    consultantId: user.id,
-                    consultantName: user.name,
-                    companyId: assignment.companyId,
-                    companyName: company ? company.name : 'No asignado',
-                    supportName: support ? support.name : 'No asignado', // Cambiar de projectName
-                    supportType: support ? support.type : 'N/A', // Nuevo campo
-                    moduleName: module ? module.name : 'No asignado',
-                    totalHours: 0
-                };
-            }
-            
-            assignmentSummary[key].totalHours += parseFloat(report.hours || 0);
-        }
-    });
-    
-    // Generar tabla agrupada por asignación
-    approvedReportsTableBody.innerHTML = '';
-    Object.values(assignmentSummary).forEach(summary => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td><span class="consultant-id">${summary.consultantId}</span></td>
-            <td><span class="consultant-name">${summary.consultantName}</span></td>
-            <td><span class="consultant-id">${summary.companyId}</span></td>
-            <td><span class="company-name">${summary.companyName}</span></td>
-            <td><span class="project-name">${summary.supportName}</span></td>
-            <td>${summary.supportType}</td>
-            <td>${summary.moduleName}</td>
-            <td><span class="hours-reported">${summary.totalHours.toFixed(1)} hrs</span></td>
-        `;
-        approvedReportsTableBody.appendChild(row);
-    });
-}
-
 
 function approveReport(reportId) {
     const result = window.PortalDB.updateReport(reportId, { status: 'Aprobado' });
@@ -1761,6 +1613,68 @@ function getReportCategory(report) {
     return 'unknown';
 }
 
+// 🆕 AGREGAR ESTA FUNCIÓN COMPLETA
+/**
+ * Filtra reportes aprobados por categoría 
+ * @param {string} category - 'all', 'soporte', 'proyecto'
+ */
+function filterApprovedReportsByCategory(category) {
+    console.log(`🔍 Filtrando reportes aprobados por categoría: ${category}`);
+    
+    currentApprovedReportFilter = category;
+    
+    // Actualizar botones activos
+    updateApprovedCategoryFilterButtons(category);
+    
+    // Actualizar tabla con filtro aplicado
+    updateApprovedReportsList();
+}
+
+/**
+ * Actualiza el estado visual de los botones de filtro para reportes aprobados
+ */
+function updateApprovedCategoryFilterButtons(activeCategory) {
+    // Buscar solo los botones de la sección de reportes aprobados
+    const approvedSection = document.getElementById('reportes-aprobados-section');
+    if (approvedSection) {
+        approvedSection.querySelectorAll('.category-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.dataset.category === activeCategory) {
+                btn.classList.add('active');
+            }
+        });
+    }
+}
+
+/**
+ * Actualiza contadores de reportes aprobados por categoría
+ */
+function updateApprovedReportCategoryCounts(reports) {
+    const counts = {
+        all: reports.length,
+        soporte: 0,
+        proyecto: 0
+    };
+    
+    reports.forEach(report => {
+        const category = getReportCategory(report);
+        if (category === 'soporte') {
+            counts.soporte++;
+        } else if (category === 'proyecto') {
+            counts.proyecto++;
+        }
+    });
+    
+    // Actualizar badges
+    const allCountElement = document.getElementById('approvedFilterCountAll');
+    const soporteCountElement = document.getElementById('approvedFilterCountSoporte');
+    const proyectoCountElement = document.getElementById('approvedFilterCountProyecto');
+    
+    if (allCountElement) allCountElement.textContent = counts.all;
+    if (soporteCountElement) soporteCountElement.textContent = counts.soporte;
+    if (proyectoCountElement) proyectoCountElement.textContent = counts.proyecto;
+}
+
 /**
  * Filtra reportes por categoría y actualiza la interfaz
  * @param {string} category - 'all', 'soporte', 'proyecto'
@@ -1973,14 +1887,13 @@ function createReportTableRow(report) {
     } else {
         // HTML para SOPORTE y TODOS (10 columnas - con columna tipo)
         const asignacionContent = support ? support.name : (project ? project.name : 'Sin asignación');
-        const tipoContent = support ? support.type || 'N/A' : (project ? 'Proyecto' : 'Sin tipo');
         
         row.innerHTML = `
             <td><span class="consultant-id">${user?.id || 'N/A'}</span></td>
             <td><span class="consultant-name">${user?.name || 'Usuario no encontrado'}</span></td>
             <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
             <td><span class="project-name">${asignacionContent}</span></td>
-            <td>${tipoContent}</td>
+            
             <td>${module ? module.name : 'Sin módulo'}</td>
             <td><span class="hours-badge">${report.hours || 0} hrs</span></td>
             <td>${window.DateUtils ? window.DateUtils.formatDate(report.createdAt) : new Date(report.createdAt).toLocaleDateString()}</td>
@@ -2426,8 +2339,6 @@ function handleCreateSupport(e) {
     
     const name = document.getElementById('supportName').value.trim();
     const description = document.getElementById('supportDescription').value.trim();
-    const priority = document.getElementById('supportPriority').value;
-    const type = document.getElementById('supportType').value;
     
     if (!name) {
         window.NotificationUtils.error('El nombre del soporte es requerido');
@@ -2436,9 +2347,7 @@ function handleCreateSupport(e) {
 
     const supportData = {
         name: name,
-        description: description,
-        priority: priority,
-        type: type
+        description: description
     };
 
     const result = window.PortalDB.createSupport(supportData);
@@ -3514,7 +3423,7 @@ function populateFilterDropdowns(reportType) {
         Object.values(currentData.supports).forEach(support => {
             const option = document.createElement('option');
             option.value = support.id;
-            option.textContent = `${support.name} (${support.type || 'N/A'})`;
+            option.textContent = support.name;
             supportFilter.appendChild(option);
         });
     }
@@ -3538,7 +3447,7 @@ if (supportTypeFilter && currentData.supports) {
     Object.values(currentData.supports).forEach(support => {
         const option = document.createElement('option');
         option.value = support.id;
-        option.textContent = `${support.name}${support.type ? ` (${support.type})` : ''}`;
+        option.textContent = support.name;
         supportTypeFilter.appendChild(option);
     });
 }

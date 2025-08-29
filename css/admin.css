@@ -1239,11 +1239,6 @@
     min-width: 140px; /* Proyecto */
 }
 
-.reports-table th:nth-child(5), 
-.reports-table td:nth-child(5) {
-    min-width: 120px; /* Tarea */
-}
-
 .reports-table th:nth-child(6), 
 .reports-table td:nth-child(6) {
     min-width: 120px; /* Módulo */

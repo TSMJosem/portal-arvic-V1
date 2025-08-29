@@ -374,7 +374,7 @@
                                         <th>Nombre Consultor</th>
                                         <th>Cliente (Empresa)</th>
                                         <th>Soporte</th>
-                                        <th>Tipo Soporte</th>
+                                        <!-- Columna "Tipo Soporte" eliminada -->
                                         <th>Módulo</th>
                                         <th>Horas Reportadas</th>
                                         <th>Fecha Reporte</th>
@@ -384,7 +384,7 @@
                                 </thead>
                                 <tbody id="reportsTableBody">
                                     <tr>
-                                        <td colspan="10" class="empty-table-message">
+                                        <td colspan="9" class="empty-table-message">
                                             <div class="empty-state">
                                                 <div class="empty-state-icon">📄</div>
                                                 <div class="empty-state-title">No hay reportes</div>
@@ -403,6 +403,26 @@
                             <h2 class="section-title">✅ Reportes Aprobados - Horas Acumuladas</h2>
                         </div>
                         
+                        <div class="reports-category-filters">
+                            <div class="filter-buttons-group">
+                                <button class="category-filter-btn active" data-category="all" onclick="filterApprovedReportsByCategory('all')">
+                                    <span class="filter-icon">📊</span>
+                                    <span class="filter-text">Todos</span>
+                                    <span class="filter-count" id="approvedFilterCountAll">0</span>
+                                </button>
+                                <button class="category-filter-btn" data-category="soporte" onclick="filterApprovedReportsByCategory('soporte')">
+                                    <span class="filter-icon">📞</span>
+                                    <span class="filter-text">Soporte</span>
+                                    <span class="filter-count" id="approvedFilterCountSoporte">0</span>
+                                </button>
+                                <button class="category-filter-btn" data-category="proyecto" onclick="filterApprovedReportsByCategory('proyecto')">
+                                    <span class="filter-icon">📋</span>
+                                    <span class="filter-text">Proyecto</span>
+                                    <span class="filter-count" id="approvedFilterCountProyecto">0</span>
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Filtros de Fecha -->
                         <div class="reports-filters">
                             <div class="filter-group">
@@ -437,14 +457,13 @@
                                         <th>ID Cliente</th>
                                         <th>Cliente (Empresa)</th>
                                         <th>Soporte</th>
-                                        <th>Tipo Soporte</th>
                                         <th>Módulo</th>
                                         <th>Horas Acumuladas</th>
                                     </tr>
                                 </thead>
                                 <tbody id="approvedReportsTableBody">
                                     <tr>
-                                        <td colspan="8" class="empty-table-message">
+                                        <td colspan="7" class="empty-table-message">
                                             <div class="empty-state">
                                                 <div class="empty-state-icon">✅</div>
                                                 <div class="empty-state-title">No hay reportes aprobados</div>
@@ -692,25 +711,6 @@
                 <div class="form-group">
                     <label for="supportDescription">Descripción (opcional)</label>
                     <textarea id="supportDescription" placeholder="Descripción detallada del soporte" rows="3"></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="supportPriority">Prioridad</label>
-                    <select id="supportPriority">
-                        <option value="Baja">Baja</option>
-                        <option value="Media" selected>Media</option>
-                        <option value="Alta">Alta</option>
-                        <option value="Crítica">Crítica</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="supportType">Tipo de Soporte</label>
-                    <select id="supportType">
-                        <option value="Técnico">Técnico</option>
-                        <option value="Funcional">Funcional</option>
-                        <option value="Configuración">Configuración</option>
-                        <option value="Mantenimiento">Mantenimiento</option>
-                        <option value="Otros">Otros</option>
-                    </select>
                 </div>
                 <div class="form-group">
                     <button type="submit" class="btn btn-primary">Crear Soporte</button>

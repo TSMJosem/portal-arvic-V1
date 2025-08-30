@@ -1126,6 +1126,68 @@ canUserCreateReport(userId) {
         return this.deleteData(backupKey.replace(this.prefix, ''));
     }
 
+/**
+ * Obtener reportes rechazados de un usuario específico
+ */
+getRejectedReports(userId) {
+    const reports = this.getReports();
+    return Object.values(reports).filter(report => 
+        report.userId === userId && report.status === 'Rechazado'
+    );
+}
+
+/**
+ * Obtener reportes reenviados de un usuario específico
+ */
+getResubmittedReports(userId) {
+    const reports = this.getReports();
+    return Object.values(reports).filter(report => 
+        report.userId === userId && report.status === 'Resubmitted'
+    );
+}
+
+/**
+ * Reenviar un reporte rechazado (cambiar estado a Pendiente)
+ */
+resubmitReport(reportId, updateData = {}) {
+    const reports = this.getReports();
+    if (!reports[reportId]) {
+        return { success: false, message: 'Reporte no encontrado' };
+    }
+    
+    if (reports[reportId].status !== 'Rechazado') {
+        return { success: false, message: 'Solo se pueden reenviar reportes rechazados' };
+    }
+    
+    reports[reportId] = { 
+        ...reports[reportId], 
+        ...updateData,
+        status: 'Pendiente', // Cambiar de Rechazado a Pendiente
+        resubmittedAt: new Date().toISOString(),
+        feedback: '', // Limpiar feedback anterior
+        updatedAt: new Date().toISOString()
+    };
+    
+    this.setData('reports', reports);
+    
+    return { success: true, report: reports[reportId] };
+}
+
+/**
+ * Obtener estadísticas de reportes por usuario
+ */
+getUserReportStats(userId) {
+    const reports = Object.values(this.getReports()).filter(r => r.userId === userId);
+    
+    return {
+        total: reports.length,
+        pending: reports.filter(r => r.status === 'Pendiente').length,
+        approved: reports.filter(r => r.status === 'Aprobado').length,
+        rejected: reports.filter(r => r.status === 'Rechazado').length,
+        resubmitted: reports.filter(r => r.status === 'Resubmitted').length
+    };
+}
+
     // === GESTIÓN DE REPORTES EXCEL GENERADOS ===
 getGeneratedReports() {
     return this.getData('generated_reports') || {};
@@ -1359,8 +1421,8 @@ deleteGeneratedReport(reportId) {
     }
 
     getProjectAssignment(assignmentId) {
-        const assignments = this.getProjectAssignments();
-        return assignments[assignmentId] || null;
+        const projectAssignments = this.getProjectAssignments();
+        return projectAssignments[assignmentId] || null;
     }
 
     createProjectAssignment(assignmentData) {

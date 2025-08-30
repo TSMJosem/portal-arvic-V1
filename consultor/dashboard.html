@@ -73,64 +73,126 @@
                                 <div class="empty-state-desc">Las asignaciones del administrador aparecerán aquí</div>
                             </div>
                         </div>
+
+                        <!-- Sección de Reportes Rechazados -->
+                        <div id="rejectedReportsSection" class="dashboard-section" style="margin-top: 30px;">
+                            <!-- El contenido se cargará dinámicamente via JavaScript -->
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </main>
 
-<!-- Modal para Crear Reporte - ESTRUCTURA MEJORADA -->
+<!-- Modal para Crear Reporte - DISEÑO TIMESHEET REDISEÑADO -->
 <div id="createReportModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content redesigned-modal">
         <div class="modal-header">
-            <h2 class="modal-title">📝 Crear Reporte de Horas</h2>
-            <button class="close" onclick="closeModal('createReportModal')">&times;</button>
+            <h2 class="modal-title">📝 Crear Ticket de Horas</h2>
+            <button class="close-btn" onclick="closeModal('createReportModal')">&times;</button>
         </div>
+        
         <div class="modal-body">
-            <form id="reportForm">
-                <div class="form-group">
-                    <label>Asignación:</label>
-                    <div id="selectedAssignmentInfo" class="assignment-info-display">
-                        <!-- Se llena dinámicamente -->
+            <form id="reportForm" class="timesheet-form">
+                
+                <!-- Información de Asignación -->
+                <div class="form-section">
+                    <div class="section-title">Información de Asignación</div>
+                    
+                    <div class="form-row">
+                        <div class="form-label">Empleado:</div>
+                        <div class="form-value">
+                            <div id="employeeDisplay" class="info-display">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Proyecto/Soporte:</div>
+                        <div class="form-value">
+                            <div id="selectedAssignmentInfo" class="info-display">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="reportTitle">Título del Reporte *</label>
-                    <input type="text" id="reportTitle" placeholder="Ej: Reporte Semanal - Desarrollo Módulo X" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="reportDescription">Descripción del Trabajo Realizado *</label>
-                    <textarea id="reportDescription" rows="5" 
-                              placeholder="Describe detalladamente el trabajo realizado, logros y observaciones..." 
-                              required></textarea>
-                </div>
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="reportHours">Horas Trabajadas *</label>
-                        <input type="number" id="reportHours" min="0.5" max="24" step="0.5" placeholder="8.0" required>
-                        <small class="form-text">Ingrese las horas en formato decimal (ej: 8.5)</small>
+
+                <!-- Detalles del Reporte -->
+                <div class="form-section">
+                    <div class="section-title">Detalles del Ticket</div>
+                    
+                    <div class="form-row">
+                        <label class="form-label required" for="reportTitle">Título:</label>
+                        <div class="form-value">
+                            <input type="text" 
+                                   id="reportTitle" 
+                                   class="form-control" 
+                                   placeholder="Ej: Ticket Semanal - Desarrollo Módulo X"
+                                   required>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="reportDate">Fecha del Reporte *</label>
-                        <input type="date" id="reportDate" required>
+
+                    <div class="form-row description-row">
+                        <label class="form-label required" for="reportDescription">Descripción:</label>
+                        <div class="form-value">
+                            <textarea id="reportDescription" 
+                                      class="form-control description-textarea" 
+                                      placeholder="Describe detalladamente el trabajo realizado, logros y observaciones..."
+                                      rows="4"
+                                      required></textarea>
+                        </div>
                     </div>
                 </div>
-                
-                <div class="form-group" style="text-align: center; margin-top: 25px;">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal('createReportModal')" style="margin-right: 10px;">
-                        Cancelar
-                    </button>
-                    <button type="submit" class="submit-btn">
-                        📤 Enviar Reporte
-                    </button>
+
+                <!-- Tiempo y Fecha -->
+                <div class="form-section">
+                    <div class="section-title">Tiempo y Fecha</div>
+                    
+                    <div class="time-date-grid">
+                        <div class="form-row">
+                            <label class="form-label required" for="reportHours">Duración (Horas):</label>
+                            <div class="form-value">
+                                <div class="time-input-container">
+                                    <input type="number" 
+                                           id="reportHours" 
+                                           class="form-control time-input" 
+                                           min="0.5" 
+                                           max="24" 
+                                           step="0.5" 
+                                           placeholder="8.0"
+                                           required>
+                                    <small class="form-text">Formato decimal (ej: 8.5)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label required" for="reportDate">Fecha:</label>
+                            <div class="form-value">
+                                <input type="date" 
+                                       id="reportDate" 
+                                       class="form-control date-input"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
             </form>
+
+            <!-- Botones de Acción -->
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeModal('createReportModal')">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-submit" form="reportForm">
+                    📤 Enviar Ticket
+                </button>
+            </div>
         </div>
     </div>
-</div>
+</div>  
 
 <!-- Modal para Ver Reportes de Asignación - ESTRUCTURA MEJORADA -->
 <div id="viewReportsModal" class="modal">

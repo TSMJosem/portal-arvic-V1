@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel Administrador - GRUPO IT ARVIC</title>
+
     <link rel="stylesheet" href="../css/shared.css">
     <link rel="stylesheet" href="../css/admin.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
 </head>
 <body class="admin-layout">
     <header class="admin-header">
@@ -516,6 +518,15 @@
                                         </button>
                                     </div>
                                 </div>
+
+                                <!-- NUEVA SECCIÓN: Exportación de Reportes -->
+                                <div class="export-section" id="exportSection" style="display: none;">
+                                    <h3>📊 Exportar Reporte Actual</h3>
+                                    <div class="export-buttons" id="exportButtons">
+                                        <!-- Los botones se generan dinámicamente aquí -->
+                                    </div>
+                                    <p class="export-note">Primero genera la vista previa del reporte, luego podrás exportar a Excel y PDF</p>
+                                </div>
                             </div>
 
                     <!-- Sección de Historial de Reportes Generados -->
@@ -746,9 +757,15 @@
     </div>
 
     <!-- Scripts -->
+    
     <script src="../js/database.js"></script>
     <script src="../js/auth.js"></script>
     <script src="../js/utils.js"></script>
     <script src="admin.js"></script>
+
+     <!-- Librería jsPDF para generación de PDF -->
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js" integrity="sha384-NaWTHo/8YCBYJ59830LTz/P4aQZK1sS0SneOgAvhsIl3zBu8r9RevNg5lHCHAuQ/" crossorigin="anonymous"></script>
+    <script src="../js/arvic-pdf-system.js"></script>
 </body>
 </html>

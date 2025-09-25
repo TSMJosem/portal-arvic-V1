@@ -1,0 +1,384 @@
+/* ===================================================================
+   ESTILOS PARA EXPORTACIÓN PDF - PORTAL ARVIC
+   ===================================================================
+   
+   Estilos adicionales para integrar perfectamente los botones PDF
+   con el diseño existente del portal ARVIC
+*/
+
+/* ===================================================================
+   BOTONES DE EXPORTACIÓN MEJORADOS
+   =================================================================== */
+
+/* Contenedor de acciones con mejor distribución */
+.config-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    justify-content: center;
+    align-items: center;
+    margin-top: var(--spacing-lg);
+    flex-wrap: wrap;
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--gray-200);
+}
+
+/* Mejorar botones existentes para mantener consistencia */
+.config-actions .btn {
+    min-width: 140px;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Efectos hover mejorados */
+.config-actions .btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.config-actions .btn:active:not(:disabled) {
+    transform: translateY(0);
+    transition: transform 0.1s ease;
+}
+
+/* Botón PDF específico con colores corporativos ARVIC */
+.btn-pdf {
+    background: linear-gradient(135deg, var(--info-color) 0%, #0369a1 100%);
+    color: white;
+    border: 1px solid var(--info-color);
+    box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+}
+
+.btn-pdf:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+    box-shadow: 0 8px 25px rgba(14, 165, 233, 0.4);
+    border-color: #075985;
+}
+
+.btn-pdf:disabled {
+    background: var(--gray-400);
+    color: var(--gray-600);
+    border-color: var(--gray-400);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* Animación de carga para botón PDF */
+.btn-pdf.loading {
+    position: relative;
+    color: transparent;
+}
+
+.btn-pdf.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top: 2px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* ===================================================================
+   GRUPO DE BOTONES DE EXPORTACIÓN
+   =================================================================== */
+
+/* Agrupar botones de exportación visualmente */
+.export-button-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    background: white;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-md);
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* Separador visual entre grupos */
+.button-separator {
+    width: 1px;
+    height: 30px;
+    background: linear-gradient(to bottom, transparent, var(--gray-300), transparent);
+    margin: 0 var(--spacing-sm);
+}
+
+/* ===================================================================
+   ICONOS Y ELEMENTOS VISUALES
+   =================================================================== */
+
+/* Iconos para botones con mejor alineación */
+.btn-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+}
+
+.btn-icon::before {
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+/* Icono específico para PDF */
+.btn-pdf .btn-icon::before {
+    content: '📄';
+    filter: grayscale(0);
+}
+
+/* ===================================================================
+   ESTADOS DE BOTONES MEJORADOS
+   =================================================================== */
+
+/* Estado de éxito (después de exportación exitosa) */
+.btn-success-flash {
+    animation: successFlash 0.6s ease;
+}
+
+@keyframes successFlash {
+    0% { background-color: var(--success-color); transform: scale(1); }
+    50% { background-color: #059669; transform: scale(1.05); }
+    100% { background-color: var(--success-color); transform: scale(1); }
+}
+
+/* Estado de error */
+.btn-error-flash {
+    animation: errorFlash 0.6s ease;
+}
+
+@keyframes errorFlash {
+    0% { background-color: var(--accent-color); transform: scale(1); }
+    50% { background-color: #dc2626; transform: scale(1.05); }
+    100% { background-color: var(--accent-color); transform: scale(1); }
+}
+
+/* ===================================================================
+   TOOLTIPS PARA BOTONES
+   =================================================================== */
+
+/* Tooltip informativo */
+.btn[data-tooltip] {
+    position: relative;
+}
+
+.btn[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--gray-900);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    margin-bottom: 5px;
+    opacity: 0;
+    animation: tooltipFadeIn 0.3s ease forwards;
+}
+
+.btn[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 4px solid transparent;
+    border-top-color: var(--gray-900);
+    z-index: 1000;
+    margin-bottom: 1px;
+    opacity: 0;
+    animation: tooltipFadeIn 0.3s ease forwards;
+}
+
+@keyframes tooltipFadeIn {
+    to {
+        opacity: 1;
+    }
+}
+
+/* ===================================================================
+   RESPONSIVE DESIGN PARA BOTONES
+   =================================================================== */
+
+/* Adaptación para tablets */
+@media (max-width: 768px) {
+    .config-actions {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .config-actions .btn {
+        width: 100%;
+        min-width: auto;
+    }
+    
+    .export-button-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .button-separator {
+        width: 80%;
+        height: 1px;
+        margin: var(--spacing-xs) 0;
+    }
+}
+
+/* Adaptación para móviles */
+@media (max-width: 480px) {
+    .config-actions {
+        padding: var(--spacing-sm);
+    }
+    
+    .config-actions .btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.8rem;
+    }
+}
+
+/* ===================================================================
+   MEJORAS PARA NOTIFICACIONES
+   =================================================================== */
+
+/* Notificación específica para exportación PDF */
+.notification.pdf-export {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border-left: 4px solid var(--info-color);
+    color: #1e40af;
+}
+
+.notification.pdf-export .notification-icon {
+    color: var(--info-color);
+}
+
+/* ===================================================================
+   INDICADOR DE PROGRESO PARA EXPORTACIÓN
+   =================================================================== */
+
+/* Barra de progreso para exportaciones largas */
+.export-progress {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--gray-200);
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.export-progress.active {
+    opacity: 1;
+}
+
+.export-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--info-color));
+    width: 0%;
+    transition: width 0.3s ease;
+    animation: progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+    0% { background-position: -200px 0; }
+    100% { background-position: 200px 0; }
+}
+
+/* ===================================================================
+   ACCESIBILIDAD Y MEJORAS UX
+   =================================================================== */
+
+/* Focus mejorado para accesibilidad */
+.btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(30, 58, 138, 0.2);
+}
+
+/* Reducir movimiento para usuarios que lo prefieren */
+@media (prefers-reduced-motion: reduce) {
+    .btn,
+    .export-progress-bar,
+    .config-actions .btn {
+        transition: none;
+        animation: none;
+    }
+    
+    .config-actions .btn:hover:not(:disabled) {
+        transform: none;
+    }
+}
+
+/* ===================================================================
+   UTILIDADES ESPECÍFICAS PARA EL SISTEMA PDF
+   =================================================================== */
+
+/* Clase utilitaria para ocultar elementos durante exportación */
+.pdf-exporting .no-pdf {
+    display: none !important;
+}
+
+/* Clase para elementos que solo aparecen durante exportación */
+.pdf-only {
+    display: none;
+}
+
+.pdf-exporting .pdf-only {
+    display: block;
+}
+
+/* Mejora visual para el estado de carga global */
+.app-loading .config-actions .btn:not(.btn-pdf) {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* ===================================================================
+   COMPATIBILIDAD CON TEMA OSCURO (FUTURO)
+   =================================================================== */
+
+/* Variables CSS personalizadas para tema oscuro */
+@media (prefers-color-scheme: dark) {
+    .config-actions {
+        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+        border-color: #475569;
+    }
+    
+    .btn-pdf {
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.2);
+    }
+    
+    .notification.pdf-export {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        color: #dbeafe;
+    }
+}
+
+/* ===================================================================
+   PRINT STYLES (PARA CASOS ESPECIALES)
+   =================================================================== */
+
+@media print {
+    .config-actions,
+    .btn,
+    .export-button-group {
+        display: none !important;
+    }
+}

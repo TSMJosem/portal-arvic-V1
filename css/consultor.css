@@ -1,0 +1,1476 @@
+/* === ESTILOS PROFESIONALES PARA EL PANEL DE CONSULTOR === */
+
+/* Layout principal del consultor */
+.consultor-layout {
+    background: var(--gray-50);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-primary);
+}
+
+/* Header del consultor profesional */
+.consultor-header {
+    background: linear-gradient(135deg, white 0%, var(--gray-50) 100%);
+    border-bottom: 1px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    width: 100%;
+}
+
+.consultor-header .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Logo section mejorada */
+.consultor-header .nav-left {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.consultor-header .logo {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.consultor-logo-svg {
+    height: 50px; /* Misma altura que el admin */
+    width: auto;
+    filter: brightness(1.1) drop-shadow(0 2px 8px rgba(255, 255, 255, 0.1));
+    transition: transform 0.3s ease;
+}
+
+.consultor-logo-svg:hover {
+    transform: scale(1.05);
+}
+
+@media (max-width: 768px) {
+    .consultor-logo-svg {
+        height: 40px;
+    }
+}
+
+.consultor-header .logo-icon::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 16px solid white;
+    border-top: 10px solid transparent;
+    border-bottom: 10px solid transparent;
+    left: 50%;
+    top: 50%;
+    margin-left: -6px;
+    margin-top: -10px;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* Título central mejorado */
+.consultor-header .nav-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    margin: 0 var(--spacing-xl);
+}
+
+.consultor-header .nav-center h2 {
+    color: var(--gray-800);
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    text-align: center;
+    background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-600) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Menú de usuario mejorado */
+.consultor-header .nav-right {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex-shrink: 0;
+}
+
+.consultor-header .user-menu {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+}
+
+.consultor-header .user-name {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    font-weight: 500;
+    white-space: nowrap;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--gray-100);
+    border-radius: var(--border-radius-md);
+    border: 1px solid var(--gray-200);
+}
+
+.consultor-header .btn-danger {
+    background: linear-gradient(135deg, var(--accent-color) 0%, #b91c1c 100%);
+    color: white;
+    border: none;
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.consultor-header .btn-danger:hover {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Contenido principal */
+.main-content {
+    margin-top: 88px;
+    padding: var(--spacing-xl);
+    min-height: calc(100vh - 88px);
+    background: var(--gray-50);
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.content-wrapper {
+    display: flex;
+    gap: var(--spacing-xl);
+    background: white;
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    min-height: calc(100vh - 140px);
+    border: 1px solid var(--gray-200);
+}
+
+/* Sidebar mejorado del consultor */
+.consultor-sidebar {
+    width: 280px;
+    background: linear-gradient(180deg, var(--gray-100) 0%, var(--gray-50) 100%);
+    border-right: 1px solid var(--gray-200);
+    flex-shrink: 0;
+    padding: var(--spacing-2xl);
+}
+
+.sidebar-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-xl);
+    text-align: center;
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--gray-200);
+}
+
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.sidebar-menu .menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid transparent;
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+    border-left: 4px solid var(--primary-color);
+    box-shadow: var(--shadow-md);
+    transition: var(--transition-normal);
+}
+
+.sidebar-menu .menu-item:hover {
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+    transform: translateX(4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.sidebar-menu .menu-text {
+    font-size: 0.875rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.sidebar-menu .menu-badge {
+    background: var(--primary-color);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 28px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+}
+
+/* Panel principal del consultor */
+.consultor-main {
+    flex: 1;
+    padding: var(--spacing-2xl);
+    background: white;
+    overflow-y: auto;
+}
+
+/* Secciones de contenido */
+.content-section {
+    display: block;
+    animation: fadeInSection 0.5s ease;
+}
+
+@keyframes fadeInSection {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-title {
+    font-size: 1.875rem;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-2xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 3px solid var(--primary-color);
+    position: relative;
+    font-weight: 700;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -3px;
+    left: 0;
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(135deg, var(--success-color) 0%, #047857 100%);
+    border-radius: var(--border-radius-sm);
+}
+
+/* Tarjeta de información del usuario mejorada */
+.user-info-card {
+    background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-2xl);
+    margin-bottom: var(--spacing-2xl);
+    border-left: 6px solid var(--primary-color);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-200);
+}
+
+.user-info-card h3 {
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-lg);
+    font-size: 1.25rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.user-details p {
+    margin: var(--spacing-sm) 0;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.user-details strong {
+    color: var(--gray-900);
+    min-width: 80px;
+}
+
+/* Contenedor de asignaciones mejorado */
+.assignments-container {
+    margin-top: var(--spacing-2xl);
+}
+
+.assignment-card {
+    background: white;
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-2xl);
+    margin-bottom: var(--spacing-xl);
+    box-shadow: var(--shadow-lg);
+    transition: var(--transition-normal);
+    border-left: 6px solid var(--primary-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.assignment-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, transparent 70%);
+    border-radius: 0 0 0 100px;
+    pointer-events: none;
+}
+
+.assignment-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+    border-left-color: var(--success-color);
+}
+
+.assignment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--gray-100);
+}
+
+.assignment-header h3 {
+    margin: 0;
+    color: var(--gray-900);
+    font-size: 1.125rem;
+    font-weight: 600;
+}
+
+.assignment-id {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    font-size: 0.75rem;
+    font-weight: 700;
+    font-family: var(--font-secondary);
+    box-shadow: var(--shadow-sm);
+}
+
+.assignment-details {
+    margin-bottom: var(--spacing-lg);
+}
+
+.assignment-details p {
+    margin: var(--spacing-sm) 0;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.assignment-details strong {
+    color: var(--gray-900);
+    font-weight: 600;
+    min-width: 100px;
+}
+
+.assignment-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--gray-200);
+    flex-wrap: wrap;
+}
+
+/* Botones de asignaciones mejorados */
+.btn {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: none;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: var(--transition-normal);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #1e40af 100%);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, var(--gray-600) 0%, var(--gray-700) 100%);
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-secondary:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+    background: linear-gradient(135deg, var(--gray-700) 0%, var(--gray-800) 100%);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, var(--accent-color) 0%, #b91c1c 100%);
+    color: white;
+    box-shadow: var(--shadow-md);
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Formulario de reportes mejorado */
+.submit-btn {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border: none;
+    padding: var(--spacing-lg) var(--spacing-2xl);
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-lg);
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    min-width: 200px;
+}
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-xl);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, #1e40af 100%);
+}
+
+/* Estados vacíos mejorados */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    color: var(--gray-500);
+    background: var(--gray-50);
+    border-radius: var(--border-radius-xl);
+    border: 2px dashed var(--gray-300);
+    margin: var(--spacing-xl) 0;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.6;
+}
+
+.empty-state-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    color: var(--gray-700);
+}
+
+.empty-state-desc {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    max-width: 400px;
+    margin: 0 auto;
+    color: var(--gray-600);
+}
+
+/* Información de asignación en modales mejorada */
+.assignment-info-display {
+    background: linear-gradient(135deg, var(--gray-50) 0%, white 100%);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    border-left: 4px solid var(--primary-color);
+    margin-bottom: var(--spacing-lg);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--gray-200);
+}
+
+.assignment-info-display h4 {
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-md);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.assignment-info-display p {
+    margin: var(--spacing-xs) 0;
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.assignment-info-display strong {
+    color: var(--gray-900);
+    min-width: 80px;
+}
+
+/* Items de reportes mejorados */
+.report-item {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
+    border-left: 4px solid var(--primary-color);
+    transition: var(--transition-normal);
+    box-shadow: var(--shadow-sm);
+}
+
+.report-item:hover {
+    border-left-color: var(--success-color);
+    box-shadow: var(--shadow-md);
+    transform: translateX(4px);
+}
+
+/* Estados de reportes mejorados */
+.report-status {
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--border-radius-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    box-shadow: var(--shadow-sm);
+}
+
+.status-pending {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    border: 1px solid #f59e0b;
+}
+
+.status-approved {
+    background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+
+.status-rejected {
+    background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+    color: #991b1b;
+    border: 1px solid #ef4444;
+}
+
+/* Badges personalizados mejorados */
+.custom-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-md);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    border: 1px solid;
+    box-shadow: var(--shadow-sm);
+}
+
+.badge-success {
+    background: rgba(5, 150, 105, 0.1);
+    color: var(--success-color);
+    border-color: var(--success-color);
+}
+
+/* Form groups mejorados */
+.form-group {
+    margin-bottom: var(--spacing-xl);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 600;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    font-size: 0.875rem;
+    transition: var(--transition-normal);
+    box-sizing: border-box;
+    box-shadow: var(--shadow-sm);
+    background: white;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+    outline: none;
+}
+
+.form-text {
+    font-size: 0.75rem;
+    color: var(--gray-500);
+    margin-top: var(--spacing-xs);
+    font-style: italic;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* === MODALES MEJORADOS CON SCROLL === */
+
+/* Modal container profesional */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 50;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+/* Modal content mejorado */
+.modal-content {
+    background-color: white;
+    margin: 2% auto;
+    padding: 0;
+    border-radius: var(--border-radius-xl);
+    width: 90%;
+    max-width: 900px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: var(--shadow-xl);
+    position: relative;
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+}
+
+/* Header del modal profesional */
+.modal-header {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: var(--spacing-xl) var(--spacing-2xl);
+    border-radius: var(--border-radius-xl) var(--border-radius-xl) 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modal-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.modal-header .close {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 1.25rem;
+    font-weight: bold;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-normal);
+}
+
+.modal-header .close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+/* Contenido del modal con scroll mejorado */
+.modal-body {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: var(--spacing-2xl);
+    max-height: calc(90vh - 100px);
+}
+
+/* Scrollbar personalizada para modales */
+.modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.modal-body::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: var(--border-radius-sm);
+}
+
+.modal-body::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: var(--border-radius-sm);
+}
+
+.modal-body::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+
+/* Para Firefox */
+.modal-body {
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary-color) var(--gray-100);
+}
+
+/* Animaciones para modales mejoradas */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translateY(-50px) scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.modal-content {
+    animation: slideDown 0.3s ease;
+}
+
+/* Responsive mejorado */
+@media (max-width: 768px) {
+    .consultor-header .navbar {
+        flex-direction: column;
+        gap: var(--spacing-lg);
+        padding: var(--spacing-lg);
+    }
+    
+    .consultor-header .nav-center {
+        margin: 0;
+    }
+    
+    .main-content {
+        margin-top: 140px;
+        padding: var(--spacing-lg);
+    }
+    
+    .content-wrapper {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .consultor-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--gray-200);
+        padding: var(--spacing-lg);
+    }
+    
+    .assignment-actions {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+    
+    .assignment-header {
+        flex-direction: column;
+        gap: var(--spacing-md);
+        align-items: flex-start;
+    }
+    
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .modal-content {
+        width: 95%;
+        margin: 5% auto;
+        max-height: 85vh;
+    }
+    
+    .modal-header {
+        padding: var(--spacing-lg);
+    }
+    
+    .modal-title {
+        font-size: 1.125rem;
+    }
+    
+    .modal-body {
+        padding: var(--spacing-lg);
+        max-height: calc(85vh - 80px);
+    }
+}
+
+@media (max-width: 480px) {
+    .consultor-header .user-menu {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        align-items: center;
+    }
+    
+    .main-content {
+        margin-top: 160px;
+        padding: var(--spacing-md);
+    }
+    
+    .consultor-main {
+        padding: var(--spacing-lg);
+    }
+    
+    .assignment-card {
+        padding: var(--spacing-lg);
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+    
+    .modal-content {
+        width: 98%;
+        margin: 2% auto;
+        max-height: 95vh;
+        border-radius: var(--border-radius-lg);
+    }
+    
+    .modal-header {
+        padding: var(--spacing-md);
+        border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    }
+    
+    .modal-title {
+        font-size: 1rem;
+    }
+    
+    .modal-body {
+        padding: var(--spacing-lg);
+        max-height: calc(95vh - 70px);
+    }
+}
+
+/* Mejoras adicionales */
+.consultor-layout {
+    overflow-x: hidden;
+}
+
+.consultor-header {
+    min-height: 88px;
+}
+
+/* Animaciones suaves */
+.assignment-card {
+    animation: fadeInCard 0.4s ease;
+}
+
+@keyframes fadeInCard {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Mejorar espaciado en formularios dentro de modales */
+.modal-body .form-group {
+    margin-bottom: var(--spacing-xl);
+}
+
+.modal-body .form-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Botones en modales mejorados */
+.modal-body .btn {
+    min-width: 120px;
+}
+
+/* Evitar problemas de z-index */
+.modal {
+    z-index: 9999;
+}
+
+/* Asegurar que el contenido no se desborde horizontalmente */
+.modal-body * {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Mejorar visualización de textarea en modales */
+.modal-body textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
+/* Loading spinner mejorado */
+#loadingSpinner {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+#loadingSpinner > div {
+    text-align: center;
+    padding: var(--spacing-2xl);
+    background: white;
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--gray-200);
+}
+
+#loadingSpinner .spinner {
+    border: 4px solid var(--gray-200);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto var(--spacing-lg);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error container mejorado */
+#errorContainer {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, var(--accent-color) 0%, #b91c1c 100%);
+    color: white;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-radius: var(--border-radius-lg);
+    z-index: 10000;
+    max-width: 500px;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+
+#errorContainer button {
+    background: none;
+    border: none;
+    color: white;
+    margin-left: var(--spacing-lg);
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: var(--spacing-xs);
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-normal);
+}
+
+#errorContainer button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+/* Estilos para asignaciones de proyecto al panel del consultor */
+.assignment-type-badge { 
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: bold;
+    margin-left: 10px;
+    text-transform: uppercase;
+}
+
+.support-badge {
+    background-color: #3498db;
+    color: white;
+}
+
+.project-badge {
+    background-color: #e74c3c;
+    color: white;
+}
+
+/* Bordes diferentes para cada tipo */
+.assignment-card.support-assignment {
+    border-left: 4px solid #3498db;
+}
+
+.assignment-card.project-assignment {
+    border-left: 4px solid #e74c3c;
+    background-color: #fdf2f2; /* Fondo ligeramente diferente */
+}
+
+/* Efectos hover específicos */
+.assignment-card.support-assignment:hover {
+    box-shadow: 0 4px 12px rgba(52, 152, 219, 0.2);
+}
+
+.assignment-card.project-assignment:hover {
+    box-shadow: 0 4px 12px rgba(231, 76, 60, 0.2);
+}
+
+/* Badge de estado para proyectos */
+.status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 8px;
+    font-size: 0.8em;
+    font-weight: bold;
+    background-color: #2ecc71;
+    color: white;
+}
+
+/* Botones específicos para proyectos */
+.btn-success {
+    background-color: #27ae60;
+    border-color: #27ae60;
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #2ecc71;
+    border-color: #2ecc71;
+}
+
+.btn-info {
+    background-color: #3498db;
+    border-color: #3498db;
+    color: white;
+}
+
+.btn-info:hover {
+    background-color: #5dade2;
+    border-color: #5dade2;
+}
+
+/* Estados de error */
+.error-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #e74c3c;
+}
+
+.error-icon {
+    font-size: 3em;
+    margin-bottom: 15px;
+}
+
+.error-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.error-desc {
+    color: #7f8c8d;
+    font-size: 0.9em;
+}
+
+.redesigned-modal {
+    max-width: 650px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+}
+
+.redesigned-modal .modal-header {
+    background: linear-gradient(135deg, #4285F4 0%, #34A853 100%);
+    padding: 20px 30px;
+    position: relative;
+}
+
+.redesigned-modal .modal-title {
+    color: white;
+    font-size: 1.4em;
+    font-weight: 600;
+    margin: 0;
+}
+
+.redesigned-modal .close-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.redesigned-modal .close-btn:hover {
+    background: rgba(255,255,255,0.3);
+    transform: rotate(90deg);
+}
+
+.redesigned-modal .modal-body {
+    padding: 30px;
+    background: #f8f9fa;
+}
+
+/* Formulario estilo timesheet */
+.timesheet-form {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.form-section {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.section-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 15px;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.form-row:last-child {
+    margin-bottom: 0;
+}
+
+.form-row.description-row {
+    align-items: flex-start;
+}
+
+.form-label {
+    font-weight: 500;
+    color: #495057;
+    text-align: right;
+    padding-right: 10px;
+    padding-top: 8px;
+}
+
+.form-label.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.form-value {
+    width: 100%;
+}
+
+.form-control {
+    width: 100%;
+    padding: 10px 15px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    font-size: 1em;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #4285F4;
+    box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+}
+
+.description-textarea {
+    resize: vertical;
+    min-height: 100px;
+    font-family: inherit;
+}
+
+.time-input {
+    text-align: center;
+    font-weight: 600;
+    color: #4285F4;
+}
+
+.date-input {
+    color: #495057;
+}
+
+.form-text {
+    color: #6c757d;
+    font-size: 0.85em;
+    margin-top: 4px;
+    display: block;
+}
+
+/* Información de asignación */
+.info-display {
+    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+    padding: 12px 15px;
+    border-radius: 8px;
+    border-left: 4px solid #2196F3;
+}
+
+.info-display h4 {
+    color: #1976D2;
+    margin: 0 0 5px 0;
+    font-size: 0.95em;
+}
+
+.info-display p {
+    margin: 2px 0;
+    color: #424242;
+    font-size: 0.9em;
+}
+
+/* Grid para tiempo y fecha */
+.time-date-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.time-input-container {
+    position: relative;
+}
+
+/* Botones de acción */
+.modal-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid #dee2e6;
+}
+
+.redesigned-modal .btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.redesigned-modal .btn-cancel {
+    background: #6c757d;
+    color: white;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.redesigned-modal .btn-cancel:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+}
+
+.redesigned-modal .btn-submit {
+    background: linear-gradient(135deg, #4285F4 0%, #34A853 100%);
+    color: white;
+    min-width: 160px;
+    justify-content: center;
+}
+
+.redesigned-modal .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(66, 133, 244, 0.3);
+}
+
+.redesigned-modal .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Estados de edición */
+.redesigned-modal .editing-info {
+    background: #e3f2fd;
+    border: 1px solid #2196f3;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.redesigned-modal .editing-info h4 {
+    color: #1976d2;
+    margin-bottom: 8px;
+    font-size: 1em;
+}
+
+.redesigned-modal .editing-info p {
+    color: #0d47a1;
+    margin: 0;
+    font-size: 0.9em;
+}
+
+.redesigned-modal .rejection-feedback {
+    background: #ffe3e3;
+    border: 1px solid #ff4757;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.redesigned-modal .rejection-feedback strong {
+    color: #ff4757;
+}
+
+.redesigned-modal .rejection-feedback span {
+    color: #721c24;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .redesigned-modal {
+        margin: 10px;
+        max-width: calc(100vw - 20px);
+    }
+
+    .redesigned-modal .modal-body {
+        padding: 20px;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .form-label {
+        text-align: left;
+        padding-right: 0;
+        padding-top: 0;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .redesigned-modal .btn {
+        width: 100%;
+    }
+}
+
+/* Animaciones */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.redesigned-modal {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+/* Estados de carga */
+.loading::after {
+    content: "";
+    width: 16px;
+    height: 16px;
+    margin-left: 8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive para badges */
+@media (max-width: 768px) {
+    .assignment-type-badge {
+        display: block;
+        margin-left: 0;
+        margin-top: 5px;
+        text-align: center;
+        width: fit-content;
+    }
+    
+    .assignment-header h3 {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

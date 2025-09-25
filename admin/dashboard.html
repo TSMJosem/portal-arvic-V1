@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Administrador - GRUPO IT ARVIC</title>
+    <link rel="stylesheet" href="../css/shared.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../css/arvic-pdf-styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body class="admin-layout">
+    <header class="admin-header">
+        <nav class="navbar">
+            <div class="logo">
+                <img src="../images/Logo Grupo IT Arvic 33.svg" alt="GRUPO IT ARVIC" class="admin-logo-svg">
+            </div>
+            <div class="user-info">
+                <span id="adminUserName">Hector Perez</span>
+                <button class="btn btn-danger" onclick="logout()">Cerrar Sesión</button>
+            </div>
+        </nav>
+    </header>
+
+    <main class="admin-content">
+        <div class="container">
+            <!-- Layout con Sidebar -->
+            <div class="admin-layout-wrapper">
+                <!-- Sidebar de Navegación -->
+                <div class="admin-sidebar">
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-section-title">📊 Gestión General</h3>
+                        <div class="sidebar-menu">
+                            <div class="sidebar-menu-item active" data-section="usuarios">
+                                <span class="menu-icon">👥</span>
+                                <span class="menu-text">Usuarios</span>
+                                <span class="menu-badge" id="sidebarUsersCount">0</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="empresas">
+                                <span class="menu-icon">🏢</span>
+                                <span class="menu-text">Empresas</span>
+                                <span class="menu-badge" id="sidebarCompaniesCount">0</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="proyectos">
+                                <span class="menu-icon">📋</span>
+                                <span class="menu-text">Proyectos</span>
+                                <span class="menu-badge" id="sidebarProjectsCount">0</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="soportes">
+                                <span class="menu-icon">📞</span>
+                                <span class="menu-text">Soportes</span>
+                                <span class="menu-badge" id="sidebarSupportsCount">0</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="modulos">
+                                <span class="menu-icon">🧩</span>
+                                <span class="menu-text">Módulos</span>
+                                <span class="menu-badge" id="sidebarModulesCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-section-title">🎯 Asignaciones</h3>
+                        <div class="sidebar-menu">
+                            <div class="sidebar-menu-item" data-section="crear-asignacion">
+                                <span class="menu-icon">➕</span>
+                                <span class="menu-text">Asignar Soportes</span>
+                            </div>
+
+                            <div class="sidebar-menu-item" data-section="lista-asignaciones">
+                                <span class="menu-icon">📋</span>
+                                <span class="menu-text">Lista Completa</span>
+                                <span class="menu-badge" id="sidebarAssignmentsCount">0</span>
+                            </div>
+                            
+                            <div class="sidebar-menu-item" data-section="asignaciones-recientes">
+                                <span class="menu-icon">🕒</span>
+                                <span class="menu-text">Recientes</span>
+                            </div>
+
+                            <div class="sidebar-menu-item" data-section="asignar-proyectos">
+                                <span class="menu-icon">➕</span>
+                                <span class="menu-text">Asignar Proyectos</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="lista-proyectos-asignados">
+                                <span class="menu-icon">📋</span>
+                                <span class="menu-text">Proyectos Asignados</span>
+                                <span class="menu-badge" id="sidebarProjectAssignmentsCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-section-title">📄 Reportes</h3>
+                        <div class="sidebar-menu">
+                            <div class="sidebar-menu-item" data-section="reportes-pendientes">
+                                <span class="menu-icon">📊</span>
+                                <span class="menu-text">Reportes Pendientes</span>
+                                <span class="menu-badge" id="sidebarReportsCount">0</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="reportes-aprobados">
+                                <span class="menu-icon">✅</span>
+                                <span class="menu-text">Reportes Aprobados</span>
+                                <span class="menu-badge" id="sidebarApprovedReportsCount">0</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="generar-reporte">
+                                <span class="menu-icon">📋</span>
+                                <span class="menu-text">Generar Reporte</span>
+                            </div>
+                            <div class="sidebar-menu-item" data-section="historial-reportes">
+                                <span class="menu-icon">📜</span>
+                                <span class="menu-text">Historial Generados</span>
+                                <span class="menu-badge" id="sidebarGeneratedReportsCount">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contenido Principal -->
+                <div class="admin-main-content">
+                    <!-- Sección de Usuarios -->
+                    <div id="usuarios-section" class="content-section active">
+                        <div class="section-header">
+                            <h2 class="section-title">👥 Gestión de Usuarios</h2>
+                            <button class="add-btn" onclick="openUserModal()">+ Nuevo Usuario</button>
+                        </div>
+                        <div class="items-list" id="usersList">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">👤</div>
+                                <div class="empty-state-title">No hay usuarios</div>
+                                <div class="empty-state-desc">Cree el primer usuario consultor</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Empresas -->
+                    <div id="empresas-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">🏢 Gestión de Empresas</h2>
+                            <button class="add-btn" onclick="openCompanyModal()">+ Nueva Empresa</button>
+                        </div>
+                        <div class="items-list" id="companiesList">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🏢</div>
+                                <div class="empty-state-title">No hay empresas</div>
+                                <div class="empty-state-desc">Registre la primera empresa cliente</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Proyectos -->
+                    <div id="proyectos-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📋 Gestión de Proyectos</h2>
+                            <button class="add-btn" onclick="openProjectModal()">+ Nuevo Proyecto</button>
+                        </div>
+                        <div class="items-list" id="projectsList">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📋</div>
+                                <div class="empty-state-title">No hay proyectos</div>
+                                <div class="empty-state-desc">Cree el primer proyecto</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Tareas -->
+                    <div id="soportes-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📞 Gestión de Soportes</h2>
+                            <button class="add-btn" onclick="openSupportModal()">+ Nuevo Soporte</button>
+                        </div>
+                        <div class="items-list" id="supportsList">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📞</div>
+                                <div class="empty-state-title">No hay soportes</div>
+                                <div class="empty-state-desc">Cree el primer soporte</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Módulos -->
+                    <div id="modulos-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">🧩 Gestión de Módulos</h2>
+                            <button class="add-btn" onclick="openModuleModal()">+ Nuevo Módulo</button>
+                        </div>
+                        <div class="items-list" id="modulesList">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🧩</div>
+                                <div class="empty-state-title">No hay módulos</div>
+                                <div class="empty-state-desc">Cree el primer módulo</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Nueva Asignación -->
+                    <div id="crear-asignacion-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">➕ Crear Nueva Asignación de Soporte</h2>
+                        </div>
+                        <div class="assignment-form-container">
+                            <div class="assignment-form">
+                                <div class="form-group">
+                                    <label for="assignUser">Usuario Consultor</label>
+                                    <select id="assignUser" name="assignUser" required>
+                                        <option value="">Seleccionar usuario</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="assignCompany">Empresa Cliente</label>
+                                    <select id="assignCompany" name="assignCompany" required>
+                                        <option value="">Seleccionar empresa</option>
+                                    </select>
+                                </div>
+                                <!-- ✅ ELEMENTO CRÍTICO - ASEGURAR QUE ESTÉ EXACTAMENTE ASÍ -->
+                                <div class="form-group">
+                                    <label for="assignSupport">Soporte</label>
+                                    <select id="assignSupport" name="assignSupport" required>
+                                        <option value="">Seleccionar Soporte</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="assignModule">Módulos</label>
+                                    <select id="assignModule" name="assignModule" required>
+                                        <option value="">Seleccionar Módulo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group" style="text-align: center; margin-top: 20px;">
+                                <button type="button" class="btn btn-primary" onclick="createAssignment()">
+                                    ➕ Crear Asignación
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Asignar Proyectos -->
+                    <div id="asignar-proyectos-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">🎯 Asignar Proyecto a Consultor</h2>
+                        </div>
+                        
+                        <div class="assignment-form-container">
+                            <div class="assignment-form">
+                                <!-- Consultor -->
+                                <div class="form-group">
+                                    <label for="assignProjectConsultor">Consultor</label>
+                                    <select id="assignProjectConsultor" name="assignProjectConsultor" required>
+                                        <option value="">Seleccionar consultor</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Proyecto -->
+                                <div class="form-group">
+                                    <label for="assignProjectProject">Proyecto</label>
+                                    <select id="assignProjectProject" name="assignProjectProject" required>
+                                        <option value="">Seleccionar proyecto</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Empresa Cliente -->
+                                <div class="form-group">
+                                    <label for="assignProjectCompany">Empresa Cliente</label>
+                                    <select id="assignProjectCompany" name="assignProjectCompany" required>
+                                        <option value="">Seleccionar empresa cliente</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Módulo -->
+                                <div class="form-group">
+                                    <label for="assignProjectModule">Módulo</label>
+                                    <select id="assignProjectModule" name="assignProjectModule" required>
+                                        <option value="">Seleccionar módulo</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group" style="text-align: center; margin-top: 20px;">
+                                <button type="button" class="btn btn-primary" onclick="createProjectAssignment()">
+                                    🎯 Asignar Proyecto
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="lista-proyectos-asignados-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📋 Proyectos Asignados</h2>
+                        </div>
+                        
+                        <div id="projectAssignmentsList" class="assignments-list">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-title">No hay proyectos asignados</div>
+                                <div class="empty-state-desc">Los proyectos asignados a consultores aparecerán aquí</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Lista de Proyectos Asignados -->
+                    <div id="lista-proyectos-asignados-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📋 Proyectos Asignados</h2>
+                        </div>
+                        
+                        <div id="projectAssignmentsList" class="project-assignments-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-title">No hay proyectos asignados</div>
+                                <div class="empty-state-desc">Los proyectos asignados a consultores aparecerán aquí</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Lista de Asignaciones -->
+                    <div id="lista-asignaciones-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📋 Lista Completa de Asignaciones</h2>
+                        </div>
+                        <div class="assignments-list" id="assignmentsList">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🔗</div>
+                                <div class="empty-state-title">No hay asignaciones</div>
+                                <div class="empty-state-desc">Las asignaciones creadas aparecerán en esta lista</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sección de Asignaciones Recientes -->
+                    <div id="asignaciones-recientes-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">🕒 Asignaciones Recientes</h2>
+                        </div>
+                        <div class="items-list" id="recentAssignments">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-title">Sin asignaciones</div>
+                                <div class="empty-state-desc">Las asignaciones recientes aparecerán aquí</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Reportes Pendientes -->
+                    <div id="reportes-pendientes-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📊 Reportes Pendientes</h2>
+                        </div>
+                        
+                        <!-- ✨ NUEVO: Filtros por Categoría -->
+                        <div class="reports-category-filters">
+                            <div class="filter-buttons-group">
+                                <button class="category-filter-btn active" data-category="all" onclick="filterReportsByCategory('all')">
+                                    <span class="filter-icon">📊</span>
+                                    <span class="filter-text">Todos</span>
+                                    <span class="filter-count" id="filterCountAll">0</span>
+                                </button>
+                                <button class="category-filter-btn" data-category="soporte" onclick="filterReportsByCategory('soporte')">
+                                    <span class="filter-icon">📞</span>
+                                    <span class="filter-text">Soporte</span>
+                                    <span class="filter-count" id="filterCountSoporte">0</span>
+                                </button>
+                                <button class="category-filter-btn" data-category="proyecto" onclick="filterReportsByCategory('proyecto')">
+                                    <span class="filter-icon">📋</span>
+                                    <span class="filter-text">Proyecto</span>
+                                    <span class="filter-count" id="filterCountProyecto">0</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="reports-table-container">
+                            <table class="admin-table reports-table" id="reportsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID Consultor</th>
+                                        <th>Nombre Consultor</th>
+                                        <th>Cliente (Empresa)</th>
+                                        <th>Soporte</th>
+                                        <!-- Columna "Tipo Soporte" eliminada -->
+                                        <th>Módulo</th>
+                                        <th>Horas Reportadas</th>
+                                        <th>Fecha Reporte</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportsTableBody">
+                                    <tr>
+                                        <td colspan="9" class="empty-table-message">
+                                            <div class="empty-state">
+                                                <div class="empty-state-icon">📄</div>
+                                                <div class="empty-state-title">No hay reportes</div>
+                                                <div class="empty-state-desc">Los reportes enviados por consultores aparecerán aquí</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Tabla de Reportes Aprobados -->
+                    <div id="reportes-aprobados-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">✅ Reportes Aprobados - Horas Acumuladas</h2>
+                        </div>
+                        
+                        <div class="reports-category-filters">
+                            <div class="filter-buttons-group">
+                                <button class="category-filter-btn active" data-category="all" onclick="filterApprovedReportsByCategory('all')">
+                                    <span class="filter-icon">📊</span>
+                                    <span class="filter-text">Todos</span>
+                                    <span class="filter-count" id="approvedFilterCountAll">0</span>
+                                </button>
+                                <button class="category-filter-btn" data-category="soporte" onclick="filterApprovedReportsByCategory('soporte')">
+                                    <span class="filter-icon">📞</span>
+                                    <span class="filter-text">Soporte</span>
+                                    <span class="filter-count" id="approvedFilterCountSoporte">0</span>
+                                </button>
+                                <button class="category-filter-btn" data-category="proyecto" onclick="filterApprovedReportsByCategory('proyecto')">
+                                    <span class="filter-icon">📋</span>
+                                    <span class="filter-text">Proyecto</span>
+                                    <span class="filter-count" id="approvedFilterCountProyecto">0</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Filtros de Fecha -->
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label for="timeFilter">Filtrar por:</label>
+                                <select id="timeFilter" onchange="updateApprovedReportsList()">
+                                    <option value="week">Esta Semana</option>
+                                    <option value="month">Este Mes</option>
+                                    <option value="custom">Rango Personalizado</option>
+                                    <option value="all">Todas las Fechas</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group" id="customDateRange" style="display: none;">
+                                <label for="startDate">Fecha Inicio:</label>
+                                <input type="date" id="startDate" onchange="updateApprovedReportsList()">
+                                
+                                <label for="endDate">Fecha Fin:</label>
+                                <input type="date" id="endDate" onchange="updateApprovedReportsList()">
+                            </div>
+                            
+                            <div class="filter-info">
+                                <span id="filterInfo">Mostrando: Esta semana</span>
+                            </div>
+                        </div>
+                        
+                        <div class="reports-table-container">
+                            <table class="admin-table reports-table" id="approvedReportsTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID Consultor</th>
+                                        <th>Nombre Consultor</th>
+                                        <th>ID Cliente</th>
+                                        <th>Cliente (Empresa)</th>
+                                        <th>Soporte</th>
+                                        <th>Módulo</th>
+                                        <th>Horas Acumuladas</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="approvedReportsTableBody">
+                                    <tr>
+                                        <td colspan="7" class="empty-table-message">
+                                            <div class="empty-state">
+                                                <div class="empty-state-icon">✅</div>
+                                                <div class="empty-state-title">No hay reportes aprobados</div>
+                                                <div class="empty-state-desc">Los reportes aprobados aparecerán aquí con horas acumuladas</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                            <!-- Sección de Generar Reporte -->
+                            <div id="generar-reporte-section" class="content-section">
+                                <div class="section-header">
+                                    <h2 class="section-title">📋 Sistema de Reportes ARVIC</h2>
+                                    <p class="section-subtitle">Genere reportes detallados según documentación oficial</p>
+                                </div>
+                                
+                                <!-- Selector de Reportes -->
+                                <div class="report-selector">
+                                    <h3>🎯 Seleccionar Tipo de Reporte</h3>
+                                    <div class="report-grid" id="reportGrid">
+                                        <!-- Se generará dinámicamente con JavaScript -->
+                                    </div>
+                                </div>
+
+                                <!-- Panel de Configuración Dinámico -->
+                                <div class="report-config-panel" id="reportConfigPanel" style="display: none;">
+                                    <!-- Se generará dinámicamente según el reporte seleccionado -->
+                                </div>
+
+                                <!-- Vista Previa Editable -->
+                                <div class="preview-panel" id="reportPreviewPanel" style="display: none;">
+                                    <!-- Se generará dinámicamente según los datos -->
+                                </div>
+
+                                <!-- Opciones Generales (MANTENER) -->
+                                <div class="report-options">
+                                    <h3>Opciones Generales</h3>
+                                    <div class="form-group">
+                                        <button type="button" class="btn btn-secondary" onclick="exportData()">
+                                            💾 Exportar Datos Completos
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" onclick="importData()">
+                                            📁 Importar Datos
+                                        </button>
+                                        <button type="button" class="btn btn-info" onclick="generateAdminReport()">
+                                            📋 Reporte Administrativo
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                    <!-- Sección de Historial de Reportes Generados -->
+                    <div id="historial-reportes-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">📜 Historial de Reportes Generados</h2>
+                            <button class="add-btn" onclick="refreshGeneratedReportsList()">🔄 Actualizar</button>
+                        </div>
+                        
+                        <!-- Filtros para Historial -->
+                        <div class="reports-filters">
+                            <div class="filter-group">
+                                <label for="historialTimeFilter">Período:</label>
+                                <select id="historialTimeFilter" onchange="updateGeneratedReportsList()">
+                                    <option value="week">Esta Semana</option>
+                                    <option value="month">Este Mes</option>
+                                    <option value="custom">Rango Personalizado</option>
+                                    <option value="all">Todos los Reportes</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="historialTypeFilter">Tipo:</label>
+                                <select id="historialTypeFilter" onchange="updateGeneratedReportsList()">
+                                    <option value="all">Todos los Tipos</option>
+                                    <option value="actividades">Reportes de Actividades</option>
+                                    <option value="pagos">Reportes de Pagos</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group" id="historialCustomDateRange" style="display: none;">
+                                <label for="historialStartDate">Fecha Inicio:</label>
+                                <input type="date" id="historialStartDate" onchange="updateGeneratedReportsList()">
+                                
+                                <label for="historialEndDate">Fecha Fin:</label>
+                                <input type="date" id="historialEndDate" onchange="updateGeneratedReportsList()">
+                            </div>
+                            
+                            <div class="filter-info">
+                                <span id="historialFilterInfo">Mostrando: Esta semana</span>
+                            </div>
+                        </div>
+                        
+                    
+                        <!-- Tabla de Reportes Generados -->
+                        <div class="reports-table-container">
+                            <table class="admin-table reports-table" id="generatedReportsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre del Archivo</th>
+                                        <th>Tipo de Reporte</th>
+                                        <th>Período</th>
+                                        <th>Registros</th>
+                                        <th>Horas Totales</th>
+                                        <th>Monto Total</th>
+                                        <th>Fecha Generación</th>
+                                        <th>Descargas</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="generatedReportsTableBody">
+                                    <tr>
+                                        <td colspan="9" class="empty-table-message">
+                                            <div class="empty-state">
+                                                <div class="empty-state-icon">📊</div>
+                                                <div class="empty-state-title">No hay reportes generados</div>
+                                                <div class="empty-state-desc">Los reportes Excel generados aparecerán en este historial</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Estadísticas del Historial -->
+                        <div class="historial-stats">
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-number" id="totalGeneratedReports">0</div>
+                                    <div class="stat-label">Total Reportes</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="totalActividadReports">0</div>
+                                    <div class="stat-label">Rep. Actividades</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="totalPagoReports">0</div>
+                                    <div class="stat-label">Rep. Pagos</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="totalDownloads">0</div>
+                                    <div class="stat-label">Total Descargas</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Usuario -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">👤 Crear Nuevo Usuario</h2>
+                <button class="close" onclick="closeModal('userModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm" class="admin-form">
+                    <div class="form-group">
+                        <label for="userName">Nombre Completo *</label>
+                        <input type="text" id="userName" placeholder="Ej: Juan Pérez García" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="userEmail">Email (opcional)</label>
+                        <input type="email" id="userEmail" placeholder="juan.perez@empresa.com">
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Crear Usuario</button>
+                    </div>
+                </form>
+                <div class="message message-info">
+                    <strong>Información:</strong> El sistema generará automáticamente un ID único y una contraseña temporal para el nuevo usuario.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Empresa -->
+    <div id="companyModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🏢 Registrar Nueva Empresa</h2>
+                <button class="close" onclick="closeModal('companyModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="companyForm" class="admin-form">
+                    <div class="form-group">
+                        <label for="companyName">Nombre de la Empresa *</label>
+                        <input type="text" id="companyName" placeholder="Ej: Tecnología Avanzada SA de CV" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="companyDescription">Descripción (opcional)</label>
+                        <textarea id="companyDescription" placeholder="Breve descripción de la empresa y sus servicios" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Registrar Empresa</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Proyecto -->
+    <div id="projectModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">📋 Crear Nuevo Proyecto</h2>
+                <button class="close" onclick="closeModal('projectModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="projectForm" class="admin-form">
+                    <div class="form-group">
+                        <label for="projectName">Nombre del Proyecto *</label>
+                        <input type="text" id="projectName" placeholder="Ej: Sistema de Gestión Empresarial" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="projectDescription">Descripción (opcional)</label>
+                        <textarea id="projectDescription" placeholder="Descripción detallada del proyecto" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Crear Proyecto</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Soporte -->
+    <div id="supportModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">📞 Crear Nuevo Soporte</h2>
+            <button class="close" onclick="closeModal('supportModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="supportForm" class="admin-form">
+                <div class="form-group">
+                    <label for="supportName">Nombre del Soporte *</label>
+                    <input type="text" id="supportName" placeholder="Ej: Soporte técnico sistema ERP" required>
+                </div>
+                <div class="form-group">
+                    <label for="supportDescription">Descripción (opcional)</label>
+                    <textarea id="supportDescription" placeholder="Descripción detallada del soporte" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Crear Soporte</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+    <!-- Modal Módulo -->
+    <div id="moduleModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">🧩 Crear Nuevo Módulo</h2>
+                <button class="close" onclick="closeModal('moduleModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="moduleForm" class="admin-form">
+                    <div class="form-group">
+                        <label for="moduleName">Nombre del Módulo *</label>
+                        <input type="text" id="moduleName" placeholder="Ej: Módulo MM" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="moduleDescription">Descripción (opcional)</label>
+                        <textarea id="moduleDescription" placeholder="Descripción detallada del módulo" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary">Crear Módulo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+     <script src="admin.js"></script>
+    <script src="../js/arvic-pdf-exporter.js"></script>
+</body>
+</html>

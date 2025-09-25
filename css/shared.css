@@ -1,0 +1,744 @@
+/* === ESTILOS COMPARTIDOS PROFESIONALES PARA PORTAL ARVIC === */
+
+/* Tipografía mejorada */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+/* Reset y configuración base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    /* Paleta de colores corporativa */
+    --primary-color: #1e3a8a;        /* Azul corporativo principal */
+    --primary-dark: #1e40af;         /* Azul oscuro */
+    --primary-light: #3b82f6;        /* Azul claro */
+    --secondary-color: #475569;      /* Gris azulado */
+    --accent-color: #dc2626;         /* Rojo corporativo */
+    --success-color: #059669;        /* Verde éxito */
+    --warning-color: #d97706;        /* Naranja advertencia */
+    --info-color: #0284c7;           /* Azul información */
+    
+    /* Colores neutros */
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+    
+    /* Tipografía */
+    --font-primary: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --font-secondary: 'JetBrains Mono', 'Fira Code', monospace;
+    
+    /* Espaciado */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-2xl: 3rem;
+    
+    /* Bordes y sombras */
+    --border-radius-sm: 0.375rem;
+    --border-radius-md: 0.5rem;
+    --border-radius-lg: 0.75rem;
+    --border-radius-xl: 1rem;
+    
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    
+    /* Transiciones */
+    --transition-fast: all 0.15s ease;
+    --transition-normal: all 0.3s ease;
+    --transition-slow: all 0.5s ease;
+}
+
+body {
+    font-family: var(--font-primary);
+    background-color: var(--gray-50);
+    color: var(--gray-800);
+    line-height: 1.6;
+    font-size: 0.875rem;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* === LOGO ARVIC EXACTO - RECREACIÓN COMPLETA === */
+
+/* Logo container */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* Círculo azul con gradiente */
+.logo-icon {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #4FC3F7 0%, #2196F3 50%, #1976D2 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 4px 20px rgba(33, 150, 243, 0.3);
+    overflow: hidden;
+}
+
+/* Letra A completa usando clip-path para mayor precisión */
+.logo-icon::before {
+    content: 'A';
+    position: absolute;
+    font-family: 'Arial Black', sans-serif;
+    font-size: 42px;
+    font-weight: 900;
+    color: white;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2;
+    line-height: 1;
+}
+
+/* Triángulo azul pequeño dentro de la A */
+.logo-icon::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 8px solid #1976D2;
+    top: 58%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 3;
+}
+
+/* Contenedor del texto */
+.logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1;
+    margin-left: 0.5rem;
+}
+
+/* Texto "GRUPO IT" */
+.grupo-text {
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    font-size: 0.9rem;
+    color: #888888;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 0.1rem;
+    line-height: 1;
+}
+
+/* Texto "ARVIC" */
+.arvic-text {
+    font-family: 'Arial Black', 'Helvetica', sans-serif;
+    font-size: 2.8rem;
+    color: #1976D2;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    line-height: 0.9;
+}
+
+/* Versión pequeña para headers */
+.logo.logo-small .logo-icon {
+    width: 48px;
+    height: 48px;
+}
+
+.logo.logo-small .logo-icon::before {
+    font-size: 28px;
+}
+
+.logo.logo-small .logo-icon::after {
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-bottom: 6px solid #1976D2;
+}
+
+.logo.logo-small .grupo-text {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+}
+
+.logo.logo-small .arvic-text {
+    font-size: 1.8rem;
+}
+
+/* Versión extra pequeña para móviles */
+.logo.logo-xs .logo-icon {
+    width: 40px;
+    height: 40px;
+}
+
+.logo.logo-xs .logo-icon::before {
+    font-size: 22px;
+}
+
+.logo.logo-xs .logo-icon::after {
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-bottom: 5px solid #1976D2;
+}
+
+.logo.logo-xs .grupo-text {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+}
+
+.logo.logo-xs .arvic-text {
+    font-size: 1.4rem;
+}
+
+/* Animación sutil al hover */
+.logo-icon {
+    transition: all 0.3s ease;
+}
+
+.logo:hover .logo-icon {
+    transform: scale(1.05);
+    box-shadow: 0 6px 25px rgba(33, 150, 243, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .logo {
+        gap: 0.75rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .logo {
+        gap: 0.5rem;
+    }
+}
+
+/* Sistema de botones profesional */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border: 1px solid transparent;
+    border-radius: var(--border-radius-md);
+    font-family: var(--font-primary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    line-height: 1.25;
+    text-decoration: none;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    min-height: 40px;
+    white-space: nowrap;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Variantes de botones */
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-secondary {
+    background-color: white;
+    color: var(--gray-700);
+    border-color: var(--gray-300);
+}
+
+.btn-secondary:hover {
+    background-color: var(--gray-50);
+    border-color: var(--gray-400);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-success {
+    background-color: var(--success-color);
+    color: white;
+    border-color: var(--success-color);
+}
+
+.btn-success:hover {
+    background-color: #047857;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-danger {
+    background-color: var(--accent-color);
+    color: white;
+    border-color: var(--accent-color);
+}
+
+.btn-danger:hover {
+    background-color: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-warning {
+    background-color: var(--warning-color);
+    color: white;
+    border-color: var(--warning-color);
+}
+
+.btn-warning:hover {
+    background-color: #c2410c;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.btn-info {
+    background-color: var(--info-color);
+    color: white;
+    border-color: var(--info-color);
+}
+
+.btn-info:hover {
+    background-color: #0369a1;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Tamaños de botones */
+.btn-sm {
+    padding: var(--spacing-xs) var(--spacing-md);
+    font-size: 0.75rem;
+    min-height: 32px;
+}
+
+.btn-lg {
+    padding: var(--spacing-md) var(--spacing-xl);
+    font-size: 1rem;
+    min-height: 48px;
+}
+
+/* Formularios profesionales */
+.form-group {
+    margin-bottom: var(--spacing-lg);
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: var(--spacing-sm);
+    font-weight: 500;
+    color: var(--gray-700);
+    font-size: 0.875rem;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius-md);
+    font-size: 0.875rem;
+    font-family: var(--font-primary);
+    transition: var(--transition-normal);
+    background-color: white;
+    color: var(--gray-900);
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.1);
+}
+
+.form-group input:disabled,
+.form-group select:disabled,
+.form-group textarea:disabled {
+    background-color: var(--gray-100);
+    color: var(--gray-500);
+    cursor: not-allowed;
+}
+
+.form-group textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Cards profesionales */
+.card {
+    background: white;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid var(--gray-200);
+    transition: var(--transition-normal);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin: 0;
+}
+
+/* Sistema de mensajes mejorado */
+.message {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--border-radius-md);
+    margin-bottom: var(--spacing-lg);
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-left: 4px solid;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.message-success {
+    background-color: #f0fdf4;
+    color: #15803d;
+    border-color: var(--success-color);
+}
+
+.message-error {
+    background-color: #fef2f2;
+    color: #dc2626;
+    border-color: var(--accent-color);
+}
+
+.message-warning {
+    background-color: #fffbeb;
+    color: #d97706;
+    border-color: var(--warning-color);
+}
+
+.message-info {
+    background-color: #eff6ff;
+    color: #2563eb;
+    border-color: var(--info-color);
+}
+
+/* Badges profesionales */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-align: center;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.badge-primary {
+    background-color: rgba(30, 58, 138, 0.1);
+    color: var(--primary-color);
+}
+
+.badge-success {
+    background-color: rgba(5, 150, 105, 0.1);
+    color: var(--success-color);
+}
+
+.badge-danger {
+    background-color: rgba(220, 38, 38, 0.1);
+    color: var(--accent-color);
+}
+
+.badge-warning {
+    background-color: rgba(217, 119, 6, 0.1);
+    color: var(--warning-color);
+}
+
+.badge-secondary {
+    background-color: var(--gray-100);
+    color: var(--gray-600);
+}
+
+/* Modal profesional */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 50;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+.modal-content {
+    background-color: white;
+    margin: 5% auto;
+    padding: 0;
+    border-radius: var(--border-radius-xl);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    animation: slideDown 0.3s ease;
+    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--gray-200);
+    overflow: hidden;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-xl);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    color: white;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.modal-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.modal-body {
+    padding: var(--spacing-xl);
+}
+
+.close {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: var(--spacing-sm);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--border-radius-md);
+    transition: var(--transition-normal);
+}
+
+.close:hover {
+    color: white;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Utilidades */
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
+
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+.d-flex { display: flex !important; }
+.d-inline-flex { display: inline-flex !important; }
+
+/* Espaciado */
+.m-0 { margin: 0; }
+.mt-1 { margin-top: var(--spacing-xs); }
+.mt-2 { margin-top: var(--spacing-sm); }
+.mt-3 { margin-top: var(--spacing-md); }
+.mt-4 { margin-top: var(--spacing-lg); }
+.mt-5 { margin-top: var(--spacing-xl); }
+
+.mb-1 { margin-bottom: var(--spacing-xs); }
+.mb-2 { margin-bottom: var(--spacing-sm); }
+.mb-3 { margin-bottom: var(--spacing-md); }
+.mb-4 { margin-bottom: var(--spacing-lg); }
+.mb-5 { margin-bottom: var(--spacing-xl); }
+
+.p-1 { padding: var(--spacing-xs); }
+.p-2 { padding: var(--spacing-sm); }
+.p-3 { padding: var(--spacing-md); }
+.p-4 { padding: var(--spacing-lg); }
+.p-5 { padding: var(--spacing-xl); }
+
+/* Grid system mejorado */
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-lg);
+}
+
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0 calc(-1 * var(--spacing-md));
+}
+
+.col {
+    flex: 1;
+    padding: 0 var(--spacing-md);
+}
+
+.col-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding: 0 var(--spacing-md);
+}
+
+.col-4 {
+    flex: 0 0 33.333333%;
+    max-width: 33.333333%;
+    padding: 0 var(--spacing-md);
+}
+
+.col-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+    padding: 0 var(--spacing-md);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 var(--spacing-md);
+    }
+    
+    .col-6,
+    .col-4,
+    .col-3 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+    
+    .modal-content {
+        margin: 10% auto;
+        width: 95%;
+    }
+    
+    .logo-icon {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .logo-icon::before {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .arvic-text {
+        font-size: 1.25rem;
+    }
+}
+
+/* Animaciones profesionales */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideDown {
+    from { 
+        opacity: 0; 
+        transform: translateY(-20px) scale(0.95); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0) scale(1); 
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease;
+}
+
+.slide-in {
+    animation: slideDown 0.3s ease;
+}
+
+/* Mejoras de accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Estados de focus mejorados */
+*:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: var(--border-radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--gray-400);
+    border-radius: var(--border-radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-500);
+}
+
+/* Para Firefox */
+html {
+    scrollbar-width: thin;
+    scrollbar-color: var(--gray-400) var(--gray-100);
+}

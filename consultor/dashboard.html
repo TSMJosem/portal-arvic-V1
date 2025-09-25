@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Consultor - GRUPO IT ARVIC</title>
+    <link rel="stylesheet" href="../css/shared.css">
+    <link rel="stylesheet" href="../css/consultor.css">
+</head>
+<body class="consultor-layout">
+    <header class="consultor-header">
+        <nav class="navbar">
+            <div class="nav-left">
+                <div class="logo">
+                    <img src="../images/Logo Grupo IT Arvic 22.svg" alt="GRUPO IT ARVIC" class="consultor-logo-svg">
+                </div>
+            </div>
+            <div class="nav-center">
+                <h2 style="color: #2c3e50; margin: 0;">Portal de Consultor</h2>
+            </div>
+            <div class="nav-right">
+                <div class="user-menu">
+                    <span class="user-name" id="consultorUserName">Cargando...</span>
+                    <button class="btn btn-danger" onclick="logout()">Cerrar Sesión</button>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 9999; align-items: center; justify-content: center;">
+        <div style="text-align: center;">
+            <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1cb5e0; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto;"></div>
+            <p style="margin-top: 20px; color: #666;">Cargando portal...</p>
+        </div>
+    </div>
+
+    <main class="main-content" id="mainContent">
+        <div class="container">
+            <div class="content-wrapper">
+                <!-- Sidebar Simplificado -->
+                <div class="sidebar consultor-sidebar">
+                    <h2 class="sidebar-title">📋 Mis Asignaciones</h2>
+                    <div class="sidebar-menu">
+                        <div class="menu-item active">
+                            <span class="menu-text">Asignaciones Activas</span>
+                            <span class="menu-badge" id="assignmentsCount">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Principal -->
+                <div class="main-panel consultor-main">
+                    <!-- Sección de Asignaciones -->
+                    <div class="content-section active">
+                        <h2 class="section-title">🎯 Mis Asignaciones y Reportes</h2>
+                        
+                        <!-- Información del Usuario -->
+                        <div class="user-info-card">
+                            <h3>👤 Información del Consultor</h3>
+                            <div class="user-details">
+                                <p><strong>Nombre:</strong> <span id="userNameDisplay">Cargando...</span></p>
+                                <p><strong>ID:</strong> <span id="userIdDisplay">Cargando...</span></p>
+                                <p><strong>Estado:</strong> <span class="custom-badge badge-success">✅ Activo</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Lista de Asignaciones -->
+                        <div id="assignmentsList" class="assignments-container">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-title">No hay asignaciones</div>
+                                <div class="empty-state-desc">Las asignaciones del administrador aparecerán aquí</div>
+                            </div>
+                        </div>
+
+                        <!-- Sección de Reportes Rechazados -->
+                        <div id="rejectedReportsSection" class="dashboard-section" style="margin-top: 30px;">
+                            <!-- El contenido se cargará dinámicamente via JavaScript -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+<!-- Modal para Crear Reporte - DISEÑO TIMESHEET REDISEÑADO -->
+<div id="createReportModal" class="modal">
+    <div class="modal-content redesigned-modal">
+        <div class="modal-header">
+            <h2 class="modal-title">📝 Crear Ticket de Horas</h2>
+            <button class="close-btn" onclick="closeModal('createReportModal')">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+            <form id="reportForm" class="timesheet-form">
+                
+                <!-- Información de Asignación -->
+                <div class="form-section">
+                    <div class="section-title">Información de Asignación</div>
+                    
+                    <div class="form-row">
+                        <div class="form-label">Empleado:</div>
+                        <div class="form-value">
+                            <div id="employeeDisplay" class="info-display">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-label">Proyecto/Soporte:</div>
+                        <div class="form-value">
+                            <div id="selectedAssignmentInfo" class="info-display">
+                                <!-- Se llena dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalles del Reporte -->
+                <div class="form-section">
+                    <div class="section-title">Detalles del Ticket</div>
+                    
+                    <div class="form-row">
+                        <label class="form-label required" for="reportTitle">Título:</label>
+                        <div class="form-value">
+                            <input type="text" 
+                                   id="reportTitle" 
+                                   class="form-control" 
+                                   placeholder="Ej: Ticket Semanal - Desarrollo Módulo X"
+                                   required>
+                        </div>
+                    </div>
+
+                    <div class="form-row description-row">
+                        <label class="form-label required" for="reportDescription">Descripción:</label>
+                        <div class="form-value">
+                            <textarea id="reportDescription" 
+                                      class="form-control description-textarea" 
+                                      placeholder="Describe detalladamente el trabajo realizado, logros y observaciones..."
+                                      rows="4"
+                                      required></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tiempo y Fecha -->
+                <div class="form-section">
+                    <div class="section-title">Tiempo y Fecha</div>
+                    
+                    <div class="time-date-grid">
+                        <div class="form-row">
+                            <label class="form-label required" for="reportHours">Duración (Horas):</label>
+                            <div class="form-value">
+                                <div class="time-input-container">
+                                    <input type="number" 
+                                           id="reportHours" 
+                                           class="form-control time-input" 
+                                           min="0.5" 
+                                           max="24" 
+                                           step="0.5" 
+                                           placeholder="8.0"
+                                           required>
+                                    <small class="form-text">Formato decimal (ej: 8.5)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <label class="form-label required" for="reportDate">Fecha:</label>
+                            <div class="form-value">
+                                <input type="date" 
+                                       id="reportDate" 
+                                       class="form-control date-input"
+                                       required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+
+            <!-- Botones de Acción -->
+            <div class="modal-actions">
+                <button type="button" class="btn btn-cancel" onclick="closeModal('createReportModal')">
+                    Cancelar
+                </button>
+                <button type="submit" class="btn btn-submit" form="reportForm">
+                    📤 Enviar Ticket
+                </button>
+            </div>
+        </div>
+    </div>
+</div>  
+
+<!-- Modal para Ver Reportes de Asignación - ESTRUCTURA MEJORADA -->
+<div id="viewReportsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 class="modal-title">📊 Reportes de Asignación</h2>
+            <button class="close" onclick="closeModal('viewReportsModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div id="assignmentReportsInfo">
+                <!-- Información de la asignación -->
+            </div>
+            <div id="reportsList">
+                <!-- Lista de reportes -->
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Error Message Container -->
+    <div id="errorContainer" style="display: none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #ff6b6b; color: white; padding: 15px 25px; border-radius: 8px; z-index: 10000; max-width: 500px;">
+        <span id="errorText"></span>
+        <button onclick="hideError()" style="background: none; border: none; color: white; margin-left: 15px; cursor: pointer;">&times;</button>
+    </div>
+
+    <!-- Scripts en orden correcto -->
+    <script src="../js/database.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/utils.js"></script>
+    <script src="consultor.js"></script>
+</body>
+</html>

@@ -1,38 +1,42 @@
 // ===================================================================
-// SISTEMA DE EXPORTACIÓN PDF REUTILIZABLE - PORTAL ARVIC
+// SISTEMA DE EXPORTACIÓN PDF ARVIC - VERSIÓN FINAL COMPLETA
+// Replica EXACTAMENTE el diseño de la imagen de referencia objetivo
 // ===================================================================
 
 /**
  * COLORES CORPORATIVOS ARVIC 
  */
 const ARVIC_COLORS = {
-    primary: '#1976D2',
+    primary: '#1976D2',      // Azul principal de los headers
     secondary: '#2196F3', 
-    light: '#4FC3F7',
+    light: '#E3F2FD',       // Azul muy claro para filas alternadas
     dark: '#0D47A1',
     gray: '#666666',
-    lightGray: '#F5F5F5',
-    white: '#FFFFFF'
+    lightGray: '#F5F5F5',   // Gris para filas alternadas
+    white: '#FFFFFF',
+    black: '#000000',
+    textGray: '#555555'     // Para texto general
 };
 
 /**
- * CONFIGURACIÓN PDF PREDETERMINADA
+ * CONFIGURACIÓN PDF OPTIMIZADA
  */
 const PDF_CONFIG = {
     margin: 20,
-    headerHeight: 60,
-    logoSize: 45,
-    titleFontSize: 16,
+    headerHeight: 95,       // Más espacio para header completo con metadata
+    logoSize: 40,
+    titleFontSize: 18,
+    subtitleFontSize: 12,
     headerFontSize: 10,
-    dataFontSize: 9,
-    lineHeight: 1.2,
+    dataFontSize: 10,       // Aumentado de 9 a 10
+    metadataFontSize: 9,    // Aumentado de 8 a 9
+    lineHeight: 14,         // Aumentado de 12 a 14
     pageFormat: 'a4',
-    orientation: 'landscape' // landscape para más columnas
+    orientation: 'landscape'
 };
 
 /**
- * CLASE PRINCIPAL - EXPORTADOR PDF ARVIC
- * Funcionalidad reutilizable que se adapta automáticamente a cualquier estructura
+ * CLASE PRINCIPAL - EXPORTADOR PDF ARVIC CORREGIDO
  */
 class ARVICPDFExporter {
     constructor() {
@@ -61,40 +65,43 @@ class ARVICPDFExporter {
 
     /**
      * FUNCIÓN PRINCIPAL - Exportar datos a PDF
-     * @param {Object} config - Configuración del reporte
-     * @param {Array} data - Datos del reporte  
-     * @param {Array} headers - Headers/columnas
-     * @param {Object} metadata - Información adicional (cliente, consultor, etc.)
      */
     async exportToPDF(config, data, headers, metadata = {}) {
         await this.loadJsPDF();
         
+        console.log('🎯 Iniciando exportación PDF:', {
+            reportType: config.reportType,
+            dataCount: data.length,
+            headers: headers,
+            metadata: metadata
+        });
+        
         const doc = new this.jsPDF({
-            orientation: this.determineOrientation(headers.length),
+            orientation: 'landscape',
             unit: 'mm',
             format: 'a4'
         });
 
         // Configurar documento
-        this.setupDocument(doc);
+        this.setupDocument(doc, config);
         
-        // Añadir logo y header
-        this.addHeader(doc, config.title, metadata);
+        // Añadir header completo (logo + título + metadata)
+        this.addCompleteHeader(doc, config, metadata);
         
-        // Determinar estructura y añadir tabla
-        this.addTable(doc, data, headers, config);
+        // Añadir tabla con datos
+        this.addDataTable(doc, data, headers, config);
         
         // Añadir footer
         this.addFooter(doc);
         
-        // Generar nombre de archivo
+        // Generar nombre de archivo y descargar
         const fileName = this.generateFileName(config.reportType, metadata);
-        
-        // Descargar
         doc.save(fileName);
         
-        // Notificación
-        window.NotificationUtils?.success(`PDF generado: ${fileName}`);
+        // Notificación de éxito
+        if (window.NotificationUtils) {
+            window.NotificationUtils.success(`PDF generado exitosamente: ${fileName}`);
+        }
         
         return fileName;
     }
@@ -102,9 +109,9 @@ class ARVICPDFExporter {
     /**
      * Configurar propiedades del documento
      */
-    setupDocument(doc) {
+    setupDocument(doc, config) {
         doc.setProperties({
-            title: 'Reporte ARVIC',
+            title: `${config.title} - ARVIC`,
             subject: 'Reporte generado automáticamente',
             author: 'Sistema ARVIC',
             creator: 'Portal Administrativo ARVIC'
@@ -112,178 +119,249 @@ class ARVICPDFExporter {
     }
 
     /**
-     * Determinar orientación según número de columnas
+     * Añadir header completo (espaciado ultra-compacto como imagen objetivo)
      */
-    determineOrientation(columnCount) {
-        return columnCount > 5 ? 'landscape' : 'portrait';
-    }
-
-    /**
-     * Añadir header con logo y información
-     */
-    addHeader(doc, title, metadata) {
+    addCompleteHeader(doc, config, metadata) {
         const pageWidth = doc.internal.pageSize.getWidth();
         
-        // LOGO ARVIC (recreación vectorial)
-        this.drawARVICLogo(doc, PDF_CONFIG.margin, PDF_CONFIG.margin);
+        // === LOGO REAL DE ARVIC (lado izquierdo) ===
+        this.addARVICLogo(doc, 25, 22); // Subido de 25 a 22
         
-        // TÍTULO PRINCIPAL
-        doc.setFontSize(PDF_CONFIG.titleFontSize);
+        // === TÍTULO PRINCIPAL (centro) ===
+        const titleText = this.getTitleByReportType(config.reportType);
         doc.setTextColor(ARVIC_COLORS.primary);
         doc.setFont('helvetica', 'bold');
-        doc.text(title.toUpperCase(), pageWidth / 2, PDF_CONFIG.margin + 15, { align: 'center' });
+        doc.setFontSize(PDF_CONFIG.titleFontSize);
+        doc.text(titleText, pageWidth / 2, 30, { align: 'center' }); // Subido de 35 a 30
         
-        // INFORMACIÓN ADICIONAL
-        this.addMetadataInfo(doc, metadata, pageWidth);
+        // Subtítulo empresa (mucho más cerca del título)
+        doc.setTextColor(ARVIC_COLORS.textGray);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(PDF_CONFIG.subtitleFontSize);
+        doc.text('GRUPO IT ARVIC', pageWidth / 2, 40, { align: 'center' }); // Subido de 47 a 40
         
-        // LÍNEA SEPARADORA
-        doc.setLineWidth(0.5);
+        // === LÍNEA SEPARADORA (mucho más cerca del subtítulo) ===
         doc.setDrawColor(ARVIC_COLORS.primary);
-        doc.line(PDF_CONFIG.margin, PDF_CONFIG.headerHeight, pageWidth - PDF_CONFIG.margin, PDF_CONFIG.headerHeight);
+        doc.setLineWidth(0.8);
+        doc.line(PDF_CONFIG.margin, 48, pageWidth - PDF_CONFIG.margin, 48); // Subido de 55 a 48
+        
+        // === METADATA COMPLETA (muy cerca de la línea) ===
+        this.addCompleteMetadataSection(doc, metadata, 52); // Subido de 62 a 52
     }
 
     /**
-     * Dibujar logo ARVIC (versión vectorial exacta)
+     * Añadir logo real de ARVIC (replicando el diseño exacto)
      */
-    drawARVICLogo(doc, x, y) {
-        const logoSize = PDF_CONFIG.logoSize;
-        
-        // Círculo base con gradiente simulado
-        doc.setFillColor(ARVIC_COLORS.secondary);
-        doc.circle(x + logoSize/2, y + logoSize/2, logoSize/2, 'F');
-        
-        // Sombra del círculo
-        doc.setFillColor(ARVIC_COLORS.dark);
-        doc.circle(x + logoSize/2 + 1, y + logoSize/2 + 1, logoSize/2, 'F');
-        doc.setFillColor(ARVIC_COLORS.secondary);
-        doc.circle(x + logoSize/2, y + logoSize/2, logoSize/2, 'F');
+    addARVICLogo(doc, x, y) {
+        // Círculo azul con la "A"
+        doc.setFillColor(ARVIC_COLORS.primary);
+        doc.circle(x, y, 15, 'F');
         
         // Letra "A" en blanco
-        doc.setFontSize(24);
         doc.setTextColor(ARVIC_COLORS.white);
         doc.setFont('helvetica', 'bold');
-        doc.text('A', x + logoSize/2, y + logoSize/2 + 3, { align: 'center' });
+        doc.setFontSize(20);
+        doc.text('A', x, y + 5, { align: 'center' });
         
-        // Texto "GRUPO IT ARVIC"
+        // Texto "GRUPO IT" y "ARVIC"
+        doc.setTextColor(ARVIC_COLORS.black);
+        doc.setFont('helvetica', 'normal');
         doc.setFontSize(8);
-        doc.setTextColor(ARVIC_COLORS.gray);
-        doc.setFont('helvetica', 'normal');
-        doc.text('GRUPO IT', x + logoSize + 5, y + 15);
+        doc.text('GRUPO IT', x + 20, y - 5);
         
-        doc.setFontSize(14);
-        doc.setTextColor(ARVIC_COLORS.primary);
         doc.setFont('helvetica', 'bold');
-        doc.text('ARVIC', x + logoSize + 5, y + 28);
+        doc.setFontSize(16);
+        doc.text('ARVIC', x + 20, y + 8);
     }
 
     /**
-     * Añadir información de metadata
+     * Obtener título según tipo de reporte
      */
-    addMetadataInfo(doc, metadata, pageWidth) {
-        doc.setFontSize(PDF_CONFIG.headerFontSize);
-        doc.setTextColor(ARVIC_COLORS.gray);
+    getTitleByReportType(reportType) {
+        const titles = {
+            'pago-consultor-general': 'REPORTE GENERAL DE PAGOS',
+            'pago-consultor-especifico': 'REPORTE DE PAGO A CONSULTOR',
+            'cliente-soporte': 'REPORTE DE SOPORTE AL CLIENTE',
+            'remanente': 'REPORTE REMANENTE',
+            'proyecto-general': 'REPORTE GENERAL DE PROYECTOS',
+            'proyecto-cliente': 'REPORTE DE PROYECTO',
+            'proyecto-consultor': 'REPORTE DE CONSULTOR - PROYECTOS'
+        };
+        
+        return titles[reportType] || 'REPORTE ARVIC';
+    }
+
+    /**
+     * Añadir sección de metadata completa (espaciado mínimo)
+     */
+    addCompleteMetadataSection(doc, metadata, startY) {
+        const pageWidth = doc.internal.pageSize.getWidth();
+        let yPos = startY;
+        
         doc.setFont('helvetica', 'normal');
+        doc.setFontSize(PDF_CONFIG.metadataFontSize);
+        doc.setTextColor(ARVIC_COLORS.textGray);
         
-        let yPos = PDF_CONFIG.margin + 25;
+        // === LADO IZQUIERDO ===
+        const clienteText = (metadata.cliente && metadata.cliente !== 'Todos los clientes') 
+            ? `Cliente: ${metadata.cliente}` 
+            : 'Cliente: N/A';
+        doc.text(clienteText, PDF_CONFIG.margin, yPos);
         
-        // Información en dos columnas
-        if (metadata.cliente) {
-            doc.text(`Cliente: ${metadata.cliente}`, PDF_CONFIG.margin, yPos);
-        }
-        if (metadata.consultor) {
-            doc.text(`Consultor: ${metadata.consultor}`, pageWidth - 80, yPos);
-        }
+        // Consultor (espaciado ultra-mínimo)
+        const consultorText = (metadata.consultor && metadata.consultor !== 'Todos los consultores') 
+            ? `Consultor: ${metadata.consultor}` 
+            : 'Consultor: N/A';
+        doc.text(consultorText, PDF_CONFIG.margin, yPos + 4); // Reducido de 6 a 4
         
-        yPos += 8;
-        if (metadata.soporte) {
-            doc.text(`Soporte: ${metadata.soporte}`, PDF_CONFIG.margin, yPos);
-        }
-        if (metadata.mes) {
-            doc.text(`Período: ${metadata.mes}`, pageWidth - 80, yPos);
-        }
-        
-        // Fecha de generación
-        yPos += 8;
+        // === LADO DERECHO ===
         const fecha = new Date().toLocaleDateString('es-MX', {
-            year: 'numeric',
-            month: 'long', 
             day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
+            month: 'long',
+            year: 'numeric'
         });
-        doc.text(`Generado: ${fecha}`, PDF_CONFIG.margin, yPos);
+        doc.text(`Generado: ${fecha}`, pageWidth - PDF_CONFIG.margin, yPos, { align: 'right' });
+        
+        const periodoText = (metadata.mes && metadata.mes !== 'Todos los períodos') 
+            ? `Período: ${metadata.mes}` 
+            : 'Período: N/A';
+        doc.text(periodoText, pageWidth - PDF_CONFIG.margin, yPos + 4, { align: 'right' }); // Reducido de 6 a 4
     }
 
     /**
-     * Añadir tabla principal con datos
+     * Añadir tabla de datos con mejor separación entre totales y mensaje
      */
-    addTable(doc, data, headers, config) {
-        const startY = PDF_CONFIG.headerHeight + 10;
+    addDataTable(doc, data, headers, config) {
+        const startY = PDF_CONFIG.headerHeight + 1;
         const pageWidth = doc.internal.pageSize.getWidth();
         const tableWidth = pageWidth - (PDF_CONFIG.margin * 2);
         
-        // Calcular anchos de columna dinámicamente
-        const columnWidths = this.calculateColumnWidths(headers, tableWidth, config.reportType);
+        // Calcular anchos de columna según el tipo de reporte
+        const columnWidths = this.calculateOptimalColumnWidths(headers, tableWidth, config.reportType);
         
-        // Headers de la tabla
+        console.log('📊 Configuración de tabla:', {
+            headers: headers,
+            columnWidths: columnWidths,
+            dataLength: data.length
+        });
+        
+        // Dibujar headers de la tabla
         this.drawTableHeaders(doc, headers, columnWidths, startY);
         
-        // Datos de la tabla
-        let currentY = startY + 15;
-        const lineHeight = 8;
+        // Dibujar filas de datos
+        let currentY = startY + 10;
+        const rowHeight = 14; 
         
         data.forEach((row, index) => {
             // Verificar si necesitamos nueva página
-            if (currentY > doc.internal.pageSize.getHeight() - 30) {
+            if (currentY > doc.internal.pageSize.getHeight() - 80) {
                 doc.addPage();
-                currentY = PDF_CONFIG.margin + 10;
+                currentY = 30;
                 this.drawTableHeaders(doc, headers, columnWidths, currentY);
-                currentY += 15;
+                currentY += 10;
             }
             
-            this.drawTableRow(doc, row, headers, columnWidths, currentY, index % 2 === 0);
-            currentY += lineHeight;
+            this.drawDataRow(doc, row, headers, columnWidths, currentY, index, config.reportType);
+            currentY += rowHeight;
         });
         
-        // Fila de totales si aplica
+        // Añadir totales SEPARADOS
         if (config.showTotals && data.length > 0) {
-            this.drawTotalsRow(doc, data, headers, columnWidths, currentY);
+            currentY += 10;
+            const totalsY = currentY;
+            this.addSeparatedTotals(doc, data, pageWidth, totalsY);
+            
+            // Mensaje MÁS SEPARADO de los totales (aumentado de 22 a 35)
+            const messageY = totalsY + 35; // Más espacio para que no se vea saturado
+            doc.setFont('helvetica', 'italic');
+            doc.setFontSize(9); 
+            doc.setTextColor(ARVIC_COLORS.black); 
+            doc.text('* Totales calculados con valores modificados en vista previa', 
+                     pageWidth - PDF_CONFIG.margin, messageY, { align: 'right' });
         }
     }
 
     /**
-     * Calcular anchos de columna según tipo de reporte
+     * Añadir totales separados (replicando diseño exacto de imagen 1)
      */
-    calculateColumnWidths(headers, tableWidth, reportType) {
+    addSeparatedTotals(doc, data, pageWidth, y) {
+        // Calcular totales
+        const totalHours = data.reduce((sum, row) => {
+            return sum + parseFloat(row.editedTime || row.tiempo || row.hours || 0);
+        }, 0);
+        
+        const totalAmount = data.reduce((sum, row) => {
+            return sum + parseFloat(row.editedTotal || row.total || 0);
+        }, 0);
+        
+        // Configurar texto para totales (aumentar tamaño de fuente)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13); // Aumentado de 12 a 13
+        doc.setTextColor(ARVIC_COLORS.primary);
+        
+        // Total Horas (alineado a la derecha)
+        doc.text(`Total Horas: ${totalHours.toFixed(1)} hrs`, 
+                 pageWidth - PDF_CONFIG.margin, y, { align: 'right' });
+        
+        // Total Monto (alineado a la derecha, con más espacio)
+        doc.text(`Total Monto: ${totalAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 
+                 pageWidth - PDF_CONFIG.margin, y + 18, { align: 'right' });
+    }
+
+    /**
+     * Calcular anchos de columna optimizados según tipo de reporte
+     */
+    calculateOptimalColumnWidths(headers, tableWidth, reportType) {
         const columnCount = headers.length;
         
         switch (reportType) {
-            case 'remanente':
-                // Estructura especial para semanas
-                const totalHorasWidth = 25;
-                const remainingWidth = tableWidth - totalHorasWidth;
-                const weekWidth = remainingWidth / (columnCount - 1);
-                return [totalHorasWidth, ...Array(columnCount - 1).fill(weekWidth)];
-                
-            case 'cliente-soporte':
-            case 'proyecto-cliente':
-                // Estructura simplificada
+            case 'pago-consultor-general':
+            case 'pago-consultor-especifico':
+                // 7 columnas: ID, Consultor, Soporte, Módulo, Tiempo, Tarifa, Total
                 return [
-                    tableWidth * 0.35, // Soporte/Módulo
-                    tableWidth * 0.15, // Tiempo  
-                    tableWidth * 0.25, // Tarifa
-                    tableWidth * 0.25  // Total
+                    tableWidth * 0.08, // ID Empresa (más estrecho)
+                    tableWidth * 0.15, // Consultor
+                    tableWidth * 0.25, // Soporte (más ancho, texto largo)
+                    tableWidth * 0.20, // Módulo
+                    tableWidth * 0.10, // Tiempo
+                    tableWidth * 0.10, // Tarifa
+                    tableWidth * 0.12  // Total
                 ];
                 
+            case 'cliente-soporte':
+                // 5 columnas: Soporte, Módulo, Tiempo, Tarifa, Total
+                return [
+                    tableWidth * 0.35, // Soporte
+                    tableWidth * 0.25, // Módulo
+                    tableWidth * 0.15, // Tiempo
+                    tableWidth * 0.15, // Tarifa
+                    tableWidth * 0.10  // Total
+                ];
+                
+            case 'proyecto-cliente':
+                // 4 columnas: Módulo, Tiempo, Tarifa, Total
+                return [
+                    tableWidth * 0.40, // Módulo (más ancho)
+                    tableWidth * 0.20, // Tiempo
+                    tableWidth * 0.20, // Tarifa
+                    tableWidth * 0.20  // Total
+                ];
+                
+            case 'remanente':
+                // Estructura especial semanal - se maneja por separado
+                const totalWidth = tableWidth * 0.15;
+                const weekWidth = (tableWidth - totalWidth) / 4;
+                return [totalWidth, weekWidth, weekWidth, weekWidth, weekWidth];
+                
             default:
-                // Distribución estándar
+                // Distribución equitativa para otros reportes
                 const standardWidth = tableWidth / columnCount;
                 return Array(columnCount).fill(standardWidth);
         }
     }
 
     /**
-     * Dibujar headers de tabla con estilo corporativo
+     * Dibujar headers de tabla (con bordes más sutiles y consistentes)
      */
     drawTableHeaders(doc, headers, columnWidths, y) {
         let currentX = PDF_CONFIG.margin;
@@ -291,232 +369,163 @@ class ARVICPDFExporter {
         headers.forEach((header, index) => {
             const width = columnWidths[index];
             
-            // Fondo del header con color corporativo
+            // Fondo azul corporativo
             doc.setFillColor(ARVIC_COLORS.primary);
             doc.rect(currentX, y, width, 12, 'F');
             
-            // Borde
+            // Bordes sutiles (más delgados y grises)
             doc.setLineWidth(0.2);
-            doc.setDrawColor(ARVIC_COLORS.white);
+            doc.setDrawColor(200, 200, 200); // Gris claro
             doc.rect(currentX, y, width, 12);
             
-            // Texto del header
+            // Texto del header (corregir "TARIFA de Modulo" a solo "TARIFA")
+            doc.setFont('helvetica', 'bold');
             doc.setFontSize(PDF_CONFIG.headerFontSize);
             doc.setTextColor(ARVIC_COLORS.white);
-            doc.setFont('helvetica', 'bold');
             
-            const text = header.toString().toUpperCase();
-            const textWidth = doc.getTextWidth(text);
+            let headerText = header.toString();
+            if (headerText === 'TARIFA de Modulo') {
+                headerText = 'TARIFA';
+            }
+            
+            const textWidth = doc.getTextWidth(headerText);
             const centerX = currentX + (width / 2) - (textWidth / 2);
             
-            doc.text(text, centerX, y + 8);
+            doc.text(headerText, centerX, y + 8);
             
             currentX += width;
         });
     }
 
     /**
-     * Dibujar fila de datos
+     * Dibujar fila de datos (con bordes sutiles y consistentes con headers)
      */
-    drawTableRow(doc, rowData, headers, columnWidths, y, isEven) {
+    drawDataRow(doc, rowData, headers, columnWidths, y, rowIndex, reportType) {
         let currentX = PDF_CONFIG.margin;
+        const rowHeight = 14; 
         
-        // Fondo alternado
-        if (isEven) {
+        // Fondo alternado (replicando el diseño de referencia)
+        if (rowIndex % 2 === 0) {
             doc.setFillColor(ARVIC_COLORS.lightGray);
-            doc.rect(PDF_CONFIG.margin, y, columnWidths.reduce((a, b) => a + b, 0), 8, 'F');
+            doc.rect(PDF_CONFIG.margin, y, columnWidths.reduce((a, b) => a + b, 0), rowHeight, 'F');
         }
+        
+        // Configurar texto para datos
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(PDF_CONFIG.dataFontSize);
+        doc.setTextColor(ARVIC_COLORS.black);
         
         headers.forEach((header, index) => {
             const width = columnWidths[index];
-            let cellValue = '';
+            let cellValue = this.getCellValue(rowData, header, reportType);
             
-            // Obtener valor de la celda
-            if (typeof rowData === 'object' && rowData !== null) {
-                cellValue = this.getCellValue(rowData, header, index);
-            } else if (Array.isArray(rowData)) {
-                cellValue = rowData[index] || '';
-            }
+            // Dibujar bordes de celda (más sutiles, igual que headers)
+            doc.setLineWidth(0.2);
+            doc.setDrawColor(200, 200, 200); // Gris claro consistente
+            doc.rect(currentX, y, width, rowHeight);
             
-            // Formatear valor
-            cellValue = this.formatCellValue(cellValue, header);
-            
-            // Dibujar texto
-            doc.setFontSize(PDF_CONFIG.dataFontSize);
-            doc.setTextColor(ARVIC_COLORS.gray);
-            doc.setFont('helvetica', 'normal');
-            
-            // Alineación según tipo de contenido
-            const alignment = this.getCellAlignment(header, cellValue);
-            let textX = currentX + 2;
+            // Determinar alineación
+            const alignment = this.getCellAlignment(header);
+            let textX = currentX + 4; // Margen izquierdo por defecto
             
             if (alignment === 'center') {
                 textX = currentX + (width / 2);
             } else if (alignment === 'right') {
-                textX = currentX + width - 2;
+                textX = currentX + width - 4; // Margen derecho
             }
             
-            doc.text(cellValue.toString(), textX, y + 6, { align: alignment });
-            
-            // Borde de celda
-            doc.setLineWidth(0.1);
-            doc.setDrawColor(ARVIC_COLORS.gray);
-            doc.rect(currentX, y, width, 8);
+            // Dibujar texto
+            doc.text(cellValue.toString(), textX, y + 9, { align: alignment });
             
             currentX += width;
         });
     }
 
     /**
-     * Obtener valor de celda desde objeto de datos
+     * Obtener valor de celda con mapeo correcto según el tipo de reporte
      */
-    getCellValue(rowData, header, index) {
-        // Mapeo de headers a propiedades de datos
-        const headerMappings = {
-            'ID EMPRESA': 'idEmpresa',
-            'CONSULTOR': 'consultor', 
-            'SOPORTE': 'soporte',
-            'MODULO': 'modulo',
-            'TIEMPO': 'editedTime',
-            'TARIFA DE MODULO': 'editedTariff',
-            'TOTAL': 'editedTotal',
-            'CLIENTE': 'cliente',
-            'PROYECTO': 'proyecto'
-        };
-        
-        const key = headerMappings[header.toUpperCase()] || 
-                   header.toLowerCase().replace(/ /g, '');
-                   
-        return rowData[key] || rowData[header] || '';
+    getCellValue(rowData, header, reportType) {
+        switch (header) {
+            case 'ID Empresa':
+                return rowData.idEmpresa || rowData.empresaId || 'N/A';
+                
+            case 'Consultor':
+                return rowData.consultor || rowData.consultorName || 'N/A';
+                
+            case 'Soporte':
+                return rowData.soporte || rowData.soporteName || rowData.supportName || 'N/A';
+                
+            case 'Modulo':
+                return rowData.modulo || rowData.moduloName || rowData.moduleName || 'N/A';
+                
+            case 'TIEMPO':
+                const tiempo = rowData.editedTime || rowData.tiempo || rowData.hours || 0;
+                return `${parseFloat(tiempo).toFixed(1)} hrs`;
+                
+            case 'TARIFA de Modulo':
+                const tarifa = rowData.editedTariff || rowData.tarifa || rowData.rate || 0;
+                return `$${parseFloat(tarifa).toLocaleString('es-MX')}`;
+                
+            case 'TOTAL':
+                const total = rowData.editedTotal || rowData.total || 0;
+                return `$${parseFloat(total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
+                
+            default:
+                // Intentar mapeo genérico
+                return rowData[header] || rowData[header.toLowerCase()] || '';
+        }
     }
 
     /**
-     * Formatear valor de celda
+     * Determinar alineación de celda (actualizado para nuevo header)
      */
-    formatCellValue(value, header) {
-        if (value === null || value === undefined) return '';
+    getCellAlignment(header) {
+        const rightAligned = ['TIEMPO', 'TARIFA de Modulo', 'TARIFA', 'TOTAL'];
+        const centerAligned = ['ID Empresa'];
         
-        const upperHeader = header.toUpperCase();
-        
-        // Formateo numérico para campos monetarios
-        if (upperHeader.includes('TOTAL') || upperHeader.includes('TARIFA')) {
-            const num = parseFloat(value);
-            if (!isNaN(num)) {
-                return `$${num.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
-            }
-        }
-        
-        // Formateo para tiempo/horas
-        if (upperHeader.includes('TIEMPO') || upperHeader.includes('HORAS')) {
-            const num = parseFloat(value);
-            if (!isNaN(num)) {
-                return `${num.toFixed(1)} hrs`;
-            }
-        }
-        
-        return value.toString();
-    }
-
-    /**
-     * Determinar alineación de texto
-     */
-    getCellAlignment(header, value) {
-        const upperHeader = header.toUpperCase();
-        
-        if (upperHeader.includes('TOTAL') || 
-            upperHeader.includes('TARIFA') || 
-            upperHeader.includes('TIEMPO')) {
-            return 'right';
-        }
-        
+        if (rightAligned.includes(header)) return 'right';
+        if (centerAligned.includes(header)) return 'center';
         return 'left';
     }
 
     /**
-     * Dibujar fila de totales
-     */
-    drawTotalsRow(doc, data, headers, columnWidths, y) {
-        let currentX = PDF_CONFIG.margin;
-        
-        // Fondo especial para totales
-        doc.setFillColor(ARVIC_COLORS.light);
-        doc.rect(PDF_CONFIG.margin, y, columnWidths.reduce((a, b) => a + b, 0), 10, 'F');
-        
-        headers.forEach((header, index) => {
-            const width = columnWidths[index];
-            let cellValue = '';
-            
-            if (index === 0) {
-                cellValue = 'TOTALES';
-            } else if (header.toUpperCase().includes('TIEMPO')) {
-                const total = data.reduce((sum, row) => {
-                    const time = parseFloat(row.editedTime || row.tiempo || 0);
-                    return sum + time;
-                }, 0);
-                cellValue = `${total.toFixed(1)} hrs`;
-            } else if (header.toUpperCase().includes('TOTAL')) {
-                const total = data.reduce((sum, row) => {
-                    const amount = parseFloat(row.editedTotal || row.total || 0);
-                    return sum + amount;
-                }, 0);
-                cellValue = `$${total.toLocaleString('es-MX', {minimumFractionDigits: 2})}`;
-            } else {
-                cellValue = '-';
-            }
-            
-            // Texto de totales
-            doc.setFontSize(PDF_CONFIG.headerFontSize);
-            doc.setTextColor(ARVIC_COLORS.dark);
-            doc.setFont('helvetica', 'bold');
-            
-            const alignment = this.getCellAlignment(header, cellValue);
-            let textX = currentX + 2;
-            
-            if (alignment === 'center') {
-                textX = currentX + (width / 2);
-            } else if (alignment === 'right') {
-                textX = currentX + width - 2;
-            }
-            
-            doc.text(cellValue, textX, y + 7, { align: alignment });
-            
-            // Borde
-            doc.setLineWidth(0.3);
-            doc.setDrawColor(ARVIC_COLORS.primary);
-            doc.rect(currentX, y, width, 10);
-            
-            currentX += width;
-        });
-    }
-
-    /**
-     * Añadir footer
+     * Añadir footer (replicando diseño exacto del objetivo)
      */
     addFooter(doc) {
-        const pageCount = doc.internal.getNumberOfPages();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const footerY = pageHeight - 25;
         
-        for (let i = 1; i <= pageCount; i++) {
-            doc.setPage(i);
-            
-            const pageHeight = doc.internal.pageSize.getHeight();
-            const pageWidth = doc.internal.pageSize.getWidth();
-            
-            // Línea superior del footer
-            doc.setLineWidth(0.2);
-            doc.setDrawColor(ARVIC_COLORS.gray);
-            doc.line(PDF_CONFIG.margin, pageHeight - 20, pageWidth - PDF_CONFIG.margin, pageHeight - 20);
-            
-            // Texto del footer
-            doc.setFontSize(8);
-            doc.setTextColor(ARVIC_COLORS.gray);
-            doc.setFont('helvetica', 'normal');
-            
-            // Información de la empresa
-            doc.text('GRUPO IT ARVIC - Sistema de Reportes', PDF_CONFIG.margin, pageHeight - 12);
-            
-            // Número de página
-            doc.text(`Página ${i} de ${pageCount}`, pageWidth - PDF_CONFIG.margin, pageHeight - 12, { align: 'right' });
-        }
+        // Línea separadora azul (más gruesa como en el objetivo)
+        doc.setDrawColor(ARVIC_COLORS.primary);
+        doc.setLineWidth(1.2); // Aumentado de 0.8 a 1.2 para que coincida con el objetivo
+        doc.line(PDF_CONFIG.margin, footerY - 10, pageWidth - PDF_CONFIG.margin, footerY - 10);
+        
+        // Texto del footer (arriba de la línea)
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(ARVIC_COLORS.textGray);
+        
+        // Lado izquierdo - Sistema
+        doc.text('GRUPO IT ARVIC - Sistema de Gestión Empresarial', PDF_CONFIG.margin, footerY - 3);
+        
+        // Lado derecho - Documento generado automáticamente
+        const currentDate = new Date().toLocaleDateString('es-MX', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+        const currentTime = new Date().toLocaleTimeString('es-MX', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+        });
+        doc.text(`Documento generado automáticamente - ${currentDate}, ${currentTime}`, 
+                 pageWidth - PDF_CONFIG.margin, footerY - 3, { align: 'right' });
+        
+        // Número de página (CENTRADO y DEBAJO de la línea azul)
+        const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
+        doc.text(`Página ${pageNumber}`, pageWidth / 2, footerY + 3, { align: 'center' }); // Ajustado posición
     }
 
     /**
@@ -524,91 +533,92 @@ class ARVICPDFExporter {
      */
     generateFileName(reportType, metadata) {
         const date = new Date();
-        const dateStr = date.toISOString().split('T')[0].replace(/-/g, '');
+        const dateStr = date.toISOString().split('T')[0];
         const timeStr = date.toTimeString().split(' ')[0].replace(/:/g, '');
         
-        let baseName = 'Reporte_ARVIC';
+        const reportNames = {
+            'pago-consultor-general': 'ReportePagoGeneral',
+            'pago-consultor-especifico': 'ReportePagoConsultor',
+            'cliente-soporte': 'ReporteSoporteCliente',
+            'remanente': 'ReporteRemanente',
+            'proyecto-general': 'ReporteProyectoGeneral',
+            'proyecto-cliente': 'ReporteProyectoCliente',
+            'proyecto-consultor': 'ReporteProyectoConsultor'
+        };
         
-        if (reportType) {
-            baseName = reportType.replace(/-/g, '_').toUpperCase();
-        }
-        
+        const baseName = reportNames[reportType] || 'ReporteARVIC';
         return `${baseName}_${dateStr}_${timeStr}.pdf`;
     }
 }
 
 // ===================================================================
-// INTEGRACIÓN CON EL SISTEMA EXISTENTE
+// INTEGRACIÓN CON LA INTERFAZ EXISTENTE (PARTE CRÍTICA RESTAURADA)
 // ===================================================================
 
-/**
- * Instancia global del exportador
- */
+// Crear instancia global
 window.arvicPDFExporter = new ARVICPDFExporter();
 
 /**
- * FUNCIÓN DE EXPORTACIÓN PRINCIPAL
- * Se integra directamente con el sistema existente
+ * FUNCIÓN PRINCIPAL - Exportar reporte actual a PDF
  */
 async function exportCurrentReportToPDF() {
-    if (!currentReportType || !editablePreviewData || Object.keys(editablePreviewData).length === 0) {
-        window.NotificationUtils?.error('No hay datos para exportar a PDF');
-        return;
-    }
-
     try {
-        // Preparar configuración del reporte
-        const reportConfig = prepareReportConfigForPDF();
+        console.log('🚀 Iniciando exportación PDF del reporte actual...');
         
-        // Preparar datos
-        const tableData = prepareDataForPDF();
+        // Validar que hay datos para exportar
+        if (!currentReportType || !editablePreviewData || Object.keys(editablePreviewData).length === 0) {
+            throw new Error('No hay datos disponibles para exportar');
+        }
+        
+        // Mostrar indicador de carga en el botón
+        const pdfButton = document.getElementById('exportPDFBtn');
+        if (pdfButton) {
+            pdfButton.classList.add('loading');
+            pdfButton.disabled = true;
+        }
+        
+        // Preparar configuración
+        const report = ARVIC_REPORTS[currentReportType];
+        const config = {
+            title: report.name || 'Reporte ARVIC',
+            reportType: currentReportType,
+            showTotals: true
+        };
+        
+        // Preparar datos - convertir objeto a array
+        const data = Object.values(editablePreviewData);
         
         // Preparar headers
-        const tableHeaders = prepareHeadersForPDF();
+        const headers = report.structure || ['ID', 'Descripción', 'Valor'];
         
         // Preparar metadata
         const metadata = prepareMetadataForPDF();
         
-        // Exportar
-        await window.arvicPDFExporter.exportToPDF(
-            reportConfig,
-            tableData,
-            tableHeaders,
-            metadata
-        );
+        console.log('📋 Datos preparados:', {
+            config: config,
+            dataCount: data.length,
+            headers: headers,
+            metadata: metadata
+        });
+        
+        // Exportar PDF
+        await window.arvicPDFExporter.exportToPDF(config, data, headers, metadata);
         
     } catch (error) {
-        console.error('❌ Error exportando PDF:', error);
-        window.NotificationUtils?.error('Error al generar PDF: ' + error.message);
+        console.error('❌ Error en exportación PDF:', error);
+        if (window.NotificationUtils) {
+            window.NotificationUtils.error(`Error al generar PDF: ${error.message}`);
+        } else {
+            alert(`Error al generar PDF: ${error.message}`);
+        }
+    } finally {
+        // Restaurar botón
+        const pdfButton = document.getElementById('exportPDFBtn');
+        if (pdfButton) {
+            pdfButton.classList.remove('loading');
+            pdfButton.disabled = false;
+        }
     }
-}
-
-/**
- * Preparar configuración del reporte actual
- */
-function prepareReportConfigForPDF() {
-    const report = ARVIC_REPORTS[currentReportType];
-    
-    return {
-        title: report.title || 'Reporte ARVIC',
-        reportType: currentReportType,
-        showTotals: true
-    };
-}
-
-/**
- * Preparar datos del reporte actual para PDF
- */
-function prepareDataForPDF() {
-    return Object.values(editablePreviewData);
-}
-
-/**
- * Preparar headers del reporte actual para PDF
- */
-function prepareHeadersForPDF() {
-    const report = ARVIC_REPORTS[currentReportType];
-    return report.structure || ['ID', 'Descripción', 'Valor'];
 }
 
 /**
@@ -623,19 +633,19 @@ function prepareMetadataForPDF() {
     const supportFilter = document.getElementById('supportTypeFilter');
     const monthFilter = document.getElementById('monthFilter');
     
-    if (clientFilter?.selectedOptions[0]) {
+    if (clientFilter?.selectedOptions[0] && clientFilter.selectedOptions[0].value !== '') {
         metadata.cliente = clientFilter.selectedOptions[0].text;
     }
     
-    if (consultantFilter?.selectedOptions[0]) {
+    if (consultantFilter?.selectedOptions[0] && consultantFilter.selectedOptions[0].value !== '') {
         metadata.consultor = consultantFilter.selectedOptions[0].text;
     }
     
-    if (supportFilter?.selectedOptions[0]) {
+    if (supportFilter?.selectedOptions[0] && supportFilter.selectedOptions[0].value !== '') {
         metadata.soporte = supportFilter.selectedOptions[0].text;
     }
     
-    if (monthFilter?.selectedOptions[0]) {
+    if (monthFilter?.selectedOptions[0] && monthFilter.selectedOptions[0].value !== '') {
         metadata.mes = monthFilter.selectedOptions[0].text;
     }
     
@@ -643,23 +653,27 @@ function prepareMetadataForPDF() {
 }
 
 // ===================================================================
-// MODIFICACIÓN DE LA INTERFAZ EXISTENTE
+// FUNCIONES DE INTEGRACIÓN CON LA INTERFAZ (RESTAURADAS)
 // ===================================================================
 
 /**
  * Añadir botón PDF al panel de configuración existente
- * Se ejecuta cuando se crea el panel de configuración
  */
 function addPDFButtonToConfigPanel() {
     // Buscar el contenedor de botones existente
     const buttonContainer = document.querySelector('.config-actions');
     
     if (buttonContainer) {
+        // Verificar si el botón ya existe
+        if (document.getElementById('exportPDFBtn')) {
+            return; // Ya existe, no crear duplicado
+        }
+        
         // Crear botón PDF
         const pdfButton = document.createElement('button');
-        pdfButton.className = 'btn btn-info';
+        pdfButton.className = 'btn btn-info btn-pdf';
         pdfButton.id = 'exportPDFBtn';
-        pdfButton.innerHTML = '📄 Exportar PDF';
+        pdfButton.innerHTML = '<span class="btn-icon">📄 Exportar PDF</span>';
         pdfButton.onclick = exportCurrentReportToPDF;
         pdfButton.disabled = true; // Inicialmente deshabilitado
         
@@ -670,22 +684,24 @@ function addPDFButtonToConfigPanel() {
         } else {
             buttonContainer.appendChild(pdfButton);
         }
+        
+        console.log('✅ Botón PDF añadido al panel de configuración');
     }
 }
 
 /**
- * Habilitar/deshabilitar botón PDF junto con otros botones
- * Modificar funciones existentes de validación
+ * Actualizar estado del botón PDF (habilitar/deshabilitar)
  */
 function updatePDFButtonState(enabled) {
     const pdfButton = document.getElementById('exportPDFBtn');
     if (pdfButton) {
         pdfButton.disabled = !enabled;
+        console.log(`🔄 Botón PDF ${enabled ? 'habilitado' : 'deshabilitado'}`);
     }
 }
 
 // ===================================================================
-// HOOKS PARA INTEGRACIÓN AUTOMÁTICA
+// HOOKS PARA INTEGRACIÓN AUTOMÁTICA (CRÍTICOS PARA EL FUNCIONAMIENTO)
 // ===================================================================
 
 /**
@@ -732,6 +748,7 @@ if (originalGenerateReportPreview) {
             const previewPanel = document.getElementById('reportPreviewPanel');
             if (previewPanel && previewPanel.innerHTML.trim() !== '') {
                 updatePDFButtonState(true);
+                console.log('✅ Vista previa generada - Botón PDF habilitado');
             }
         }, 500);
         
@@ -740,7 +757,7 @@ if (originalGenerateReportPreview) {
 }
 
 // ===================================================================
-// FUNCIONES DE UTILIDAD ADICIONALES
+// FUNCIONES GLOBALES Y DE UTILIDAD
 // ===================================================================
 
 /**
@@ -764,15 +781,6 @@ async function exportTableToPDF(tableElement, title = 'Reporte ARVIC', metadata 
     await window.arvicPDFExporter.exportToPDF(config, rows, headers, metadata);
 }
 
-/**
- * Función para previsualizar PDF (opcional)
- * Genera PDF en blob para mostrar en modal
- */
-async function previewPDFInModal() {
-    // Implementación futura si se requiere preview antes de descargar
-    console.log('Preview PDF - Funcionalidad disponible para implementar');
-}
-
 // ===================================================================
 // EXPORTAR FUNCIONES GLOBALMENTE
 // ===================================================================
@@ -783,15 +791,32 @@ window.exportTableToPDF = exportTableToPDF;
 window.addPDFButtonToConfigPanel = addPDFButtonToConfigPanel;
 window.updatePDFButtonState = updatePDFButtonState;
 
+// ===================================================================
+// INICIALIZACIÓN
+// ===================================================================
+
 // Inicialización automática
 document.addEventListener('DOMContentLoaded', function() {
     console.log('✅ Sistema de exportación PDF ARVIC cargado exitosamente');
     
-    // Verificar si ya existe un panel de configuración
+    // Verificar si ya existe un panel de configuración visible
     const configPanel = document.getElementById('reportConfigPanel');
     if (configPanel && configPanel.style.display !== 'none') {
         addPDFButtonToConfigPanel();
     }
+    
+    // Verificar integración con funciones existentes
+    setTimeout(() => {
+        if (typeof validateRequiredFilters !== 'function') {
+            console.warn('⚠️  Función validateRequiredFilters no encontrada - integración parcial');
+        }
+        
+        if (typeof generateReportPreview !== 'function') {
+            console.warn('⚠️  Función generateReportPreview no encontrada - integración parcial');
+        }
+        
+        console.log('🔗 Verificación de integración completada');
+    }, 1000);
 });
 
-console.log('📄 ARVIC PDF Exporter v1.0 - Sistema de exportación PDF reutilizable iniciado');
+console.log('📄 ARVIC PDF Exporter v3.0 - Sistema completo con diseño exacto iniciado exitosamente');

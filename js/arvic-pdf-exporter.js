@@ -35,6 +35,14 @@ const PDF_CONFIG = {
     orientation: 'landscape'
 };
 
+const PDF_CONFIG_OPTIMIZED = {
+    ...PDF_CONFIG, // Mantener configuración existente
+    dataFontSize: 9,     // Reducido de 10 a 9 para más contenido
+    headerFontSize: 10,  // Reducido de 11 a 10
+    margin: 15,          // Reducido de 20 a 15 para más espacio
+    headerHeight: 45     // Reducido de 50 a 45
+};
+
 /**
  * CLASE PRINCIPAL - EXPORTADOR PDF ARVIC CORREGIDO
  */
@@ -69,7 +77,7 @@ class ARVICPDFExporter {
     async exportToPDF(config, data, headers, metadata = {}) {
         await this.loadJsPDF();
         
-        console.log('🎯 Iniciando exportación PDF:', {
+        console.log('🎯 Iniciando exportación PDF optimizada:', {
             reportType: config.reportType,
             dataCount: data.length,
             headers: headers,
@@ -88,11 +96,10 @@ class ARVICPDFExporter {
         // Añadir header completo (logo + título + metadata)
         this.addCompleteHeader(doc, config, metadata);
         
-        // Añadir tabla con datos
+        // Añadir tabla con datos (ya incluye footers en cada página)
         this.addDataTable(doc, data, headers, config);
         
-        // Añadir footer
-        this.addFooter(doc);
+        // NOTA: No llamar addFooter aquí porque ya se llama en addDataTable
         
         // Generar nombre de archivo y descargar
         const fileName = this.generateFileName(config.reportType, metadata);
@@ -125,28 +132,28 @@ class ARVICPDFExporter {
         const pageWidth = doc.internal.pageSize.getWidth();
         
         // === LOGO REAL DE ARVIC (lado izquierdo) ===
-        this.addARVICLogo(doc, 25, 22); // Subido de 25 a 22
+        this.addARVICLogo(doc, 25, 22);
         
         // === TÍTULO PRINCIPAL (centro) ===
         const titleText = this.getTitleByReportType(config.reportType);
         doc.setTextColor(ARVIC_COLORS.primary);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(PDF_CONFIG.titleFontSize);
-        doc.text(titleText, pageWidth / 2, 30, { align: 'center' }); // Subido de 35 a 30
+        doc.text(titleText, pageWidth / 2, 30, { align: 'center' });
         
-        // Subtítulo empresa (mucho más cerca del título)
+        // Subtítulo empresa
         doc.setTextColor(ARVIC_COLORS.textGray);
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(PDF_CONFIG.subtitleFontSize);
-        doc.text('GRUPO IT ARVIC', pageWidth / 2, 40, { align: 'center' }); // Subido de 47 a 40
+        doc.text('GRUPO IT ARVIC', pageWidth / 2, 40, { align: 'center' });
         
-        // === LÍNEA SEPARADORA (mucho más cerca del subtítulo) ===
+        // === LÍNEA SEPARADORA ===
         doc.setDrawColor(ARVIC_COLORS.primary);
         doc.setLineWidth(0.8);
-        doc.line(PDF_CONFIG.margin, 48, pageWidth - PDF_CONFIG.margin, 48); // Subido de 55 a 48
+        doc.line(PDF_CONFIG.margin, 48, pageWidth - PDF_CONFIG.margin, 48);
         
-        // === METADATA COMPLETA (muy cerca de la línea) ===
-        this.addCompleteMetadataSection(doc, metadata, 52); // Subido de 62 a 52
+        // === METADATA COMPLETA (pasando reportType) ===
+        this.addCompleteMetadataSection(doc, metadata, 52, config.reportType);
     }
 
     /**
@@ -194,7 +201,7 @@ class ARVICPDFExporter {
     /**
      * Añadir sección de metadata completa (espaciado mínimo)
      */
-    addCompleteMetadataSection(doc, metadata, startY) {
+    addCompleteMetadataSection(doc, metadata, startY, reportType) {
         const pageWidth = doc.internal.pageSize.getWidth();
         let yPos = startY;
         
@@ -202,17 +209,34 @@ class ARVICPDFExporter {
         doc.setFontSize(PDF_CONFIG.metadataFontSize);
         doc.setTextColor(ARVIC_COLORS.textGray);
         
-        // === LADO IZQUIERDO ===
-        const clienteText = (metadata.cliente && metadata.cliente !== 'Todos los clientes') 
-            ? `Cliente: ${metadata.cliente}` 
-            : 'Cliente: N/A';
-        doc.text(clienteText, PDF_CONFIG.margin, yPos);
+        // Determinar qué información mostrar según el tipo de reporte
+        const shouldShowCliente = this.shouldShowClienteInfo(reportType, metadata);
+        const shouldShowConsultor = this.shouldShowConsultorInfo(reportType, metadata);
         
-        // Consultor (espaciado ultra-mínimo)
-        const consultorText = (metadata.consultor && metadata.consultor !== 'Todos los consultores') 
-            ? `Consultor: ${metadata.consultor}` 
-            : 'Consultor: N/A';
-        doc.text(consultorText, PDF_CONFIG.margin, yPos + 4); // Reducido de 6 a 4
+        let leftSideLines = [];
+        
+        // === LADO IZQUIERDO (información de filtros) ===
+        
+        // Cliente (solo si debe mostrarse)
+        if (shouldShowCliente) {
+            const clienteText = (metadata.cliente && metadata.cliente !== 'Todos los clientes') 
+                ? `Cliente: ${metadata.cliente}` 
+                : 'Cliente: N/A';
+            leftSideLines.push(clienteText);
+        }
+        
+        // Consultor (solo si debe mostrarse)  
+        if (shouldShowConsultor) {
+            const consultorText = (metadata.consultor && metadata.consultor !== 'Todos los consultores') 
+                ? `Consultor: ${metadata.consultor}` 
+                : 'Consultor: N/A';
+            leftSideLines.push(consultorText);
+        }
+        
+        // Dibujar líneas del lado izquierdo
+        leftSideLines.forEach((line, index) => {
+            doc.text(line, PDF_CONFIG.margin, yPos + (index * 4));
+        });
         
         // === LADO DERECHO ===
         const fecha = new Date().toLocaleDateString('es-MX', {
@@ -222,10 +246,55 @@ class ARVICPDFExporter {
         });
         doc.text(`Generado: ${fecha}`, pageWidth - PDF_CONFIG.margin, yPos, { align: 'right' });
         
+        // Período (con texto mejorado)
         const periodoText = (metadata.mes && metadata.mes !== 'Todos los períodos') 
             ? `Período: ${metadata.mes}` 
-            : 'Período: N/A';
-        doc.text(periodoText, pageWidth - PDF_CONFIG.margin, yPos + 4, { align: 'right' }); // Reducido de 6 a 4
+            : 'Período: No seleccionado'; // CAMBIADO: ya no dice "N/A"
+        doc.text(periodoText, pageWidth - PDF_CONFIG.margin, yPos + 4, { align: 'right' });
+    }
+
+    /**
+     * NUEVA FUNCIÓN: Determinar si mostrar información de Cliente
+     */
+    shouldShowClienteInfo(reportType, metadata) {
+        // Reportes que NO deben mostrar "Cliente N/A":
+        const reportesOmitirCliente = [
+            'pago-consultor-general',    // Reporte General de Pagos
+            'pago-consultor-especifico', // Reporte De Pago A Consultor  
+            'proyecto-general',          // Reporte General de Proyectos
+            'proyecto-consultor'         // Reporte De Consultor - Proyectos
+        ];
+        
+        // Si es un reporte que debe omitir cliente Y no hay cliente seleccionado, no mostrar
+        if (reportesOmitirCliente.includes(reportType)) {
+            // Solo mostrar si hay un cliente específico seleccionado
+            return metadata.cliente && metadata.cliente !== 'Todos los clientes';
+        }
+        
+        // Para otros reportes, mostrar siempre
+        return true;
+    }
+
+    /**
+     * NUEVA FUNCIÓN: Determinar si mostrar información de Consultor
+     */
+    shouldShowConsultorInfo(reportType, metadata) {
+        // Reportes que NO deben mostrar "Consultor N/A":
+        const reportesOmitirConsultor = [
+            'pago-consultor-general',  // Reporte General de Pagos
+            'cliente-soporte',         // Reporte De Soporte Al Cliente
+            'proyecto-general',        // Reporte General de Proyectos  
+            'proyecto-cliente'         // Reporte De Proyecto (Cliente)
+        ];
+        
+        // Si es un reporte que debe omitir consultor Y no hay consultor seleccionado, no mostrar
+        if (reportesOmitirConsultor.includes(reportType)) {
+            // Solo mostrar si hay un consultor específico seleccionado
+            return metadata.consultor && metadata.consultor !== 'Todos los consultores';
+        }
+        
+        // Para otros reportes, mostrar siempre
+        return true;
     }
 
     /**
@@ -240,6 +309,7 @@ class ARVICPDFExporter {
         const columnWidths = this.calculateOptimalColumnWidths(headers, tableWidth, config.reportType);
         
         console.log('📊 Configuración de tabla:', {
+            reportType: config.reportType,
             headers: headers,
             columnWidths: columnWidths,
             dataLength: data.length
@@ -265,48 +335,89 @@ class ARVICPDFExporter {
             currentY += rowHeight;
         });
         
-        // Añadir totales SEPARADOS
+        // Añadir totales SEPARADOS (pasando reportType)
         if (config.showTotals && data.length > 0) {
             currentY += 10;
             const totalsY = currentY;
-            this.addSeparatedTotals(doc, data, pageWidth, totalsY);
+            this.addSeparatedTotals(doc, data, pageWidth, totalsY, config.reportType); // 🔧 Pasando reportType
             
-            // Mensaje MÁS SEPARADO de los totales (aumentado de 22 a 35)
-            const messageY = totalsY + 35; // Más espacio para que no se vea saturado
+            // Mensaje
+            const messageY = totalsY + 35;
             doc.setFont('helvetica', 'italic');
             doc.setFontSize(9); 
             doc.setTextColor(ARVIC_COLORS.black); 
             doc.text('* Totales calculados con valores modificados en vista previa', 
-                     pageWidth - PDF_CONFIG.margin, messageY, { align: 'right' });
+                    pageWidth - PDF_CONFIG.margin, messageY, { align: 'right' });
         }
+    }
+
+    /**
+     * NUEVA FUNCIÓN: Estimar altura de fila antes de dibujarla
+     */
+    estimateRowHeight(doc, rowData, headers, columnWidths, reportType) {
+        let maxLines = 1;
+        
+        headers.forEach((header, index) => {
+            const width = columnWidths[index];
+            let cellValue = this.getCellValue(rowData, header, reportType);
+            const lines = this.splitTextToFitWidth(doc, cellValue.toString(), width - 8);
+            
+            if (lines.length > maxLines) {
+                maxLines = lines.length;
+            }
+        });
+        
+        return Math.max(14, maxLines * 4); // 12mm mínimo, 4mm por línea adicional
     }
 
     /**
      * Añadir totales separados (replicando diseño exacto de imagen 1)
      */
-    addSeparatedTotals(doc, data, pageWidth, y) {
-        // Calcular totales
-        const totalHours = data.reduce((sum, row) => {
-            return sum + parseFloat(row.editedTime || row.tiempo || row.hours || 0);
-        }, 0);
+    addSeparatedTotals(doc, data, pageWidth, y, reportType) {
+        let totalHours = 0;
+        let totalAmount = 0;
         
-        const totalAmount = data.reduce((sum, row) => {
-            return sum + parseFloat(row.editedTotal || row.total || 0);
-        }, 0);
+        // 🔧 CÁLCULO ESPECIAL PARA REPORTE REMANENTE
+        if (reportType === 'remanente') {
+            console.log('📊 Calculando totales para reporte remanente');
+            
+            data.forEach(row => {
+                // Sumar total de horas de cada módulo
+                totalHours += parseFloat(row.totalHoras || 0);
+                
+                // Sumar totales de todas las semanas
+                const semanaKeys = Object.keys(row).filter(key => key.startsWith('semana'));
+                semanaKeys.forEach(semanaKey => {
+                    if (row[semanaKey] && row[semanaKey].total) {
+                        totalAmount += parseFloat(row[semanaKey].total || 0);
+                    }
+                });
+            });
+            
+            console.log(`📊 Totales remanente calculados: ${totalHours} hrs, $${totalAmount}`);
+        } else {
+            // 📋 CÁLCULO NORMAL PARA OTROS REPORTES
+            totalHours = data.reduce((sum, row) => {
+                return sum + parseFloat(row.editedTime || row.tiempo || row.hours || 0);
+            }, 0);
+            
+            totalAmount = data.reduce((sum, row) => {
+                return sum + parseFloat(row.editedTotal || row.total || 0);
+            }, 0);
+        }
         
-        // Configurar texto para totales (aumentar tamaño de fuente)
+        // Dibujar totales
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(13); // Aumentado de 12 a 13
+        doc.setFontSize(13);
         doc.setTextColor(ARVIC_COLORS.primary);
         
-        // Total Horas (alineado a la derecha)
         doc.text(`Total Horas: ${totalHours.toFixed(1)} hrs`, 
-                 pageWidth - PDF_CONFIG.margin, y, { align: 'right' });
+                pageWidth - PDF_CONFIG.margin, y, { align: 'right' });
         
-        // Total Monto (alineado a la derecha, con más espacio)
         doc.text(`Total Monto: ${totalAmount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 
-                 pageWidth - PDF_CONFIG.margin, y + 18, { align: 'right' });
+                pageWidth - PDF_CONFIG.margin, y + 18, { align: 'right' });
     }
+
 
     /**
      * Calcular anchos de columna optimizados según tipo de reporte
@@ -317,11 +428,10 @@ class ARVICPDFExporter {
         switch (reportType) {
             case 'pago-consultor-general':
             case 'pago-consultor-especifico':
-                // 7 columnas: ID, Consultor, Soporte, Módulo, Tiempo, Tarifa, Total
                 return [
-                    tableWidth * 0.08, // ID Empresa (más estrecho)
+                    tableWidth * 0.08, // ID Empresa
                     tableWidth * 0.15, // Consultor
-                    tableWidth * 0.25, // Soporte (más ancho, texto largo)
+                    tableWidth * 0.25, // Soporte
                     tableWidth * 0.20, // Módulo
                     tableWidth * 0.10, // Tiempo
                     tableWidth * 0.10, // Tarifa
@@ -329,7 +439,6 @@ class ARVICPDFExporter {
                 ];
                 
             case 'cliente-soporte':
-                // 5 columnas: Soporte, Módulo, Tiempo, Tarifa, Total
                 return [
                     tableWidth * 0.35, // Soporte
                     tableWidth * 0.25, // Módulo
@@ -339,22 +448,33 @@ class ARVICPDFExporter {
                 ];
                 
             case 'proyecto-cliente':
-                // 4 columnas: Módulo, Tiempo, Tarifa, Total
                 return [
-                    tableWidth * 0.40, // Módulo (más ancho)
+                    tableWidth * 0.40, // Módulo
                     tableWidth * 0.20, // Tiempo
                     tableWidth * 0.20, // Tarifa
                     tableWidth * 0.20  // Total
                 ];
                 
             case 'remanente':
-                // Estructura especial semanal - se maneja por separado
-                const totalWidth = tableWidth * 0.15;
-                const weekWidth = (tableWidth - totalWidth) / 4;
-                return [totalWidth, weekWidth, weekWidth, weekWidth, weekWidth];
+                // 🔧 CORRECCIÓN: Estructura dinámica para remanente
+                console.log('📊 Calculando anchos para reporte remanente:', headers);
+                
+                // Primera columna: "Total de Horas" (más ancha)
+                const totalColumnWidth = tableWidth * 0.20;
+                
+                // Calcular número de semanas dinámicamente
+                const weekColumns = headers.length - 1; // Excluir "Total de Horas"
+                const weekColumnWidth = (tableWidth - totalColumnWidth) / weekColumns;
+                
+                const widths = [totalColumnWidth];
+                for (let i = 0; i < weekColumns; i++) {
+                    widths.push(weekColumnWidth);
+                }
+                
+                console.log('📊 Anchos calculados para remanente:', widths);
+                return widths;
                 
             default:
-                // Distribución equitativa para otros reportes
                 const standardWidth = tableWidth / columnCount;
                 return Array(columnCount).fill(standardWidth);
         }
@@ -398,53 +518,186 @@ class ARVICPDFExporter {
     }
 
     /**
+     * NUEVA FUNCIÓN: Dividir texto para que quepa en el ancho especificado
+     */
+    splitTextToFitWidth(doc, text, maxWidth) {
+        if (!text || text === 'N/A') return [text];
+        
+        const words = text.toString().split(' ');
+        const lines = [];
+        let currentLine = '';
+        
+        for (let word of words) {
+            const testLine = currentLine ? `${currentLine} ${word}` : word;
+            const testWidth = doc.getTextWidth(testLine);
+            
+            if (testWidth <= maxWidth) {
+                currentLine = testLine;
+            } else {
+                if (currentLine) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                } else {
+                    // Palabra muy larga, dividir por caracteres
+                    lines.push(...this.splitLongWord(doc, word, maxWidth));
+                    currentLine = '';
+                }
+            }
+        }
+        
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+        
+        return lines.length > 0 ? lines : [text];
+    }
+
+    /**
      * Dibujar fila de datos (con bordes sutiles y consistentes con headers)
      */
     drawDataRow(doc, rowData, headers, columnWidths, y, rowIndex, reportType) {
         let currentX = PDF_CONFIG.margin;
-        const rowHeight = 14; 
+        const baseRowHeight = 14; // Altura base de fila (mínima)
         
-        // Fondo alternado (replicando el diseño de referencia)
-        if (rowIndex % 2 === 0) {
-            doc.setFillColor(ARVIC_COLORS.lightGray);
-            doc.rect(PDF_CONFIG.margin, y, columnWidths.reduce((a, b) => a + b, 0), rowHeight, 'F');
-        }
+        // Calcular la altura real necesaria para esta fila
+        let maxTextHeight = baseRowHeight;
+        const cellTexts = [];
         
-        // Configurar texto para datos
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(PDF_CONFIG.dataFontSize);
-        doc.setTextColor(ARVIC_COLORS.black);
-        
+        // Pre-procesar todos los textos para calcular altura necesaria
         headers.forEach((header, index) => {
             const width = columnWidths[index];
             let cellValue = this.getCellValue(rowData, header, reportType);
             
-            // Dibujar bordes de celda (más sutiles, igual que headers)
+            // Verificar si el texto necesita ser dividido
+            const lines = this.splitTextToFitWidth(doc, cellValue.toString(), width - 8); // 8mm de padding
+            cellTexts[index] = lines;
+            
+            // Calcular altura necesaria
+            const textHeight = lines.length * 4; // 4mm por línea
+            if (textHeight > maxTextHeight) {
+                maxTextHeight = textHeight;
+            }
+        });
+        
+        // Asegurar altura mínima
+        const finalRowHeight = Math.max(maxTextHeight, baseRowHeight);
+        
+        // Fondo alternado
+        if (rowIndex % 2 === 0) {
+            doc.setFillColor(ARVIC_COLORS.lightGray);
+            doc.rect(PDF_CONFIG.margin, y, columnWidths.reduce((a, b) => a + b, 0), finalRowHeight, 'F');
+        }
+        
+        // Dibujar celdas y textos
+        headers.forEach((header, index) => {
+            const width = columnWidths[index];
+            const lines = cellTexts[index];
+            
+            // Dibujar bordes de celda
             doc.setLineWidth(0.2);
-            doc.setDrawColor(200, 200, 200); // Gris claro consistente
-            doc.rect(currentX, y, width, rowHeight);
+            doc.setDrawColor(200, 200, 200);
+            doc.rect(currentX, y, width, finalRowHeight);
+            
+            // Configurar texto
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(PDF_CONFIG.dataFontSize);
+            doc.setTextColor(ARVIC_COLORS.black);
             
             // Determinar alineación
             const alignment = this.getCellAlignment(header);
-            let textX = currentX + 4; // Margen izquierdo por defecto
             
-            if (alignment === 'center') {
-                textX = currentX + (width / 2);
-            } else if (alignment === 'right') {
-                textX = currentX + width - 4; // Margen derecho
-            }
-            
-            // Dibujar texto
-            doc.text(cellValue.toString(), textX, y + 9, { align: alignment });
+            // Dibujar cada línea de texto
+            lines.forEach((line, lineIndex) => {
+                let textX = currentX + 4; // Margen izquierdo por defecto
+                
+                if (alignment === 'center') {
+                    textX = currentX + (width / 2);
+                } else if (alignment === 'right') {
+                    textX = currentX + width - 4;
+                }
+                
+                const textY = y + 8 + (lineIndex * 4); // Espaciado entre líneas
+                doc.text(line, textX, textY, { align: alignment });
+            });
             
             currentX += width;
         });
+        
+        return finalRowHeight; // Retornar la altura real usada
+    }
+
+    /**
+     * NUEVA FUNCIÓN: Dividir palabras muy largas por caracteres
+     */
+    splitLongWord(doc, word, maxWidth) {
+        const lines = [];
+        let currentPart = '';
+        
+        for (let char of word) {
+            const testPart = currentPart + char;
+            const testWidth = doc.getTextWidth(testPart);
+            
+            if (testWidth <= maxWidth) {
+                currentPart = testPart;
+            } else {
+                if (currentPart) {
+                    lines.push(currentPart);
+                }
+                currentPart = char;
+            }
+        }
+        
+        if (currentPart) {
+            lines.push(currentPart);
+        }
+        
+        return lines;
     }
 
     /**
      * Obtener valor de celda con mapeo correcto según el tipo de reporte
      */
     getCellValue(rowData, header, reportType) {
+        console.log(`🔍 getCellValue - Header: "${header}", ReportType: "${reportType}"`);
+        
+        // 🔧 MANEJO ESPECIAL PARA REPORTE REMANENTE
+        if (reportType === 'remanente') {
+            console.log('📊 Procesando celda de reporte remanente:', { header, rowData: Object.keys(rowData) });
+            
+            if (header === 'Total de Horas') {
+                const totalHoras = rowData.totalHoras || 0;
+                console.log(`📊 Total de Horas: ${totalHoras}`);
+                return `${parseFloat(totalHoras).toFixed(1)} hrs`;
+            }
+            
+            // Para headers de semana (SEMANA 1, SEMANA 2, etc.)
+            if (header.includes('SEMANA')) {
+                const weekNumber = header.match(/SEMANA (\d+)/);
+                if (weekNumber) {
+                    const semanaKey = `semana${weekNumber[1]}`;
+                    const semanaData = rowData[semanaKey];
+                    
+                    console.log(`📅 Procesando ${semanaKey}:`, semanaData);
+                    
+                    if (semanaData) {
+                        // Formato: "Modulo: X hrs | $X | $X"
+                        const modulo = rowData.modulo || 'Sin módulo';
+                        const tiempo = parseFloat(semanaData.tiempo || 0).toFixed(1);
+                        const tarifa = parseFloat(semanaData.tarifa || 0).toLocaleString('es-MX');
+                        const total = parseFloat(semanaData.total || 0).toLocaleString('es-MX');
+                        
+                        return `${modulo}\n${tiempo} hrs\n$${tarifa}\n$${total}`;
+                    } else {
+                        return `${rowData.modulo || 'Sin módulo'}\n0.0 hrs\n$0\n$0`;
+                    }
+                }
+            }
+            
+            // Fallback para otros campos
+            return rowData[header] || '';
+        }
+        
+        // 📋 MANEJO NORMAL PARA OTROS REPORTES
         switch (header) {
             case 'ID Empresa':
                 return rowData.idEmpresa || rowData.empresaId || 'N/A';
@@ -471,7 +724,6 @@ class ARVICPDFExporter {
                 return `$${parseFloat(total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
                 
             default:
-                // Intentar mapeo genérico
                 return rowData[header] || rowData[header.toLowerCase()] || '';
         }
     }
@@ -689,6 +941,17 @@ function addPDFButtonToConfigPanel() {
     }
 }
 
+// Función auxiliar para verificar cuántas filas caben por página
+function calculateMaxRowsPerPage() {
+    const pageHeight = 210; // A4 landscape
+    const usableHeight = pageHeight - PDF_CONFIG_OPTIMIZED.headerHeight - 50; // 50 para footer
+    const averageRowHeight = 12; // Altura promedio por fila
+    
+    return Math.floor(usableHeight / averageRowHeight);
+}
+
+console.log(`📋 Filas estimadas por página: ${calculateMaxRowsPerPage()}`);
+
 /**
  * Actualizar estado del botón PDF (habilitar/deshabilitar)
  */
@@ -698,6 +961,35 @@ function updatePDFButtonState(enabled) {
         pdfButton.disabled = !enabled;
         console.log(`🔄 Botón PDF ${enabled ? 'habilitado' : 'deshabilitado'}`);
     }
+}
+
+function debugRemanenteData() {
+    console.log('🔍 DEBUGGING - Estructura de datos remanente');
+    
+    if (!editablePreviewData || Object.keys(editablePreviewData).length === 0) {
+        console.error('❌ No hay datos en editablePreviewData');
+        return;
+    }
+    
+    const firstRow = Object.values(editablePreviewData)[0];
+    console.log('📊 Primera fila de datos:', firstRow);
+    
+    // Verificar estructura de semanas
+    const semanaKeys = Object.keys(firstRow).filter(key => key.startsWith('semana'));
+    console.log('📅 Semanas encontradas:', semanaKeys);
+    
+    semanaKeys.forEach(semanaKey => {
+        console.log(`📅 ${semanaKey}:`, firstRow[semanaKey]);
+    });
+    
+    // Verificar total de horas
+    console.log('📊 Total de horas:', firstRow.totalHoras);
+    
+    return {
+        totalRows: Object.keys(editablePreviewData).length,
+        semanas: semanaKeys.length,
+        estructura: firstRow
+    };
 }
 
 // ===================================================================
@@ -790,6 +1082,7 @@ window.exportCurrentReportToPDF = exportCurrentReportToPDF;
 window.exportTableToPDF = exportTableToPDF;
 window.addPDFButtonToConfigPanel = addPDFButtonToConfigPanel;
 window.updatePDFButtonState = updatePDFButtonState;
+window.debugRemanenteData = debugRemanenteData;
 
 // ===================================================================
 // INICIALIZACIÓN

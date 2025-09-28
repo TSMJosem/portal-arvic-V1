@@ -305,50 +305,125 @@ class ARVICPDFExporter {
         const pageWidth = doc.internal.pageSize.getWidth();
         const tableWidth = pageWidth - (PDF_CONFIG.margin * 2);
         
-        // Calcular anchos de columna según el tipo de reporte
-        const columnWidths = this.calculateOptimalColumnWidths(headers, tableWidth, config.reportType);
-        
-        console.log('📊 Configuración de tabla:', {
+        console.log('📊 addDataTable:', {
             reportType: config.reportType,
-            headers: headers,
-            columnWidths: columnWidths,
-            dataLength: data.length
+            dataLength: data.length,
+            headers: headers
         });
         
-        // Dibujar headers de la tabla
-        this.drawTableHeaders(doc, headers, columnWidths, startY);
+        // 🔧 TRANSFORMAR DATOS SI ES REMANENTE
+        let processedData = data;
+        let processedHeaders = headers;
         
-        // Dibujar filas de datos
-        let currentY = startY + 10;
-        const rowHeight = 14; 
+        if (config.reportType === 'remanente') {
+            console.log('📊 Usando estructura jerárquica completa para remanente');
+            
+            const bottomMargin = 50;
+
+            // 1. Extraer datos editables correctos PRIMERO
+            extraerDatosEditablesCorrectos();
+            
+            // 2. Transformar datos
+            const transformed = this.transformRemanenteDataForPDF(window.editablePreviewData || {});
+            processedData = transformed.data;
+            processedHeaders = transformed.headers;
+            
+            // 3. Generar estructura de headers jerárquicos
+            const headerStructure = this.generateRemanenteHeaders(window.editablePreviewData || {});
+            
+            // 4. Calcular anchos para estructura jerárquica
+            const columnWidths = this.calculateOptimalColumnWidths(processedHeaders, tableWidth, config.reportType);
+            
+            console.log('📊 Configuración jerárquica:', {
+                headerStructure,
+                columnWidths: columnWidths.length,
+                dataLength: processedData.length
+            });
+            
+            // 5. Dibujar headers jerárquicos
+            const headerHeight = this.drawRemanenteHeaders(doc, headerStructure, columnWidths, startY);
+            
+            // 6. Dibujar filas usando función especializada
+            let currentY = startY + headerHeight + 2;
+            processedData.forEach((row, index) => {
+                if (currentY + 18 > doc.internal.pageSize.getHeight() - bottomMargin) {
+                    this.addFooter(doc);
+                    doc.addPage();
+                    currentY = 30;
+                    this.drawRemanenteHeaders(doc, headerStructure, columnWidths, currentY);
+                    currentY += headerHeight + 2;
+                }
+                
+                this.drawRemanenteDataRow(doc, row, processedHeaders, columnWidths, currentY, index);
+                currentY += 15;
+            });
+            
+            this.addFooter(doc);
+            return; // SALIR AQUÍ para remanente
+        }
         
-        data.forEach((row, index) => {
-            // Verificar si necesitamos nueva página
-            if (currentY > doc.internal.pageSize.getHeight() - 80) {
+        // Calcular anchos de columna
+        const columnWidths = this.calculateOptimalColumnWidths(processedHeaders, tableWidth, config.reportType);
+        
+        console.log('📊 Configuración final:', {
+            headers: processedHeaders,
+            columnWidths: columnWidths,
+            dataLength: processedData.length
+        });
+        
+        // Dibujar headers
+        this.drawTableHeaders(doc, processedHeaders, columnWidths, startY);
+        
+        // Dibujar filas
+        let currentY = startY + 12;
+        const bottomMargin = 50;
+        
+        processedData.forEach((row, index) => {
+            // Calcular altura necesaria
+            const estimatedHeight = config.reportType === 'remanente' ? 18 : 14;
+            
+            // Verificar nueva página
+            if (currentY + estimatedHeight > doc.internal.pageSize.getHeight() - bottomMargin) {
+                this.addFooter(doc);
                 doc.addPage();
                 currentY = 30;
-                this.drawTableHeaders(doc, headers, columnWidths, currentY);
-                currentY += 10;
+                this.drawTableHeaders(doc, processedHeaders, columnWidths, currentY);
+                currentY += 12;
             }
             
-            this.drawDataRow(doc, row, headers, columnWidths, currentY, index, config.reportType);
-            currentY += rowHeight;
+            // Dibujar fila según tipo
+            let actualHeight;
+            if (config.reportType === 'remanente') {
+                actualHeight = this.drawRemanenteDataRow(doc, row, processedHeaders, columnWidths, currentY, index);
+            } else {
+                actualHeight = this.drawDataRow(doc, row, processedHeaders, columnWidths, currentY, index, config.reportType);
+            }
+            
+            currentY += actualHeight + 1;
         });
         
-        // Añadir totales SEPARADOS (pasando reportType)
-        if (config.showTotals && data.length > 0) {
+        // Añadir totales
+        if (config.showTotals && processedData.length > 0) {
             currentY += 10;
-            const totalsY = currentY;
-            this.addSeparatedTotals(doc, data, pageWidth, totalsY, config.reportType); // 🔧 Pasando reportType
             
-            // Mensaje
-            const messageY = totalsY + 35;
+            if (currentY + 30 > doc.internal.pageSize.getHeight() - bottomMargin) {
+                this.addFooter(doc);
+                doc.addPage();
+                currentY = 30;
+            }
+            
+            this.addSeparatedTotals(doc, processedData, pageWidth, currentY, config.reportType);
+            
+            const messageY = currentY + 25;
             doc.setFont('helvetica', 'italic');
-            doc.setFontSize(9); 
-            doc.setTextColor(ARVIC_COLORS.black); 
+            doc.setFontSize(8);
+            doc.setTextColor(ARVIC_COLORS.black);
             doc.text('* Totales calculados con valores modificados en vista previa', 
                     pageWidth - PDF_CONFIG.margin, messageY, { align: 'right' });
         }
+        
+        // Footer final
+        this.addFooter(doc);
     }
 
     /**
@@ -429,49 +504,38 @@ class ARVICPDFExporter {
             case 'pago-consultor-general':
             case 'pago-consultor-especifico':
                 return [
-                    tableWidth * 0.08, // ID Empresa
-                    tableWidth * 0.15, // Consultor
-                    tableWidth * 0.25, // Soporte
-                    tableWidth * 0.20, // Módulo
-                    tableWidth * 0.10, // Tiempo
-                    tableWidth * 0.10, // Tarifa
-                    tableWidth * 0.12  // Total
+                    tableWidth * 0.08, tableWidth * 0.15, tableWidth * 0.25, 
+                    tableWidth * 0.20, tableWidth * 0.10, tableWidth * 0.10, tableWidth * 0.12
                 ];
                 
             case 'cliente-soporte':
                 return [
-                    tableWidth * 0.35, // Soporte
-                    tableWidth * 0.25, // Módulo
-                    tableWidth * 0.15, // Tiempo
-                    tableWidth * 0.15, // Tarifa
-                    tableWidth * 0.10  // Total
+                    tableWidth * 0.35, tableWidth * 0.25, tableWidth * 0.15, 
+                    tableWidth * 0.15, tableWidth * 0.10
                 ];
                 
             case 'proyecto-cliente':
                 return [
-                    tableWidth * 0.40, // Módulo
-                    tableWidth * 0.20, // Tiempo
-                    tableWidth * 0.20, // Tarifa
-                    tableWidth * 0.20  // Total
+                    tableWidth * 0.40, tableWidth * 0.20, tableWidth * 0.20, tableWidth * 0.20
                 ];
                 
             case 'remanente':
-                // 🔧 CORRECCIÓN: Estructura dinámica para remanente
-                console.log('📊 Calculando anchos para reporte remanente:', headers);
+                console.log('📊 Calculando anchos para 5 semanas');
                 
-                // Primera columna: "Total de Horas" (más ancha)
-                const totalColumnWidth = tableWidth * 0.20;
-                
-                // Calcular número de semanas dinámicamente
-                const weekColumns = headers.length - 1; // Excluir "Total de Horas"
-                const weekColumnWidth = (tableWidth - totalColumnWidth) / weekColumns;
+                const totalColumnWidth = tableWidth * 0.15;
+                const weekAreaWidth = tableWidth * 0.85;
+                const numberOfWeeks = 5;  // FIJO: siempre 5 semanas
+                const weekColumnWidth = weekAreaWidth / numberOfWeeks;
+                const subColumnWidth = weekColumnWidth / 4;
                 
                 const widths = [totalColumnWidth];
-                for (let i = 0; i < weekColumns; i++) {
-                    widths.push(weekColumnWidth);
+                
+                // 5 semanas × 4 subcolomnas = 20 columnas adicionales
+                for (let semana = 1; semana <= numberOfWeeks; semana++) {
+                    widths.push(subColumnWidth, subColumnWidth, subColumnWidth, subColumnWidth);
                 }
                 
-                console.log('📊 Anchos calculados para remanente:', widths);
+                console.log(`📊 Anchos calculados para ${numberOfWeeks} semanas`);
                 return widths;
                 
             default:
@@ -662,38 +726,32 @@ class ARVICPDFExporter {
         
         // 🔧 MANEJO ESPECIAL PARA REPORTE REMANENTE
         if (reportType === 'remanente') {
-            console.log('📊 Procesando celda de reporte remanente:', { header, rowData: Object.keys(rowData) });
+            console.log('📊 Procesando celda de reporte remanente:', header);
             
             if (header === 'Total de Horas') {
                 const totalHoras = rowData.totalHoras || 0;
-                console.log(`📊 Total de Horas: ${totalHoras}`);
                 return `${parseFloat(totalHoras).toFixed(1)} hrs`;
             }
             
-            // Para headers de semana (SEMANA 1, SEMANA 2, etc.)
-            if (header.includes('SEMANA')) {
-                const weekNumber = header.match(/SEMANA (\d+)/);
-                if (weekNumber) {
-                    const semanaKey = `semana${weekNumber[1]}`;
-                    const semanaData = rowData[semanaKey];
-                    
-                    console.log(`📅 Procesando ${semanaKey}:`, semanaData);
-                    
-                    if (semanaData) {
-                        // Formato: "Modulo: X hrs | $X | $X"
-                        const modulo = rowData.modulo || 'Sin módulo';
-                        const tiempo = parseFloat(semanaData.tiempo || 0).toFixed(1);
-                        const tarifa = parseFloat(semanaData.tarifa || 0).toLocaleString('es-MX');
-                        const total = parseFloat(semanaData.total || 0).toLocaleString('es-MX');
-                        
-                        return `${modulo}\n${tiempo} hrs\n$${tarifa}\n$${total}`;
-                    } else {
-                        return `${rowData.modulo || 'Sin módulo'}\n0.0 hrs\n$0\n$0`;
-                    }
-                }
+            // Para subcolomnas de semana (MODULO, TIEMPO, TARIFA, TOTAL)
+            if (header === 'MODULO') {
+                // Determinar qué semana basándose en la posición en headers
+                // Esto se maneja de forma diferente - ver drawDataRow corregida
+                return header; // Placeholder, se maneja en drawDataRow
             }
             
-            // Fallback para otros campos
+            if (header === 'TIEMPO') {
+                return header; // Placeholder, se maneja en drawDataRow
+            }
+            
+            if (header === 'TARIFA') {
+                return header; // Placeholder, se maneja en drawDataRow
+            }
+            
+            if (header === 'TOTAL') {
+                return header; // Placeholder, se maneja en drawDataRow
+            }
+            
             return rowData[header] || '';
         }
         
@@ -701,28 +759,21 @@ class ARVICPDFExporter {
         switch (header) {
             case 'ID Empresa':
                 return rowData.idEmpresa || rowData.empresaId || 'N/A';
-                
             case 'Consultor':
                 return rowData.consultor || rowData.consultorName || 'N/A';
-                
             case 'Soporte':
                 return rowData.soporte || rowData.soporteName || rowData.supportName || 'N/A';
-                
             case 'Modulo':
                 return rowData.modulo || rowData.moduloName || rowData.moduleName || 'N/A';
-                
             case 'TIEMPO':
                 const tiempo = rowData.editedTime || rowData.tiempo || rowData.hours || 0;
                 return `${parseFloat(tiempo).toFixed(1)} hrs`;
-                
             case 'TARIFA de Modulo':
                 const tarifa = rowData.editedTariff || rowData.tarifa || rowData.rate || 0;
                 return `$${parseFloat(tarifa).toLocaleString('es-MX')}`;
-                
             case 'TOTAL':
                 const total = rowData.editedTotal || rowData.total || 0;
                 return `$${parseFloat(total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-                
             default:
                 return rowData[header] || rowData[header.toLowerCase()] || '';
         }
@@ -801,11 +852,303 @@ class ARVICPDFExporter {
         const baseName = reportNames[reportType] || 'ReporteARVIC';
         return `${baseName}_${dateStr}_${timeStr}.pdf`;
     }
+
+    /**
+     * FUNCIÓN NUEVA: Transformar datos de remanente para estructura de PDF
+     * Convierte la estructura anidada en estructura plana como la vista previa
+     */
+    transformRemanenteDataForPDF(editableData) {
+        console.log('🔄 Transformando datos con mapeo exacto...');
+        
+        if (!editableData || Object.keys(editableData).length === 0) {
+            return { headers: [], data: [] };
+        }
+        
+        // Headers: 1 total + 20 subcolomnas (4 × 5 semanas)
+        const headers = ['Total de Horas'];
+        for (let semana = 1; semana <= 5; semana++) {
+            headers.push('MODULO', 'TIEMPO', 'TARIFA', 'TOTAL');
+        }
+        
+        const flattenedData = [];
+        
+        Object.values(editableData).forEach((moduleRow) => {
+            if (!moduleRow || typeof moduleRow !== 'object') return;
+            
+            // Filtrar fila de totales
+            if (moduleRow['posicion_0'] === 'TOTALES') return;
+            
+            const flatRow = {
+                totalHoras: parseFloat(moduleRow['posicion_0'] || 0)
+            };
+            
+            // MAPEO EXACTO: Cada grupo de 4 celdas = 1 semana
+            for (let semana = 1; semana <= 5; semana++) {
+                const baseIndex = (semana - 1) * 4 + 1;
+                
+                const modulo = moduleRow[`posicion_${baseIndex}`] || '-';
+                const tiempo = moduleRow[`posicion_${baseIndex + 1}`] || '0.0';
+                const tarifa = moduleRow[`posicion_${baseIndex + 2}`] || '$0';
+                const total = moduleRow[`posicion_${baseIndex + 3}`] || '$0.00';
+                
+                flatRow[`modulo${semana}`] = modulo;
+                flatRow[`tiempo${semana}`] = tiempo === '' ? '0.0' : tiempo;
+                flatRow[`tarifa${semana}`] = tarifa === '' ? '$0' : tarifa;
+                flatRow[`total${semana}`] = total;
+            }
+            
+            flattenedData.push(flatRow);
+        });
+        
+        console.log(`✅ ${flattenedData.length} filas transformadas`);
+        
+        return {
+            headers: headers,
+            data: flattenedData,
+            weekStructure: { totalWeeks: 5 }
+        };
+    }
+
+    /**
+     * FUNCIÓN NUEVA: drawDataRow especializada para remanente
+     */
+    drawRemanenteDataRow(doc, rowData, headers, columnWidths, y, rowIndex) {
+        let currentX = PDF_CONFIG.margin;
+        const rowHeight = 18; // Altura fija más generosa para remanente
+        
+        // Fondo alternado
+        if (rowIndex % 2 === 0) {
+            doc.setFillColor(ARVIC_COLORS.lightGray);
+            doc.rect(PDF_CONFIG.margin, y, columnWidths.reduce((a, b) => a + b, 0), rowHeight, 'F');
+        }
+        
+        // Configurar texto
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8); // Fuente más pequeña para más datos
+        doc.setTextColor(ARVIC_COLORS.black);
+        
+        let headerIndex = 0;
+        
+        // Primera columna: Total de Horas
+        const totalHoras = parseFloat(rowData.totalHoras || 0).toFixed(1);
+        
+        doc.setLineWidth(0.2);
+        doc.setDrawColor(200, 200, 200);
+        doc.rect(currentX, y, columnWidths[0], rowHeight);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${totalHoras} hrs`, currentX + columnWidths[0]/2, y + rowHeight/2 + 2, { align: 'center' });
+        
+        currentX += columnWidths[0];
+        headerIndex++;
+        
+        // Detectar número de semanas
+        const remainingHeaders = headers.length - 1;
+        const numberOfWeeks = remainingHeaders / 4;
+        
+        // Dibujar datos para cada semana
+        for (let semana = 1; semana <= numberOfWeeks; semana++) {
+            doc.setFont('helvetica', 'normal');
+            
+            // MODULO
+            const modulo = rowData[`modulo${semana}`] || '-';
+            doc.rect(currentX, y, columnWidths[headerIndex], rowHeight);
+            doc.text(modulo, currentX + 2, y + rowHeight/2 + 2);
+            currentX += columnWidths[headerIndex];
+            headerIndex++;
+            
+            // TIEMPO
+            const tiempo = parseFloat(rowData[`tiempo${semana}`] || 0).toFixed(1);
+            doc.rect(currentX, y, columnWidths[headerIndex], rowHeight);
+            doc.text(`${tiempo} hrs`, currentX + columnWidths[headerIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+            currentX += columnWidths[headerIndex];
+            headerIndex++;
+            
+            // TARIFA
+            const tarifa = parseFloat(rowData[`tarifa${semana}`] || 0);
+            doc.rect(currentX, y, columnWidths[headerIndex], rowHeight);
+            doc.text(`$${tarifa.toLocaleString('es-MX')}`, currentX + columnWidths[headerIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+            currentX += columnWidths[headerIndex];
+            headerIndex++;
+            
+            // TOTAL
+            const total = parseFloat(rowData[`total${semana}`] || 0);
+            doc.rect(currentX, y, columnWidths[headerIndex], rowHeight);
+            doc.setFont('helvetica', 'bold');
+            doc.text(`$${total.toLocaleString('es-MX')}`, currentX + columnWidths[headerIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+            doc.setFont('helvetica', 'normal');
+            currentX += columnWidths[headerIndex];
+            headerIndex++;
+        }
+        
+        return rowHeight;
+    }
 }
 
 // ===================================================================
 // INTEGRACIÓN CON LA INTERFAZ EXISTENTE (PARTE CRÍTICA RESTAURADA)
 // ===================================================================
+
+/**
+ * FUNCIONES NUEVAS PARA REMANENTE
+ */
+
+// Función 1: Extraer datos editables correctos
+function extraerDatosEditablesCorrectos() {
+    console.log('🔧 Extrayendo datos con input.value...');
+    
+    const tabla = document.querySelector('#reportPreviewPanel table');
+    if (!tabla) return null;
+    
+    const filas = Array.from(tabla.querySelectorAll('tbody tr'));
+    const datosCorrectos = {};
+    
+    filas.forEach((fila, filaIndex) => {
+        const celdas = Array.from(fila.querySelectorAll('td'));
+        const objeto = {};
+        
+        celdas.forEach((celda, celdaIndex) => {
+            const input = celda.querySelector('input');
+            let valor = input ? input.value : celda.textContent.trim();
+            objeto[`posicion_${celdaIndex}`] = valor;
+        });
+        
+        datosCorrectos[filaIndex] = objeto;
+    });
+    
+    window.editablePreviewData = datosCorrectos;
+    return datosCorrectos;
+}
+
+// Función 2: Generar headers jerárquicos
+ARVICPDFExporter.prototype.generateRemanenteHeaders = function(editableData) {
+    console.log('📋 Generando headers jerárquicos para 5 semanas...');
+    
+    const headerStructure = {
+        totalWeeks: 5,
+        mainHeaders: ['Total de Horas'],
+        subHeaders: ['Total de Horas']
+    };
+    
+    for (let semana = 1; semana <= 5; semana++) {
+        headerStructure.mainHeaders.push(`Semana ${semana}`);
+        headerStructure.subHeaders.push('MODULO', 'TIEMPO', 'TARIFA', 'TOTAL');
+    }
+    
+    return headerStructure;
+};
+
+// Función 3: Dibujar headers jerárquicos
+ARVICPDFExporter.prototype.drawRemanenteHeaders = function(doc, headerStructure, columnWidths, y) {
+    let currentX = 20;
+    const mainHeaderHeight = 12;
+    const subHeaderHeight = 10;
+    
+    const totalColumnWidth = columnWidths[0];
+    const remainingWidth = columnWidths.slice(1).reduce((a, b) => a + b, 0);
+    const weekColumnWidth = remainingWidth / headerStructure.totalWeeks;
+    
+    // Headers principales
+    doc.setFillColor(25, 118, 210);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(255, 255, 255);
+    
+    // Total de Horas
+    doc.rect(currentX, y, totalColumnWidth, mainHeaderHeight + subHeaderHeight, 'F');
+    doc.rect(currentX, y, totalColumnWidth, mainHeaderHeight + subHeaderHeight);
+    doc.text('Total de Horas', currentX + totalColumnWidth/2, y + (mainHeaderHeight + subHeaderHeight)/2 + 3, { align: 'center' });
+    currentX += totalColumnWidth;
+    
+    // Headers de semanas
+    for (let semana = 1; semana <= headerStructure.totalWeeks; semana++) {
+        doc.setFillColor(25, 118, 210);
+        doc.rect(currentX, y, weekColumnWidth, mainHeaderHeight, 'F');
+        doc.rect(currentX, y, weekColumnWidth, mainHeaderHeight);
+        doc.text(`Semana ${semana}`, currentX + weekColumnWidth/2, y + mainHeaderHeight/2 + 3, { align: 'center' });
+        
+        const subColumnWidth = weekColumnWidth / 4;
+        let subX = currentX;
+        
+        ['MODULO', 'TIEMPO', 'TARIFA', 'TOTAL'].forEach(subHeader => {
+            doc.setFillColor(33, 150, 243);
+            doc.rect(subX, y + mainHeaderHeight, subColumnWidth, subHeaderHeight, 'F');
+            doc.rect(subX, y + mainHeaderHeight, subColumnWidth, subHeaderHeight);
+            
+            doc.setFontSize(8);
+            doc.text(subHeader, subX + subColumnWidth/2, y + mainHeaderHeight + subHeaderHeight/2 + 2, { align: 'center' });
+            
+            subX += subColumnWidth;
+        });
+        
+        currentX += weekColumnWidth;
+    }
+    
+    return mainHeaderHeight + subHeaderHeight;
+};
+
+// Función 4: Dibujar filas de datos para remanente
+ARVICPDFExporter.prototype.drawRemanenteDataRow = function(doc, rowData, headers, columnWidths, y, rowIndex) {
+    let currentX = 20;
+    const rowHeight = 18;
+    
+    if (rowIndex % 2 === 0) {
+        doc.setFillColor(245, 245, 245);
+        doc.rect(20, y, columnWidths.reduce((a, b) => a + b, 0), rowHeight, 'F');
+    }
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(0, 0, 0);
+    
+    // Total de Horas
+    const totalHoras = parseFloat(rowData.totalHoras || 0).toFixed(1);
+    doc.rect(currentX, y, columnWidths[0], rowHeight);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`${totalHoras} hrs`, currentX + columnWidths[0]/2, y + rowHeight/2 + 2, { align: 'center' });
+    currentX += columnWidths[0];
+    
+    let columnIndex = 1;
+    doc.setFont('helvetica', 'normal');
+    
+    for (let semana = 1; semana <= 5; semana++) {
+        // MODULO
+        const modulo = rowData[`modulo${semana}`] || '-';
+        doc.rect(currentX, y, columnWidths[columnIndex], rowHeight);
+        if (modulo !== '-' && modulo !== '') {
+            doc.setFontSize(7);
+            doc.text(modulo, currentX + 1, y + rowHeight/2 + 2);
+            doc.setFontSize(8);
+        } else {
+            doc.text('-', currentX + columnWidths[columnIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+        }
+        currentX += columnWidths[columnIndex++];
+        
+        // TIEMPO
+        const tiempo = rowData[`tiempo${semana}`] || '0.0';
+        doc.rect(currentX, y, columnWidths[columnIndex], rowHeight);
+        doc.text(tiempo === '0.0' ? '-' : `${tiempo}h`, currentX + columnWidths[columnIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+        currentX += columnWidths[columnIndex++];
+        
+        // TARIFA
+        const tarifa = rowData[`tarifa${semana}`] || '$0';
+        doc.rect(currentX, y, columnWidths[columnIndex], rowHeight);
+        doc.text(tarifa === '$0' ? '-' : `$${tarifa}`, currentX + columnWidths[columnIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+        currentX += columnWidths[columnIndex++];
+        
+        // TOTAL
+        const total = rowData[`total${semana}`] || '$0.00';
+        doc.rect(currentX, y, columnWidths[columnIndex], rowHeight);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(0, 100, 0);
+        doc.text(total, currentX + columnWidths[columnIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+        doc.setTextColor(0, 0, 0);
+        doc.setFont('helvetica', 'normal');
+        currentX += columnWidths[columnIndex++];
+    }
+    
+    return rowHeight;
+};
 
 // Crear instancia global
 window.arvicPDFExporter = new ARVICPDFExporter();
@@ -817,9 +1160,19 @@ async function exportCurrentReportToPDF() {
     try {
         console.log('🚀 Iniciando exportación PDF del reporte actual...');
         
-        // Validar que hay datos para exportar
-        if (!currentReportType || !editablePreviewData || Object.keys(editablePreviewData).length === 0) {
-            throw new Error('No hay datos disponibles para exportar');
+        // Validar que hay datos para exportar - VERSIÓN CORREGIDA
+        const reportType = window.currentReportType || currentReportType;
+        const previewData = window.editablePreviewData || editablePreviewData;
+
+        console.log('🔍 Verificando datos:', {
+            reportType: reportType,
+            previewDataKeys: Object.keys(previewData || {}),
+            globalCurrentReportType: window.currentReportType,
+            globalEditablePreviewData: window.editablePreviewData
+        });
+
+        if (!reportType || !previewData || Object.keys(previewData).length === 0) {
+            throw new Error('No hay datos disponibles para exportar. Asegúrate de generar la vista previa primero.');
         }
         
         // Mostrar indicador de carga en el botón
@@ -830,7 +1183,7 @@ async function exportCurrentReportToPDF() {
         }
         
         // Preparar configuración
-        const report = ARVIC_REPORTS[currentReportType];
+        const report = ARVIC_REPORTS[reportType];
         const config = {
             title: report.name || 'Reporte ARVIC',
             reportType: currentReportType,
@@ -838,7 +1191,7 @@ async function exportCurrentReportToPDF() {
         };
         
         // Preparar datos - convertir objeto a array
-        const data = Object.values(editablePreviewData);
+        const data = Object.values(previewData);
         
         // Preparar headers
         const headers = report.structure || ['ID', 'Descripción', 'Valor'];
@@ -992,6 +1345,45 @@ function debugRemanenteData() {
     };
 }
 
+function debugRemanenteStructure() {
+    console.log('🔍 DEBUGGING COMPLETO - Estructura Remanente');
+    
+    if (!window.editablePreviewData) {
+        console.error('❌ No hay editablePreviewData disponible');
+        return;
+    }
+    
+    const data = window.editablePreviewData;
+    const firstRow = Object.values(data)[0];
+    
+    console.log('📊 Primera fila completa:', firstRow);
+    
+    if (firstRow && firstRow.monthStructure) {
+        console.log('📅 Estructura de mes:', firstRow.monthStructure);
+        
+        const semanaKeys = Object.keys(firstRow).filter(key => key.startsWith('semana'));
+        console.log('📅 Semanas encontradas:', semanaKeys);
+        
+        semanaKeys.forEach(key => {
+            console.log(`📅 ${key}:`, firstRow[key]);
+        });
+        
+        // Probar transformación
+        const transformed = transformRemanenteDataForPDF(data);
+        console.log('🔄 Resultado de transformación:', transformed);
+        
+        return {
+            originalData: Object.keys(data).length,
+            semanas: semanaKeys.length,
+            transformedHeaders: transformed.headers.length,
+            transformedData: transformed.data.length
+        };
+    } else {
+        console.error('❌ No se encontró monthStructure en los datos');
+        return null;
+    }
+}
+
 // ===================================================================
 // HOOKS PARA INTEGRACIÓN AUTOMÁTICA (CRÍTICOS PARA EL FUNCIONAMIENTO)
 // ===================================================================
@@ -1073,20 +1465,13 @@ async function exportTableToPDF(tableElement, title = 'Reporte ARVIC', metadata 
     await window.arvicPDFExporter.exportToPDF(config, rows, headers, metadata);
 }
 
-// ===================================================================
-// EXPORTAR FUNCIONES GLOBALMENTE
-// ===================================================================
-
 // Funciones principales
 window.exportCurrentReportToPDF = exportCurrentReportToPDF;
 window.exportTableToPDF = exportTableToPDF;
 window.addPDFButtonToConfigPanel = addPDFButtonToConfigPanel;
 window.updatePDFButtonState = updatePDFButtonState;
 window.debugRemanenteData = debugRemanenteData;
-
-// ===================================================================
-// INICIALIZACIÓN
-// ===================================================================
+window.debugRemanenteStructure = debugRemanenteStructure;
 
 // Inicialización automática
 document.addEventListener('DOMContentLoaded', function() {

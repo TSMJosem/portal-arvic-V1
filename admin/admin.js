@@ -4440,7 +4440,25 @@ function getRemanenteProjectData(reports, clientId, monthKey, projectSelection) 
     });
     
     console.log(`✅ ${Object.keys(projectData).length} proyectos procesados`);
-    return projectData;
+    
+    // ✅ APLANAR LA ESTRUCTURA: Convertir objeto anidado a array plano
+    const flatData = [];
+    
+    Object.values(projectData).forEach(project => {
+        Object.values(project.modules).forEach(module => {
+            flatData.push({
+                projectName: project.projectName,
+                moduleName: module.moduleName,
+                totalHours: module.totalHours,
+                tarifa: module.tarifa,
+                total: module.total,
+                type: 'project'  // ✅ Marcar como proyecto
+            });
+        });
+    });
+    
+    console.log(`✅ ${flatData.length} módulos de proyecto en array plano`);
+    return flatData;  // ✅ RETORNAR ARRAY PLANO
 }
 
 /**
@@ -4553,7 +4571,10 @@ function processDataForReport(rawData, reportType) {
             return [];
         }
         
-        console.log(`📊 Datos remanente: ${rawData.soportes?.length || 0} soportes, ${Object.keys(rawData.proyectos || {}).length} proyectos`);
+        console.log(`📊 Datos remanente:`, {
+            soportes: rawData.soportes?.length || 0,
+            proyectos: rawData.proyectos?.length || 0  // ✅ Ahora es array
+        });
         
         // Los datos ya vienen procesados correctamente de getRemanenteDataWithProjects
         return rawData;

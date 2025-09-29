@@ -316,49 +316,18 @@ class ARVICPDFExporter {
         let processedHeaders = headers;
         
         if (config.reportType === 'remanente') {
-            console.log('📊 Usando estructura jerárquica completa para remanente');
+            console.log('📊 Generando reporte remanente en MÚLTIPLES PÁGINAS');
             
-            const bottomMargin = 50;
-
-            // 1. Extraer datos editables correctos PRIMERO
+            // 1. Extraer datos editables
             extraerDatosEditablesCorrectos();
             
             // 2. Transformar datos
             const transformed = this.transformRemanenteDataForPDF(window.editablePreviewData || {});
             processedData = transformed.data;
-            processedHeaders = transformed.headers;
             
-            // 3. Generar estructura de headers jerárquicos
-            const headerStructure = this.generateRemanenteHeaders(window.editablePreviewData || {});
+            // 3. Generar reporte multi-página
+            this.generateRemanenteMultiPageReport(doc, processedData, config, startY);
             
-            // 4. Calcular anchos para estructura jerárquica
-            const columnWidths = this.calculateOptimalColumnWidths(processedHeaders, tableWidth, config.reportType);
-            
-            console.log('📊 Configuración jerárquica:', {
-                headerStructure,
-                columnWidths: columnWidths.length,
-                dataLength: processedData.length
-            });
-            
-            // 5. Dibujar headers jerárquicos
-            const headerHeight = this.drawRemanenteHeaders(doc, headerStructure, columnWidths, startY);
-            
-            // 6. Dibujar filas usando función especializada
-            let currentY = startY + headerHeight + 2;
-            processedData.forEach((row, index) => {
-                if (currentY + 18 > doc.internal.pageSize.getHeight() - bottomMargin) {
-                    this.addFooter(doc);
-                    doc.addPage();
-                    currentY = 30;
-                    this.drawRemanenteHeaders(doc, headerStructure, columnWidths, currentY);
-                    currentY += headerHeight + 2;
-                }
-                
-                this.drawRemanenteDataRow(doc, row, processedHeaders, columnWidths, currentY, index);
-                currentY += 15;
-            });
-            
-            this.addFooter(doc);
             return; // SALIR AQUÍ para remanente
         }
         
@@ -982,6 +951,322 @@ class ARVICPDFExporter {
         }
         
         return rowHeight;
+    }
+
+    /**
+     * NUEVA FUNCIÓN: Generar reporte remanente en múltiples páginas
+     * Página 1: Total + Semanas 1-2
+     * Página 2: Total + Semanas 3-4  
+     * Página 3: Total + Semana 5 + Totales
+     */
+    generateRemanenteMultiPageReport(doc, data, config, startY) {
+        console.log('📄 Generando reporte en 3 páginas...');
+        
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const tableWidth = pageWidth - (PDF_CONFIG.margin * 2);
+        const bottomMargin = 50;
+        
+        // Definición de páginas
+        const pages = [
+            { pageNum: 1, weeks: [1, 2], title: 'Semanas 1-2' },
+            { pageNum: 2, weeks: [3, 4], title: 'Semanas 3-4' },
+            { pageNum: 3, weeks: [5], title: 'Semana 5' }
+        ];
+        
+        // Generar cada página
+        pages.forEach((pageConfig, pageIndex) => {
+            if (pageIndex > 0) {
+                doc.addPage();
+                this.addCompleteHeader(doc, config, config.metadata || {});
+            }
+            
+            console.log(`📄 Generando página ${pageConfig.pageNum}: ${pageConfig.title}`);
+            
+            // Calcular anchos de columna para esta página
+            const numWeeks = pageConfig.weeks.length;
+            const columnWidths = this.calculateRemanenteColumnWidths(tableWidth, numWeeks);
+            
+            // Generar estructura de headers
+            const headerStructure = {
+                totalWeeks: numWeeks,
+                weeks: pageConfig.weeks,
+                pageNum: pageConfig.pageNum,
+                totalPages: pages.length
+            };
+            
+            // Dibujar headers
+            const headerHeight = this.drawRemanenteHeadersMultiPage(
+                doc, 
+                headerStructure, 
+                columnWidths, 
+                startY
+            );
+            
+            // Dibujar filas de datos
+            let currentY = startY + headerHeight + 2;
+            
+            data.forEach((row, rowIndex) => {
+                // Verificar si necesitamos nueva página (solo si hay muchas filas)
+                if (currentY + 18 > doc.internal.pageSize.getHeight() - bottomMargin) {
+                    this.addFooter(doc);
+                    doc.addPage();
+                    this.addCompleteHeader(doc, config, config.metadata || {});
+                    currentY = startY;
+                    
+                    // Re-dibujar headers
+                    this.drawRemanenteHeadersMultiPage(
+                        doc, 
+                        headerStructure, 
+                        columnWidths, 
+                        currentY
+                    );
+                    currentY += headerHeight + 2;
+                }
+                
+                // Dibujar fila con solo las semanas de esta página
+                this.drawRemanenteDataRowMultiPage(
+                    doc, 
+                    row, 
+                    pageConfig.weeks, 
+                    columnWidths, 
+                    currentY, 
+                    rowIndex
+                );
+                
+                currentY += 15;
+            });
+            
+            // Si es la última página, agregar totales
+            if (pageConfig.pageNum === pages.length) {
+                currentY += 10;
+                
+                if (currentY + 40 > doc.internal.pageSize.getHeight() - bottomMargin) {
+                    this.addFooter(doc);
+                    doc.addPage();
+                    currentY = 30;
+                }
+                
+                this.addRemanenteTotals(doc, data, pageWidth, currentY);
+            }
+            
+            // Agregar footer con número de página
+            this.addFooterWithPageNumber(doc, pageConfig.pageNum, pages.length);
+        });
+    }
+
+    /**
+     * Calcular anchos de columna para remanente según número de semanas
+     */
+    calculateRemanenteColumnWidths(tableWidth, numWeeks) {
+        const totalColumnWidth = tableWidth * 0.18; // 18% para Total de Horas
+        const weekAreaWidth = tableWidth * 0.82;    // 82% para las semanas
+        const weekColumnWidth = weekAreaWidth / numWeeks;
+        const subColumnWidth = weekColumnWidth / 4; // 4 subcolomnas por semana
+        
+        const widths = [totalColumnWidth];
+        
+        // Agregar anchos para cada semana (4 subcolomnas por semana)
+        for (let i = 0; i < numWeeks; i++) {
+            widths.push(subColumnWidth, subColumnWidth, subColumnWidth, subColumnWidth);
+        }
+        
+        console.log(`📏 Anchos calculados para ${numWeeks} semanas:`, widths);
+        return widths;
+    }
+
+    /**
+     * Dibujar headers jerárquicos para páginas específicas
+     */
+    drawRemanenteHeadersMultiPage(doc, headerStructure, columnWidths, y) {
+        let currentX = PDF_CONFIG.margin;
+        const mainHeaderHeight = 12;
+        const subHeaderHeight = 10;
+        
+        const totalColumnWidth = columnWidths[0];
+        const remainingWidth = columnWidths.slice(1).reduce((a, b) => a + b, 0);
+        const weekColumnWidth = remainingWidth / headerStructure.totalWeeks;
+        
+        // Configurar fuente
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(255, 255, 255);
+        
+        // Columna "Total de Horas"
+        doc.setFillColor(25, 118, 210);
+        doc.rect(currentX, y, totalColumnWidth, mainHeaderHeight + subHeaderHeight, 'F');
+        doc.rect(currentX, y, totalColumnWidth, mainHeaderHeight + subHeaderHeight);
+        doc.text('Total de Horas', currentX + totalColumnWidth/2, y + (mainHeaderHeight + subHeaderHeight)/2 + 3, { align: 'center' });
+        currentX += totalColumnWidth;
+        
+        // Headers de semanas (solo las de esta página)
+        headerStructure.weeks.forEach(weekNum => {
+            doc.setFillColor(25, 118, 210);
+            doc.rect(currentX, y, weekColumnWidth, mainHeaderHeight, 'F');
+            doc.rect(currentX, y, weekColumnWidth, mainHeaderHeight);
+            doc.text(`Semana ${weekNum}`, currentX + weekColumnWidth/2, y + mainHeaderHeight/2 + 3, { align: 'center' });
+            
+            const subColumnWidth = weekColumnWidth / 4;
+            let subX = currentX;
+            
+            ['MODULO', 'TIEMPO', 'TARIFA', 'TOTAL'].forEach(subHeader => {
+                doc.setFillColor(33, 150, 243);
+                doc.rect(subX, y + mainHeaderHeight, subColumnWidth, subHeaderHeight, 'F');
+                doc.rect(subX, y + mainHeaderHeight, subColumnWidth, subHeaderHeight);
+                
+                doc.setFontSize(8);
+                doc.text(subHeader, subX + subColumnWidth/2, y + mainHeaderHeight + subHeaderHeight/2 + 2, { align: 'center' });
+                
+                subX += subColumnWidth;
+            });
+            
+            currentX += weekColumnWidth;
+        });
+        
+        return mainHeaderHeight + subHeaderHeight;
+    }
+
+    /**
+     * Dibujar fila de datos con solo las semanas especificadas
+     */
+    drawRemanenteDataRowMultiPage(doc, rowData, weeks, columnWidths, y, rowIndex) {
+        let currentX = PDF_CONFIG.margin;
+        const rowHeight = 15;
+        
+        // Fondo alternado
+        if (rowIndex % 2 === 0) {
+            doc.setFillColor(ARVIC_COLORS.lightGray);
+            doc.rect(PDF_CONFIG.margin, y, columnWidths.reduce((a, b) => a + b, 0), rowHeight, 'F');
+        }
+        
+        // Configurar texto
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(ARVIC_COLORS.black);
+        doc.setLineWidth(0.2);
+        doc.setDrawColor(200, 200, 200);
+        
+        let columnIndex = 0;
+        
+        // Columna 1: Total de Horas
+        const totalHoras = parseFloat(rowData.totalHoras || 0).toFixed(1);
+        doc.rect(currentX, y, columnWidths[columnIndex], rowHeight);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`${totalHoras} hrs`, currentX + columnWidths[columnIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+        doc.setFont('helvetica', 'normal');
+        currentX += columnWidths[columnIndex++];
+        
+        // Datos de las semanas especificadas
+        weeks.forEach(semana => {
+            // MODULO
+            const modulo = rowData[`modulo${semana}`] || '-';
+            doc.rect(currentX, y, columnWidths[columnIndex], rowHeight);
+            doc.setFontSize(8);
+            doc.text(modulo, currentX + columnWidths[columnIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+            doc.setFontSize(9);
+            currentX += columnWidths[columnIndex++];
+            
+            // TIEMPO
+            const tiempo = rowData[`tiempo${semana}`] || '0.0';
+            doc.rect(currentX, y, columnWidths[columnIndex], rowHeight);
+            doc.text(tiempo === '0.0' ? '-' : `${tiempo}h`, currentX + columnWidths[columnIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+            currentX += columnWidths[columnIndex++];
+            
+            // TARIFA
+            const tarifa = rowData[`tarifa${semana}`] || '$0';
+            doc.rect(currentX, y, columnWidths[columnIndex], rowHeight);
+            doc.text(tarifa === '$0' ? '-' : tarifa, currentX + columnWidths[columnIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+            currentX += columnWidths[columnIndex++];
+            
+            // TOTAL
+            const total = rowData[`total${semana}`] || '$0.00';
+            doc.rect(currentX, y, columnWidths[columnIndex], rowHeight);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 100, 0);
+            doc.text(total, currentX + columnWidths[columnIndex]/2, y + rowHeight/2 + 2, { align: 'center' });
+            doc.setTextColor(0, 0, 0);
+            doc.setFont('helvetica', 'normal');
+            currentX += columnWidths[columnIndex++];
+        });
+        
+        return rowHeight;
+    }
+
+    /**
+     * Agregar totales consolidados al final del reporte
+     */
+    addRemanenteTotals(doc, data, pageWidth, y) {
+        console.log('📊 Calculando totales consolidados...');
+        
+        let totalHoras = 0;
+        let totalMonto = 0;
+        
+        data.forEach(row => {
+            totalHoras += parseFloat(row.totalHoras || 0);
+            
+            // Sumar totales de todas las semanas
+            for (let semana = 1; semana <= 5; semana++) {
+                const total = row[`total${semana}`] || '$0.00';
+                const numericTotal = parseFloat(total.replace(/[$,]/g, ''));
+                totalMonto += numericTotal;
+            }
+        });
+        
+        // Dibujar sección de totales
+        doc.setDrawColor(25, 118, 210);
+        doc.setLineWidth(0.5);
+        doc.line(PDF_CONFIG.margin, y, pageWidth - PDF_CONFIG.margin, y);
+        
+        y += 8;
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(ARVIC_COLORS.primary);
+        
+        doc.text(`Total Horas: ${totalHoras.toFixed(1)} hrs`, 
+                pageWidth - PDF_CONFIG.margin, y, { align: 'right' });
+        
+        doc.text(`Total Monto: $${totalMonto.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`, 
+                pageWidth - PDF_CONFIG.margin, y + 10, { align: 'right' });
+        
+        console.log(`✅ Totales: ${totalHoras.toFixed(1)} hrs, $${totalMonto.toFixed(2)}`);
+    }
+
+    /**
+     * Agregar footer con número de página
+     */
+    addFooterWithPageNumber(doc, currentPage, totalPages) {
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const footerY = pageHeight - 15;
+        
+        // Línea divisoria
+        doc.setDrawColor(25, 118, 210);
+        doc.setLineWidth(0.5);
+        doc.line(PDF_CONFIG.margin, footerY - 5, pageWidth - PDF_CONFIG.margin, footerY - 5);
+        
+        // Texto del footer
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(100, 100, 100);
+        
+        doc.text('GRUPO IT ARVIC - Sistema de Gestión Empresarial', 
+                PDF_CONFIG.margin, footerY);
+        
+        const currentDate = new Date().toLocaleDateString('es-MX', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        doc.text(`Documento generado automáticamente - ${currentDate}`, 
+                PDF_CONFIG.margin, footerY + 6);
+        
+        // Número de página
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Página ${currentPage} de ${totalPages}`, 
+                pageWidth - PDF_CONFIG.margin, footerY, { align: 'right' });
     }
 }
 

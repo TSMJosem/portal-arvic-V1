@@ -58,6 +58,11 @@
                                 <span class="menu-text">Módulos</span>
                                 <span class="menu-badge" id="sidebarModulesCount">0</span>
                             </div>
+                            <div class="sidebar-menu-item" data-section="tarifario">
+                                <span class="menu-icon">💰</span>
+                                <span class="menu-text">Tarifario</span>
+                                <span class="menu-badge" id="sidebarTarifarioCount">0</span>
+                            </div>
                         </div>
                     </div>
 
@@ -227,6 +232,51 @@
                                         <option value="">Seleccionar Módulo</option>
                                     </select>
                                 </div>
+                                <!-- Sección de Tarifas -->
+                                <div class="tarifa-section">
+                                    <h4 class="tarifa-title">💰 Configuración de Tarifas</h4>
+                                    
+                                    <div class="tarifa-inputs">
+                                        <div class="form-group">
+                                            <label for="assignTarifaConsultor">Tarifa Consultor ($/hora)</label>
+                                            <input 
+                                                type="number" 
+                                                id="assignTarifaConsultor" 
+                                                name="assignTarifaConsultor" 
+                                                step="0.01" 
+                                                min="0" 
+                                                placeholder="300.00"
+                                                required
+                                            >
+                                            <small class="form-hint">Costo por hora que se le paga al consultor</small>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="assignTarifaCliente">Tarifa Cliente ($/hora)</label>
+                                            <input 
+                                                type="number" 
+                                                id="assignTarifaCliente" 
+                                                name="assignTarifaCliente" 
+                                                step="0.01" 
+                                                min="0" 
+                                                placeholder="500.00"
+                                                required
+                                            >
+                                            <small class="form-hint">Costo por hora que se le cobra al cliente</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="margen-display">
+                                        <div class="margen-info">
+                                            <span class="margen-label">Margen:</span>
+                                            <span id="assignMargen" class="margen-value">$0.00</span>
+                                            <span id="assignMargenPorcentaje" class="margen-percent">(0%)</span>
+                                        </div>
+                                        <div id="assignMargenWarning" class="margen-warning" style="display: none;">
+                                            ⚠️ El margen es negativo
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             <div class="form-group" style="text-align: center; margin-top: 20px;">
                                 <button type="button" class="btn btn-primary" onclick="createAssignment()">
@@ -275,26 +325,57 @@
                                         <option value="">Seleccionar módulo</option>
                                     </select>
                                 </div>
+                                <!-- Sección de Tarifas -->
+                                <div class="tarifa-section">
+                                    <h4 class="tarifa-title">💰 Configuración de Tarifas</h4>
+                                    
+                                    <div class="tarifa-inputs">
+                                        <div class="form-group">
+                                            <label for="projectAssignTarifaConsultor">Tarifa Consultor ($/hora)</label>
+                                            <input 
+                                                type="number" 
+                                                id="projectAssignTarifaConsultor" 
+                                                name="projectAssignTarifaConsultor" 
+                                                step="0.01" 
+                                                min="0" 
+                                                placeholder="300.00"
+                                                required
+                                            >
+                                            <small class="form-hint">Costo por hora que se le paga al consultor</small>
+                                        </div>
+                                        
+                                        <div class="form-group">
+                                            <label for="projectAssignTarifaCliente">Tarifa Cliente ($/hora)</label>
+                                            <input 
+                                                type="number" 
+                                                id="projectAssignTarifaCliente" 
+                                                name="projectAssignTarifaCliente" 
+                                                step="0.01" 
+                                                min="0" 
+                                                placeholder="500.00"
+                                                required
+                                            >
+                                            <small class="form-hint">Costo por hora que se le cobra al cliente</small>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="margen-display">
+                                        <div class="margen-info">
+                                            <span class="margen-label">Margen:</span>
+                                            <span id="projectAssignMargen" class="margen-value">$0.00</span>
+                                            <span id="projectAssignMargenPorcentaje" class="margen-percent">(0%)</span>
+                                        </div>
+                                        <div id="projectAssignMargenWarning" class="margen-warning" style="display: none;">
+                                            ⚠️ El margen es negativo
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                             
                             <div class="form-group" style="text-align: center; margin-top: 20px;">
                                 <button type="button" class="btn btn-primary" onclick="createProjectAssignment()">
                                     🎯 Asignar Proyecto
                                 </button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div id="lista-proyectos-asignados-section" class="content-section">
-                        <div class="section-header">
-                            <h2 class="section-title">📋 Proyectos Asignados</h2>
-                        </div>
-                        
-                        <div id="projectAssignmentsList" class="assignments-list">
-                            <div class="empty-state">
-                                <div class="empty-state-icon">🎯</div>
-                                <div class="empty-state-title">No hay proyectos asignados</div>
-                                <div class="empty-state-desc">Los proyectos asignados a consultores aparecerán aquí</div>
                             </div>
                         </div>
                     </div>
@@ -612,6 +693,129 @@
                                     <div class="stat-number" id="totalDownloads">0</div>
                                     <div class="stat-label">Total Descargas</div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                            <!-- Sección de Tarifario -->
+                    <div id="tarifario-section" class="content-section">
+                        <div class="section-header">
+                            <h2 class="section-title">💰 Tarifario - Gestión de Costos</h2>
+                            <button class="btn btn-export" onclick="exportTarifarioToExcel()">
+                                📤 Exportar a Excel
+                            </button>
+                        </div>
+
+                        <!-- Filtros de tipo -->
+                        <div class="tarifario-filters">
+                            <button class="filter-btn active" data-type="all" onclick="filterTarifarioByType('all')">
+                                📊 Todos
+                            </button>
+                            <button class="filter-btn" data-type="soporte" onclick="filterTarifarioByType('soporte')">
+                                📞 Soportes
+                            </button>
+                            <button class="filter-btn" data-type="proyecto" onclick="filterTarifarioByType('proyecto')">
+                                📋 Proyectos
+                            </button>
+                        </div>
+
+                        <!-- Estadísticas rápidas -->
+                        <div class="tarifario-stats">
+                            <div class="stat-card">
+                                <div class="stat-icon">📊</div>
+                                <div class="stat-content">
+                                    <span class="stat-label">Total Asignaciones</span>
+                                    <span class="stat-value" id="totalAsignaciones">0</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">💰</div>
+                                <div class="stat-content">
+                                    <span class="stat-label">Margen Promedio</span>
+                                    <span class="stat-value" id="margenPromedio">$0.00</span>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon">📈</div>
+                                <div class="stat-content">
+                                    <span class="stat-label">Total Consultores</span>
+                                    <span class="stat-value" id="totalConsultores">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Unión -->
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h3 class="table-title">📊 Tabla de Unión - Asignaciones con Tarifas</h3>
+                                <div class="table-info">
+                                    <span id="tarifarioCount">0 asignaciones</span>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="tarifario-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Tipo</th>
+                                            <th>ID Asignación</th>
+                                            <th>Módulo</th>
+                                            <th>Consultor</th>
+                                            <th>Cliente</th>
+                                            <th>Trabajo</th>
+                                            <th>Costo Consultor</th>
+                                            <th>Costo Cliente</th>
+                                            <th>Margen</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tarifarioTableBody">
+                                        <tr>
+                                            <td colspan="10" class="empty-state-cell">
+                                                <div class="empty-state">
+                                                    <div class="empty-state-icon">💰</div>
+                                                    <div class="empty-state-title">No hay tarifas configuradas</div>
+                                                    <div class="empty-state-desc">Las tarifas se crean automáticamente al crear asignaciones</div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de Consultores -->
+                        <div class="table-container">
+                            <div class="table-header">
+                                <h3 class="table-title">👥 Resumen por Consultor</h3>
+                                <div class="table-info">
+                                    <span id="consultoresCount">0 consultores</span>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="consultores-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Nombre</th>
+                                            <th>Total Asignaciones</th>
+                                            <th>Módulos</th>
+                                            <th>Clientes</th>
+                                            <th>Promedio Tarifa</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="consultoresTableBody">
+                                        <tr>
+                                            <td colspan="6" class="empty-state-cell">
+                                                <div class="empty-state">
+                                                    <div class="empty-state-icon">👥</div>
+                                                    <div class="empty-state-title">No hay consultores con asignaciones</div>
+                                                    <div class="empty-state-desc">Asigne proyectos o soportes a consultores para ver el resumen</div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>

@@ -164,44 +164,71 @@ function debugDropdowns() {
 
 /// === GESTIÓN DE ASIGNACIONES ===
 function createAssignment() {
+    // Capturar valores básicos
     const userId = document.getElementById('assignUser').value;
     const companyId = document.getElementById('assignCompany').value;
-    const supportId = document.getElementById('assignSupport').value; // Cambiar de taskId
+    const supportId = document.getElementById('assignSupport').value;
     const moduleId = document.getElementById('assignModule').value;
     
+    // Capturar tarifas - CRÍTICO
+    const tarifaConsultorInput = document.getElementById('assignTarifaConsultor');
+    const tarifaClienteInput = document.getElementById('assignTarifaCliente');
+    
+    const tarifaConsultor = tarifaConsultorInput ? parseFloat(tarifaConsultorInput.value) || 0 : 0;
+    const tarifaCliente = tarifaClienteInput ? parseFloat(tarifaClienteInput.value) || 0 : 0;
+    
+    console.log('DEBUG TARIFAS - Valores capturados:', {
+        tarifaConsultor: tarifaConsultor,
+        tarifaCliente: tarifaCliente,
+        inputConsultorExiste: !!tarifaConsultorInput,
+        inputClienteExiste: !!tarifaClienteInput
+    });
+    
+    // Validar campos básicos
     if (!userId || !companyId || !supportId || !moduleId) {
-        window.NotificationUtils.error('Todos los campos son requeridos para crear una asignación');
+        window.NotificationUtils.error('Todos los campos son requeridos');
         return;
     }
-
+    
+    // Validar tarifas
+    if (tarifaConsultor <= 0 || tarifaCliente <= 0) {
+        window.NotificationUtils.error('Las tarifas deben ser mayores a 0');
+        return;
+    }
+    
+    // Crear objeto de datos
     const assignmentData = {
         userId: userId,
         companyId: companyId,
-        supportId: supportId, // Cambiar de taskId
-        moduleId: moduleId
+        supportId: supportId,
+        moduleId: moduleId,
+        tarifaConsultor: tarifaConsultor,
+        tarifaCliente: tarifaCliente
     };
-
+    
+    console.log('ENVIANDO A DATABASE:', assignmentData);
+    
+    // Crear asignación
     const result = window.PortalDB.createAssignment(assignmentData);
     
     if (result.success) {
-        const user = currentData.users[userId];
-        const company = currentData.companies[companyId];
-        const support = currentData.supports[supportId]; // Cambiar de task
-        const module = currentData.modules[moduleId];
-        
-        window.NotificationUtils.success(
-            `✅ Nueva asignación creada: ${user.name} → ${company.name} (${support.name} - ${module.name})`
-        );
+        window.NotificationUtils.success('Asignación creada exitosamente');
+        loadAllData();
         
         // Limpiar formulario
         document.getElementById('assignUser').value = '';
         document.getElementById('assignCompany').value = '';
-        document.getElementById('assignSupport').value = ''; // Cambiar de assignTask
+        document.getElementById('assignSupport').value = '';
         document.getElementById('assignModule').value = '';
+        if (tarifaConsultorInput) tarifaConsultorInput.value = '';
+        if (tarifaClienteInput) tarifaClienteInput.value = '';
         
-        loadAllData();
+        // Resetear margen
+        if (typeof updateAssignMargen === 'function') {
+            updateAssignMargen();
+        }
     } else {
-        window.NotificationUtils.error('Error al crear asignación: ' + result.message);
+        window.NotificationUtils.error('Error: ' + result.message);
     }
 }
 
@@ -1990,6 +2017,18 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
         console.error('❌ Error durante inicialización:', error);
     }
+
+    // Inicializar listeners de tarifas
+    initializeTarifaListeners();
+    initializeProjectTarifaListeners();
+    
+    console.log('✅ Listeners de tarifas inicializados');
+
+    // Verificar asignaciones sin tarifas
+    verificarTarifasAlCargar();
+    
+    console.log('✅ Panel de administrador completamente inicializado');
+
 });
 
 console.log('✅ === ADMIN.JS CARGADO CON FUNCIONES MEJORADAS ===');
@@ -2133,6 +2172,9 @@ function loadSectionData(sectionName) {
             case 'modulos':
                 updateModulesList();
                 break;
+            case 'tarifario':           // ← NUEVO
+                loadTarifario();        // ← NUEVO
+                break;   
             case 'lista-asignaciones':
 
             case 'asignaciones-recientes':
@@ -2795,90 +2837,51 @@ function updateDropdowns() {
 }
 
 function createProjectAssignment() {
-    const consultorId = document.getElementById('assignProjectConsultor').value;  // CAMBIO
+    const userId = document.getElementById('assignProjectConsultor').value;
     const projectId = document.getElementById('assignProjectProject').value;
     const companyId = document.getElementById('assignProjectCompany').value;
     const moduleId = document.getElementById('assignProjectModule').value;
+    const tarifaConsultor = parseFloat(document.getElementById('projectAssignTarifaConsultor').value) || 0;  // ← NUEVO
+    const tarifaCliente = parseFloat(document.getElementById('projectAssignTarifaCliente').value) || 0;      // ← NUEVO
     
-    // Validaciones (IGUAL que createAssignment())
-    if (!consultorId || !projectId || !companyId || !moduleId) {
-        window.NotificationUtils.error('Todos los campos son requeridos para crear una asignación de proyecto');
+    if (!userId || !projectId || !companyId || !moduleId) {
+        window.NotificationUtils.error('Todos los campos son requeridos');
+        return;
+    }
+    
+    // Validar tarifas
+    if (tarifaConsultor <= 0 || tarifaCliente <= 0) {  // ← NUEVO
+        window.NotificationUtils.error('Las tarifas deben ser mayores a 0');
         return;
     }
     
     const assignmentData = {
-        consultorId: consultorId,
+        userId: userId,
         projectId: projectId,
         companyId: companyId,
-        moduleId: moduleId
+        moduleId: moduleId,
+        tarifaConsultor: tarifaConsultor,  // ← NUEVO
+        tarifaCliente: tarifaCliente        // ← NUEVO
     };
     
     const result = window.PortalDB.createProjectAssignment(assignmentData);
     
     if (result.success) {
-        const consultor = currentData.users[consultorId];
-        const project = currentData.projects[projectId];
-        const company = currentData.companies[companyId];
-        const module = currentData.modules[moduleId];
-        
-        window.NotificationUtils.success(
-            `✅ Proyecto asignado: ${consultor.name} → "${project.name}" para ${company.name} (${module.name})`
-        );
-        
-        // Limpiar formulario (IGUAL que createAssignment())
+        window.NotificationUtils.success('Proyecto asignado exitosamente con tarifas configuradas');
+        loadAllData();
+        // Limpiar formulario
         document.getElementById('assignProjectConsultor').value = '';
         document.getElementById('assignProjectProject').value = '';
         document.getElementById('assignProjectCompany').value = '';
         document.getElementById('assignProjectModule').value = '';
-        
-        loadAllData();
+        document.getElementById('projectAssignTarifaConsultor').value = '';  // ← NUEVO
+        document.getElementById('projectAssignTarifaCliente').value = '';    // ← NUEVO
+        updateProjectAssignMargen(); // Resetear margen  // ← NUEVO
     } else {
         window.NotificationUtils.error('Error al asignar proyecto: ' + result.message);
     }
 }
 
-// Modificar la función createAssignment para permitir múltiples asignaciones
-function createAssignment() {
-    const userId = document.getElementById('assignUser').value;
-    const companyId = document.getElementById('assignCompany').value;
-    const supportId = document.getElementById('assignSupport').value; // ✅ CAMBIO: supportId en lugar de taskId
-    const moduleId = document.getElementById('assignModule').value;
-    
-    if (!userId || !companyId || !supportId || !moduleId) {
-        window.NotificationUtils.error('Todos los campos son requeridos para crear una asignación');
-        return;
-    }
-
-    const assignmentData = {
-        userId: userId,
-        companyId: companyId,
-        supportId: supportId, // ✅ CAMBIO: supportId
-        moduleId: moduleId
-    };
-
-    const result = window.PortalDB.createAssignment(assignmentData);
-    
-    if (result.success) {
-        const user = currentData.users[userId];
-        const company = currentData.companies[companyId];
-        const support = currentData.supports[supportId]; // ✅ CAMBIO: support
-        const module = currentData.modules[moduleId];
-        
-        window.NotificationUtils.success(
-            `✅ Nueva asignación creada: ${user.name} → ${company.name} (${support.name} - ${module.name})`
-        );
-        
-        // Limpiar formulario
-        document.getElementById('assignUser').value = '';
-        document.getElementById('assignCompany').value = '';
-        document.getElementById('assignSupport').value = ''; // ✅ CAMBIO
-        document.getElementById('assignModule').value = '';
-        
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al crear asignación: ' + result.message);
-    }
-}
 
 function updateUsersList() {
     const container = document.getElementById('usersList');
@@ -6180,6 +6183,861 @@ function ensureReportSelectorInitialized() {
 
 console.log('✅ Funciones de generación de reportes cargadas correctamente');
 
+// ===================================================================
+// FUNCIONES DE CÁLCULO DE MARGEN PARA TARIFAS
+// ===================================================================
+
+/**
+ * Calcular margen entre tarifas
+ */
+function calculateMargen(tarifaConsultor, tarifaCliente) {
+    const consultor = parseFloat(tarifaConsultor) || 0;
+    const cliente = parseFloat(tarifaCliente) || 0;
+    return cliente - consultor;
+}
+
+/**
+ * Calcular porcentaje de margen
+ */
+function calculateMargenPorcentaje(tarifaConsultor, tarifaCliente) {
+    const consultor = parseFloat(tarifaConsultor) || 0;
+    const cliente = parseFloat(tarifaCliente) || 0;
+    
+    if (consultor === 0) return 0;
+    
+    const margen = cliente - consultor;
+    return (margen / consultor) * 100;
+}
+
+/**
+ * Formatear moneda
+ */
+function formatCurrency(value) {
+    return new Intl.NumberFormat('es-MX', {
+        style: 'currency',
+        currency: 'MXN'
+    }).format(value);
+}
+
+/**
+ * Actualizar display de margen para asignaciones de soporte
+ */
+function updateAssignMargen() {
+    const tarifaConsultor = document.getElementById('assignTarifaConsultor').value;
+    const tarifaCliente = document.getElementById('assignTarifaCliente').value;
+    
+    const margen = calculateMargen(tarifaConsultor, tarifaCliente);
+    const porcentaje = calculateMargenPorcentaje(tarifaConsultor, tarifaCliente);
+    
+    const margenElement = document.getElementById('assignMargen');
+    const porcentajeElement = document.getElementById('assignMargenPorcentaje');
+    const warningElement = document.getElementById('assignMargenWarning');
+    
+    // Actualizar valor
+    margenElement.textContent = formatCurrency(margen);
+    porcentajeElement.textContent = `(${porcentaje.toFixed(1)}%)`;
+    
+    // Aplicar clase según si es positivo o negativo
+    if (margen < 0) {
+        margenElement.classList.add('negative');
+        warningElement.style.display = 'block';
+    } else {
+        margenElement.classList.remove('negative');
+        warningElement.style.display = 'none';
+    }
+}
+
+/**
+ * Actualizar display de margen para asignaciones de proyecto
+ */
+function updateProjectAssignMargen() {
+    const tarifaConsultor = document.getElementById('projectAssignTarifaConsultor').value;
+    const tarifaCliente = document.getElementById('projectAssignTarifaCliente').value;
+    
+    const margen = calculateMargen(tarifaConsultor, tarifaCliente);
+    const porcentaje = calculateMargenPorcentaje(tarifaConsultor, tarifaCliente);
+    
+    const margenElement = document.getElementById('projectAssignMargen');
+    const porcentajeElement = document.getElementById('projectAssignMargenPorcentaje');
+    const warningElement = document.getElementById('projectAssignMargenWarning');
+    
+    // Actualizar valor
+    margenElement.textContent = formatCurrency(margen);
+    porcentajeElement.textContent = `(${porcentaje.toFixed(1)}%)`;
+    
+    // Aplicar clase según si es positivo o negativo
+    if (margen < 0) {
+        margenElement.classList.add('negative');
+        warningElement.style.display = 'block';
+    } else {
+        margenElement.classList.remove('negative');
+        warningElement.style.display = 'none';
+    }
+}
+
+/**
+ * Inicializar listeners para campos de tarifa (soporte)
+ */
+function initializeTarifaListeners() {
+    const tarifaConsultorInput = document.getElementById('assignTarifaConsultor');
+    const tarifaClienteInput = document.getElementById('assignTarifaCliente');
+    
+    if (tarifaConsultorInput) {
+        tarifaConsultorInput.addEventListener('input', updateAssignMargen);
+    }
+    
+    if (tarifaClienteInput) {
+        tarifaClienteInput.addEventListener('input', updateAssignMargen);
+    }
+}
+
+/**
+ * Inicializar listeners para campos de tarifa (proyecto)
+ */
+function initializeProjectTarifaListeners() {
+    const tarifaConsultorInput = document.getElementById('projectAssignTarifaConsultor');
+    const tarifaClienteInput = document.getElementById('projectAssignTarifaCliente');
+    
+    if (tarifaConsultorInput) {
+        tarifaConsultorInput.addEventListener('input', updateProjectAssignMargen);
+    }
+    
+    if (tarifaClienteInput) {
+        tarifaClienteInput.addEventListener('input', updateProjectAssignMargen);
+    }
+}
+
+// ===================================================================
+// GESTIÓN DEL TARIFARIO
+// ===================================================================
+
+let currentTarifarioFilter = 'all';
+
+/**
+ * Cargar datos del tarifario
+ */
+function loadTarifario() {
+    console.log('💰 Cargando tarifario...');
+    
+    if (!window.PortalDB) {
+        console.error('PortalDB no disponible');
+        return;
+    }
+    
+    const tarifario = window.PortalDB.getTarifario();
+    
+    console.log('Tarifario cargado:', Object.keys(tarifario).length, 'entradas');
+    
+    // Actualizar tablas
+    updateTarifarioTable(currentTarifarioFilter);
+    updateConsultoresTable();
+    updateTarifarioStats();
+    
+    // Actualizar contador en sidebar
+    const sidebarBadge = document.getElementById('sidebarTarifarioCount');
+    if (sidebarBadge) {
+        sidebarBadge.textContent = Object.keys(tarifario).length;
+    }
+}
+
+/**
+ * Actualizar tabla de unión (principal)
+ */
+function updateTarifarioTable(filterType = 'all') {
+    const tbody = document.getElementById('tarifarioTableBody');
+    if (!tbody) return;
+    
+    const tarifario = window.PortalDB.getTarifario();
+    let tarifas = Object.values(tarifario);
+    
+    // Aplicar filtro
+    if (filterType !== 'all') {
+        tarifas = tarifas.filter(t => t.tipo === filterType);
+    }
+    
+    // Actualizar contador
+    const countElement = document.getElementById('tarifarioCount');
+    if (countElement) {
+        countElement.textContent = `${tarifas.length} asignaciones`;
+    }
+    
+    // Limpiar tabla
+    tbody.innerHTML = '';
+    
+    // Si no hay datos
+    if (tarifas.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" class="empty-state-cell">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">💰</div>
+                        <div class="empty-state-title">No hay tarifas con este filtro</div>
+                        <div class="empty-state-desc">Prueba con otro filtro o crea nuevas asignaciones</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Renderizar filas
+    tarifas.forEach(tarifa => {
+        const row = createTarifaRow(tarifa);
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * Crear fila de tarifa
+ */
+function createTarifaRow(tarifa) {
+    const row = document.createElement('tr');
+    
+    // Badge de tipo
+    const tipoBadge = tarifa.tipo === 'soporte' 
+        ? '<span class="tipo-badge soporte">📞 Soporte</span>'
+        : '<span class="tipo-badge proyecto">📋 Proyecto</span>';
+    
+    // Margen con color
+    const margenClass = tarifa.margen >= 0 ? 'positive' : 'negative';
+    const margenFormatted = formatCurrency(tarifa.margen);
+    
+    row.innerHTML = `
+        <td>${tipoBadge}</td>
+        <td><code>${tarifa.idAsignacion}</code></td>
+        <td><strong>${tarifa.modulo}</strong></td>
+        <td>${tarifa.consultorNombre}</td>
+        <td>${tarifa.clienteNombre}</td>
+        <td>${tarifa.trabajoNombre}</td>
+        <td>
+            <span class="editable-value" 
+                  data-tarifa-id="${tarifa.id}" 
+                  data-field="costoConsultor"
+                  onclick="editTarifaInline('${tarifa.id}', 'costoConsultor')">
+                ${formatCurrency(tarifa.costoConsultor)}
+            </span>
+        </td>
+        <td>
+            <span class="editable-value" 
+                  data-tarifa-id="${tarifa.id}" 
+                  data-field="costoCliente"
+                  onclick="editTarifaInline('${tarifa.id}', 'costoCliente')">
+                ${formatCurrency(tarifa.costoCliente)}
+            </span>
+        </td>
+        <td class="margen-cell ${margenClass}">
+            ${margenFormatted}
+        </td>
+        <td>
+            <button class="action-btn btn-view" 
+                    onclick="viewTarifaDetails('${tarifa.id}')" 
+                    title="Ver detalles">
+                👁️
+            </button>
+        </td>
+    `;
+    
+    return row;
+}
+
+/**
+ * Actualizar tabla de consultores
+ */
+function updateConsultoresTable() {
+    const tbody = document.getElementById('consultoresTableBody');
+    if (!tbody) return;
+    
+    const consultoresResumen = window.PortalDB.getConsultoresResumen();
+    const consultores = Object.values(consultoresResumen);
+    
+    // Actualizar contador
+    const countElement = document.getElementById('consultoresCount');
+    if (countElement) {
+        countElement.textContent = `${consultores.length} consultores`;
+    }
+    
+    // Limpiar tabla
+    tbody.innerHTML = '';
+    
+    // Si no hay datos
+    if (consultores.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-state-cell">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <div class="empty-state-title">No hay consultores con asignaciones</div>
+                        <div class="empty-state-desc">Asigne proyectos o soportes a consultores</div>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    // Renderizar filas
+    consultores.forEach(consultor => {
+        const row = document.createElement('tr');
+        
+        row.innerHTML = `
+            <td><code>${consultor.id}</code></td>
+            <td><strong>${consultor.nombre}</strong></td>
+            <td><span class="badge">${consultor.totalAsignaciones}</span></td>
+            <td><small>${consultor.modulos || 'N/A'}</small></td>
+            <td><small>${consultor.clientes || 'N/A'}</small></td>
+            <td><strong>${formatCurrency(consultor.promedioTarifa)}</strong></td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * Actualizar estadísticas del tarifario
+ */
+function updateTarifarioStats() {
+    const tarifario = window.PortalDB.getTarifario();
+    const tarifas = Object.values(tarifario);
+    
+    // Total asignaciones
+    const totalElement = document.getElementById('totalAsignaciones');
+    if (totalElement) {
+        totalElement.textContent = tarifas.length;
+    }
+    
+    // Margen promedio
+    if (tarifas.length > 0) {
+        const sumaMargen = tarifas.reduce((sum, t) => sum + t.margen, 0);
+        const promedioMargen = sumaMargen / tarifas.length;
+        
+        const margenElement = document.getElementById('margenPromedio');
+        if (margenElement) {
+            margenElement.textContent = formatCurrency(promedioMargen);
+        }
+    }
+    
+    // Total consultores únicos
+    const consultoresUnicos = new Set(tarifas.map(t => t.consultorId));
+    const consultoresElement = document.getElementById('totalConsultores');
+    if (consultoresElement) {
+        consultoresElement.textContent = consultoresUnicos.size;
+    }
+}
+
+/**
+ * Filtrar tarifario por tipo
+ */
+function filterTarifarioByType(type) {
+    currentTarifarioFilter = type;
+    
+    // Actualizar botones
+    document.querySelectorAll('.tarifario-filters .filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.dataset.type === type) {
+            btn.classList.add('active');
+        }
+    });
+    
+    // Actualizar tabla
+    updateTarifarioTable(type);
+}
+
+/**
+ * Ver detalles de una tarifa
+ */
+function viewTarifaDetails(tarifaId) {
+    const tarifario = window.PortalDB.getTarifario();
+    const tarifa = tarifario[tarifaId];
+    
+    if (!tarifa) {
+        window.NotificationUtils.error('Tarifa no encontrada');
+        return;
+    }
+    
+    const detalles = `
+═══════════════════════════════════════
+💰 DETALLES DE TARIFA
+═══════════════════════════════════════
+
+📋 ID: ${tarifa.id}
+📌 Tipo: ${tarifa.tipo.toUpperCase()}
+🔗 ID Asignación: ${tarifa.idAsignacion}
+
+👤 CONSULTOR
+   Nombre: ${tarifa.consultorNombre}
+   ID: ${tarifa.consultorId}
+
+🏢 CLIENTE
+   Empresa: ${tarifa.clienteNombre}
+   ID: ${tarifa.clienteId}
+
+🧩 MÓDULO
+   Código: ${tarifa.modulo}
+   Nombre: ${tarifa.moduloNombre}
+
+📞 TRABAJO
+   ${tarifa.trabajoNombre}
+
+💵 TARIFAS
+   Consultor: ${formatCurrency(tarifa.costoConsultor)}/hora
+   Cliente:   ${formatCurrency(tarifa.costoCliente)}/hora
+   Margen:    ${formatCurrency(tarifa.margen)} (${((tarifa.margen/tarifa.costoConsultor)*100).toFixed(1)}%)
+
+📅 Fecha creación: ${window.DateUtils ? window.DateUtils.formatDate(tarifa.fechaCreacion) : tarifa.fechaCreacion}
+    `;
+    
+    alert(detalles);
+}
+
+/**
+ * Editar tarifa inline
+ */
+function editTarifaInline(tarifaId, campo) {
+    const element = document.querySelector(`[data-tarifa-id="${tarifaId}"][data-field="${campo}"]`);
+    if (!element) return;
+    
+    const tarifario = window.PortalDB.getTarifario();
+    const tarifa = tarifario[tarifaId];
+    if (!tarifa) return;
+    
+    // Obtener valor actual
+    const valorActual = tarifa[campo];
+    
+    // Crear input
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.step = '0.01';
+    input.min = '0';
+    input.value = valorActual;
+    input.className = 'inline-edit-input';
+    input.style.width = '100px';
+    
+    // Guardar referencia al elemento original
+    const originalContent = element.innerHTML;
+    
+    // Reemplazar contenido
+    element.innerHTML = '';
+    element.appendChild(input);
+    element.classList.add('editing');
+    input.focus();
+    input.select();
+    
+    // Función para guardar
+    const guardar = () => {
+        const nuevoValor = parseFloat(input.value);
+        
+        if (isNaN(nuevoValor) || nuevoValor < 0) {
+            window.NotificationUtils.error('Valor inválido');
+            element.innerHTML = originalContent;
+            element.classList.remove('editing');
+            return;
+        }
+        
+        // Confirmar cambio
+        const nombreCampo = campo === 'costoConsultor' ? 'Costo Consultor' : 'Costo Cliente';
+        
+        if (confirm(`¿Confirmar cambio de ${nombreCampo}?\n\nValor actual: ${formatCurrency(valorActual)}\nNuevo valor: ${formatCurrency(nuevoValor)}`)) {
+            saveTarifaEdit(tarifaId, campo, nuevoValor);
+        } else {
+            element.innerHTML = originalContent;
+            element.classList.remove('editing');
+        }
+    };
+    
+    // Función para cancelar
+    const cancelar = () => {
+        element.innerHTML = originalContent;
+        element.classList.remove('editing');
+    };
+    
+    // Eventos
+    input.addEventListener('blur', guardar);
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            guardar();
+        } else if (e.key === 'Escape') {
+            e.preventDefault();
+            cancelar();
+        }
+    });
+}
+
+// ===================================================================
+// RETROCOMPATIBILIDAD - ASIGNACIONES SIN TARIFAS
+// ===================================================================
+
+/**
+ * Detectar asignaciones sin tarifas configuradas
+ */
+function detectarAsignacionesSinTarifas() {
+    console.log('🔍 Buscando asignaciones sin tarifas...');
+    
+    const assignments = window.PortalDB.getAssignments();
+    const projectAssignments = window.PortalDB.getProjectAssignments();
+    
+    const sinTarifas = [];
+    
+    // Revisar asignaciones de soporte
+    Object.values(assignments).forEach(assign => {
+        if (!assign.tarifaConsultor || !assign.tarifaCliente) {
+            sinTarifas.push({
+                ...assign,
+                tipo: 'soporte'
+            });
+        }
+    });
+    
+    // Revisar asignaciones de proyecto
+    Object.values(projectAssignments).forEach(assign => {
+        if (!assign.tarifaConsultor || !assign.tarifaCliente) {
+            sinTarifas.push({
+                ...assign,
+                tipo: 'proyecto'
+            });
+        }
+    });
+    
+    console.log(`Encontradas ${sinTarifas.length} asignaciones sin tarifas`);
+    
+    return sinTarifas;
+}
+
+/**
+ * Mostrar modal para configurar tarifas de asignaciones existentes
+ */
+function mostrarModalConfigurarTarifas() {
+    const sinTarifas = detectarAsignacionesSinTarifas();
+    
+    if (sinTarifas.length === 0) {
+        window.NotificationUtils.success('Todas las asignaciones tienen tarifas configuradas');
+        return;
+    }
+    
+    // Crear HTML del modal
+    let listaHTML = '';
+    sinTarifas.forEach(assign => {
+        const user = window.PortalDB.getUser(assign.userId);
+        const company = window.PortalDB.getCompany(assign.companyId);
+        const module = window.PortalDB.getModule(assign.moduleId);
+        
+        let trabajo = '';
+        if (assign.tipo === 'soporte') {
+            const support = window.PortalDB.getSupport(assign.supportId);
+            trabajo = support ? support.name : 'N/A';
+        } else {
+            const project = window.PortalDB.getProject(assign.projectId);
+            trabajo = project ? project.name : 'N/A';
+        }
+        
+        listaHTML += `
+            <div class="asignacion-sin-tarifa" data-id="${assign.id}">
+                <div class="asignacion-info">
+                    <strong>${assign.tipo === 'soporte' ? '📞' : '📋'} ${assign.id}</strong>
+                    <div class="asignacion-details">
+                        <span>👤 ${user ? user.name : 'N/A'}</span>
+                        <span>🏢 ${company ? company.name : 'N/A'}</span>
+                        <span>🧩 ${module ? module.name : 'N/A'}</span>
+                        <span>${trabajo}</span>
+                    </div>
+                </div>
+                <button class="btn btn-sm btn-primary" onclick="abrirFormularioTarifa('${assign.id}', '${assign.tipo}')">
+                    Configurar Tarifas
+                </button>
+            </div>
+        `;
+    });
+    
+    const modalHTML = `
+        <div class="modal-overlay" id="configurarTarifasModal">
+            <div class="modal-content" style="max-width: 800px;">
+                <div class="modal-header">
+                    <h2>⚠️ Asignaciones Sin Tarifas Configuradas</h2>
+                    <button class="modal-close" onclick="cerrarModalTarifas()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-info">
+                        Se encontraron <strong>${sinTarifas.length}</strong> asignaciones sin tarifas configuradas.
+                        Es necesario configurar las tarifas para poder generar reportes correctamente.
+                    </p>
+                    <div class="asignaciones-sin-tarifa-list">
+                        ${listaHTML}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarModalTarifas()">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Agregar al DOM
+    const existingModal = document.getElementById('configurarTarifasModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+/**
+ * Abrir formulario para configurar tarifa de una asignación
+ */
+function abrirFormularioTarifa(assignmentId, tipo) {
+    const formHTML = `
+        <div class="modal-overlay" id="formularioTarifaModal">
+            <div class="modal-content" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h2>💰 Configurar Tarifas</h2>
+                    <button class="modal-close" onclick="cerrarFormularioTarifa()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>ID Asignación:</strong> ${assignmentId}</p>
+                    <p><strong>Tipo:</strong> ${tipo}</p>
+                    
+                    <div class="form-group">
+                        <label for="modalTarifaConsultor">Tarifa Consultor ($/hora)</label>
+                        <input 
+                            type="number" 
+                            id="modalTarifaConsultor" 
+                            step="0.01" 
+                            min="0" 
+                            placeholder="300.00"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="modalTarifaCliente">Tarifa Cliente ($/hora)</label>
+                        <input 
+                            type="number" 
+                            id="modalTarifaCliente" 
+                            step="0.01" 
+                            min="0" 
+                            placeholder="500.00"
+                            required
+                        >
+                    </div>
+                    
+                    <div class="margen-display">
+                        <div class="margen-info">
+                            <span class="margen-label">Margen:</span>
+                            <span id="modalMargen" class="margen-value">$0.00</span>
+                            <span id="modalMargenPorcentaje" class="margen-percent">(0%)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" onclick="cerrarFormularioTarifa()">Cancelar</button>
+                    <button class="btn btn-primary" onclick="guardarTarifaAsignacion('${assignmentId}')">
+                        Guardar Tarifas
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', formHTML);
+    
+    // Agregar listeners para calcular margen
+    const consultorInput = document.getElementById('modalTarifaConsultor');
+    const clienteInput = document.getElementById('modalTarifaCliente');
+    
+    const calcularMargenModal = () => {
+        const consultor = parseFloat(consultorInput.value) || 0;
+        const cliente = parseFloat(clienteInput.value) || 0;
+        const margen = cliente - consultor;
+        const porcentaje = consultor > 0 ? (margen / consultor) * 100 : 0;
+        
+        document.getElementById('modalMargen').textContent = formatCurrency(margen);
+        document.getElementById('modalMargenPorcentaje').textContent = `(${porcentaje.toFixed(1)}%)`;
+        
+        if (margen < 0) {
+            document.getElementById('modalMargen').classList.add('negative');
+        } else {
+            document.getElementById('modalMargen').classList.remove('negative');
+        }
+    };
+    
+    consultorInput.addEventListener('input', calcularMargenModal);
+    clienteInput.addEventListener('input', calcularMargenModal);
+}
+
+/**
+ * Guardar tarifas de una asignación
+ */
+function guardarTarifaAsignacion(assignmentId) {
+    const tarifaConsultor = parseFloat(document.getElementById('modalTarifaConsultor').value);
+    const tarifaCliente = parseFloat(document.getElementById('modalTarifaCliente').value);
+    
+    if (!tarifaConsultor || !tarifaCliente) {
+        window.NotificationUtils.error('Ambas tarifas son requeridas');
+        return;
+    }
+    
+    if (tarifaConsultor <= 0 || tarifaCliente <= 0) {
+        window.NotificationUtils.error('Las tarifas deben ser mayores a 0');
+        return;
+    }
+    
+    const result = window.PortalDB.configurarTarifasAsignacion(assignmentId, {
+        tarifaConsultor: tarifaConsultor,
+        tarifaCliente: tarifaCliente
+    });
+    
+    if (result.success) {
+        window.NotificationUtils.success('Tarifas configuradas correctamente');
+        cerrarFormularioTarifa();
+        cerrarModalTarifas();
+        
+        // Recargar tarifario si está activo
+        if (currentSection === 'tarifario') {
+            loadTarifario();
+        }
+        
+        // Verificar si quedan más asignaciones sin tarifas
+        setTimeout(() => {
+            const pendientes = detectarAsignacionesSinTarifas();
+            if (pendientes.length > 0) {
+                mostrarModalConfigurarTarifas();
+            }
+        }, 500);
+    } else {
+        window.NotificationUtils.error('Error al configurar tarifas: ' + result.message);
+    }
+}
+
+/**
+ * Cerrar modales
+ */
+function cerrarModalTarifas() {
+    const modal = document.getElementById('configurarTarifasModal');
+    if (modal) modal.remove();
+}
+
+function cerrarFormularioTarifa() {
+    const modal = document.getElementById('formularioTarifaModal');
+    if (modal) modal.remove();
+}
+
+/**
+ * Verificar asignaciones sin tarifas al cargar el panel
+ */
+function verificarTarifasAlCargar() {
+    setTimeout(() => {
+        const sinTarifas = detectarAsignacionesSinTarifas();
+        
+        if (sinTarifas.length > 0) {
+            console.warn(`⚠️ Hay ${sinTarifas.length} asignaciones sin tarifas configuradas`);
+            
+            // Mostrar notificación
+            if (window.NotificationUtils) {
+                window.NotificationUtils.warning(
+                    `Hay ${sinTarifas.length} asignaciones sin tarifas. Click aquí para configurar.`,
+                    () => mostrarModalConfigurarTarifas()
+                );
+            }
+        }
+    }, 2000);
+}
+
+/**
+ * Guardar edición de tarifa
+ */
+function saveTarifaEdit(tarifaId, campo, nuevoValor) {
+    const updates = {};
+    updates[campo] = nuevoValor;
+    
+    const result = window.PortalDB.updateTarifaEntry(tarifaId, updates);
+    
+    if (result.success) {
+        window.NotificationUtils.success('Tarifa actualizada correctamente');
+        loadTarifario();
+    } else {
+        window.NotificationUtils.error('Error al actualizar tarifa: ' + result.message);
+    }
+}
+
+/**
+ * Exportar tarifario a Excel
+ */
+async function exportTarifarioToExcel() {
+    try {
+        console.log('📤 Exportando tarifario a Excel...');
+        
+        // Verificar SheetJS
+        if (typeof XLSX === 'undefined') {
+            window.NotificationUtils.error('Librería XLSX no disponible');
+            return;
+        }
+        
+        const tarifario = window.PortalDB.getTarifario();
+        const tarifas = Object.values(tarifario);
+        
+        if (tarifas.length === 0) {
+            window.NotificationUtils.error('No hay datos para exportar');
+            return;
+        }
+        
+        // Preparar datos para Hoja 1: Tabla de Unión
+        const datosUnion = tarifas.map(t => ({
+            'Tipo': t.tipo.toUpperCase(),
+            'ID Asignación': t.idAsignacion,
+            'Módulo': t.modulo,
+            'Nombre Módulo': t.moduloNombre,
+            'Consultor ID': t.consultorId,
+            'Consultor': t.consultorNombre,
+            'Cliente ID': t.clienteId,
+            'Cliente': t.clienteNombre,
+            'Trabajo': t.trabajoNombre,
+            'Costo Consultor': t.costoConsultor,
+            'Costo Cliente': t.costoCliente,
+            'Margen': t.margen,
+            'Margen %': t.costoConsultor > 0 ? ((t.margen / t.costoConsultor) * 100).toFixed(2) : 0,
+            'Fecha Creación': t.fechaCreacion
+        }));
+        
+        // Preparar datos para Hoja 2: Resumen Consultores
+        const consultoresResumen = window.PortalDB.getConsultoresResumen();
+        const datosConsultores = Object.values(consultoresResumen).map(c => ({
+            'ID': c.id,
+            'Nombre': c.nombre,
+            'Total Asignaciones': c.totalAsignaciones,
+            'Módulos': c.modulos,
+            'Clientes': c.clientes,
+            'Promedio Tarifa Consultor': c.promedioTarifa.toFixed(2)
+        }));
+        
+        // Crear libro de trabajo
+        const wb = XLSX.utils.book_new();
+        
+        // Hoja 1: Tabla de Unión
+        const ws1 = XLSX.utils.json_to_sheet(datosUnion);
+        XLSX.utils.book_append_sheet(wb, ws1, 'Tabla de Unión');
+        
+        // Hoja 2: Resumen Consultores
+        const ws2 = XLSX.utils.json_to_sheet(datosConsultores);
+        XLSX.utils.book_append_sheet(wb, ws2, 'Resumen Consultores');
+        
+        // Generar nombre de archivo
+        const fecha = new Date().toISOString().split('T')[0];
+        const filename = `Tarifario_Completo_${fecha}.xlsx`;
+        
+        // Descargar
+        XLSX.writeFile(wb, filename);
+        
+        window.NotificationUtils.success(`Tarifario exportado: ${filename}`);
+        
+        console.log('✅ Tarifario exportado exitosamente');
+        
+    } catch (error) {
+        console.error('❌ Error al exportar tarifario:', error);
+        window.NotificationUtils.error('Error al exportar: ' + error.message);
+    }
+}
+
+
+
 // === FUNCIONES EXPORTADAS GLOBALMENTE ===
 window.showSection = showSection;
 window.openUserModal = openUserModal;
@@ -6218,6 +7076,27 @@ window.filterReportsByCategory = filterReportsByCategory;
 window.initializeReportsFilters = initializeReportsFilters;
 window.getReportCategory = getReportCategory;
 window.updateReportsListWithFilter = updateReportsListWithFilter;
+window.calculateMargen = calculateMargen;
+window.calculateMargenPorcentaje = calculateMargenPorcentaje;
+window.updateAssignMargen = updateAssignMargen;
+window.updateProjectAssignMargen = updateProjectAssignMargen;
+window.initializeTarifaListeners = initializeTarifaListeners;
+window.initializeProjectTarifaListeners = initializeProjectTarifaListeners;
+window.loadTarifario = loadTarifario;
+window.updateTarifarioTable = updateTarifarioTable;
+window.updateConsultoresTable = updateConsultoresTable;
+window.updateTarifarioStats = updateTarifarioStats;
+window.filterTarifarioByType = filterTarifarioByType;
+window.editTarifaInline = editTarifaInline;
+window.saveTarifaEdit = saveTarifaEdit;
+window.viewTarifaDetails = viewTarifaDetails;
+window.exportTarifarioToExcel = exportTarifarioToExcel;
+window.detectarAsignacionesSinTarifas = detectarAsignacionesSinTarifas;
+window.mostrarModalConfigurarTarifas = mostrarModalConfigurarTarifas;
+window.abrirFormularioTarifa = abrirFormularioTarifa;
+window.guardarTarifaAsignacion = guardarTarifaAsignacion;
+window.cerrarModalTarifas = cerrarModalTarifas;
+window.cerrarFormularioTarifa = cerrarFormularioTarifa;
 
 console.log('✅ Funciones de asignación de proyectos cargadas');
 console.log('✅ Funciones del administrador exportadas globalmente');

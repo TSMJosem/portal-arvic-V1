@@ -17,6 +17,7 @@ class PortalDatabase {
         this.setupDefaultProjects();
         this.setupDefaultSupports(); 
         this.setupDefaultModules();
+        this.setupDefaultTarifario();
         this.setupDefaultAssignments();
         this.setupDefaultProjectAssignments();
         this.setupDefaultReports();
@@ -188,6 +189,16 @@ class PortalDatabase {
             }
         };
         this.setData('modules', defaultModules);
+    }
+
+        setupDefaultTarifario() {
+        console.log('🔄 Inicializando tarifario...');
+        
+        // Inicializar con objeto vacío
+        // Las entradas se crearán automáticamente al crear asignaciones
+        this.setData('tarifario', {});
+        
+        console.log('✅ Tarifario inicializado');
     }
 
     setupDefaultAssignments() {
@@ -612,71 +623,79 @@ deleteSupport(supportId) {
     }
 
 createAssignment(assignmentData) {
-    const assignments = this.getAssignments();
-    const assignmentId = `assign_${Date.now()}`;
-    
-    // Verificar que existan todas las entidades
-    const user = this.getUser(assignmentData.userId);
-    const company = this.getCompany(assignmentData.companyId);
-    const support = this.getSupport(assignmentData.supportId); // Cambiar de taskId
-    const module = this.getModule(assignmentData.moduleId);
-    
-    if (!user || !company || !support || !module) {
-        return { success: false, message: 'Una o más entidades no existen' };
+    try {
+        const assignments = this.getData('assignments') || {};
+        const assignmentId = `assign_${Date.now()}`;
+        
+        const assignment = {
+            id: assignmentId,
+            userId: assignmentData.userId,
+            companyId: assignmentData.companyId,
+            supportId: assignmentData.supportId,
+            moduleId: assignmentData.moduleId,
+            tarifaConsultor: parseFloat(assignmentData.tarifaConsultor) || 0,
+            tarifaCliente: parseFloat(assignmentData.tarifaCliente) || 0,
+            createdAt: new Date().toISOString()
+        };
+        
+        assignments[assignmentId] = assignment;
+        this.setData('assignments', assignments);
+        
+        console.log('✅ Asignación creada:', assignmentId);
+        
+        // CORRECCIÓN: Siempre crear entrada en tarifario si hay tarifas > 0
+        const tieneConsultor = assignment.tarifaConsultor > 0;
+        const tieneCliente = assignment.tarifaCliente > 0;
+        
+        if (tieneConsultor || tieneCliente) {
+            console.log('💰 Creando entrada en tarifario con tarifas:', {
+                consultor: assignment.tarifaConsultor,
+                cliente: assignment.tarifaCliente
+            });
+            
+            const tarifaResult = this.createTarifaEntry(assignment);
+            
+            if (tarifaResult.success) {
+                console.log('✅ Entrada en tarifario creada:', tarifaResult.tarifaId);
+            } else {
+                console.error('❌ Error al crear entrada en tarifario:', tarifaResult.message);
+            }
+        } else {
+            console.warn('⚠️ Asignación creada sin tarifas, no se agregó al tarifario');
+        }
+        
+        return { success: true, assignmentId: assignmentId };
+        
+    } catch (error) {
+        console.error('Error al crear asignación:', error);
+        return { success: false, message: error.message };
     }
-    
-    // Verificar si ya existe una asignación igual
-    const existingAssignment = Object.values(assignments).find(a => 
-        a.userId === assignmentData.userId &&
-        a.companyId === assignmentData.companyId &&
-        a.supportId === assignmentData.supportId && // Cambiar de taskId
-        a.moduleId === assignmentData.moduleId &&
-        a.isActive
-    );
-    
-    if (existingAssignment) {
-        return { success: false, message: 'Ya existe una asignación idéntica para este usuario' };
-    }
-    
-    const newAssignment = {
-        id: assignmentId,
-        userId: assignmentData.userId,
-        companyId: assignmentData.companyId,
-        supportId: assignmentData.supportId, // Cambiar de taskId
-        moduleId: assignmentData.moduleId,
-        createdAt: new Date().toISOString(),
-        isActive: true
-    };
-    
-    assignments[assignmentId] = newAssignment;
-    this.setData('assignments', assignments);
-    
-    return { success: true, assignment: newAssignment };
 }
 
 
 
     deleteAssignment(assignmentId) {
-        const assignments = this.getAssignments();
-        const assignment = assignments[assignmentId];
-        
-        if (!assignment) {
+        try {
+            const assignments = this.getData('assignments') || {};
+            
+            if (assignments[assignmentId]) {
+                delete assignments[assignmentId];
+                this.setData('assignments', assignments);
+                
+                // También eliminar entrada de tarifario
+                const tarifaId = `tarifa_${assignmentId}`;  // ← NUEVO BLOQUE
+                this.deleteTarifaEntry(tarifaId);
+                
+                console.log('✅ Asignación eliminada:', assignmentId);
+                return { success: true };
+            }
+            
             return { success: false, message: 'Asignación no encontrada' };
+            
+        } catch (error) {
+            console.error('Error al eliminar asignación:', error);
+            return { success: false, message: error.message };
         }
-        
-        // Remover asignación del usuario
-        const user = this.getUser(assignment.userId);
-        if (user) {
-            this.updateUser(assignment.userId, {
-                assignedCompany: null,
-                assignedProject: null
-            });
-        }
-        
-        delete assignments[assignmentId];
-        this.setData('assignments', assignments);
-        
-        return { success: true, message: 'Asignación eliminada correctamente' };
     }
 
     deleteAssignmentsByUser(userId) {
@@ -1425,60 +1444,358 @@ deleteGeneratedReport(reportId) {
         return projectAssignments[assignmentId] || null;
     }
 
-    createProjectAssignment(assignmentData) {
-        const assignments = this.getProjectAssignments();
+createProjectAssignment(assignmentData) {
+    try {
+        const projectAssignments = this.getData('project_assignments') || {};
         const assignmentId = `proj_assign_${Date.now()}`;
         
-        // Validar que existan todas las entidades
-        const project = this.getProject(assignmentData.projectId);
-        const consultor = this.getUser(assignmentData.consultorId);
-        const company = this.getCompany(assignmentData.companyId);
-        const module = this.getModule(assignmentData.moduleId);
-        
-        if (!project || !consultor || !company || !module) {
-            return { success: false, message: 'Una o más entidades no existen' };
-        }
-        
-        // Verificar si ya existe una asignación igual
-        const existingAssignment = Object.values(assignments).find(a => 
-            a.projectId === assignmentData.projectId &&
-            a.consultorId === assignmentData.consultorId &&
-            a.companyId === assignmentData.companyId &&
-            a.moduleId === assignmentData.moduleId &&
-            a.isActive
-        );
-        
-        if (existingAssignment) {
-            return { success: false, message: 'Ya existe una asignación idéntica para este consultor en este proyecto' };
-        }
-        
-        const newAssignment = {
+        const assignment = {
             id: assignmentId,
-            projectId: assignmentData.projectId,
-            consultorId: assignmentData.consultorId,    // UN SOLO consultor
+            userId: assignmentData.userId,
             companyId: assignmentData.companyId,
+            projectId: assignmentData.projectId,
             moduleId: assignmentData.moduleId,
-            createdAt: new Date().toISOString(),
+            tarifaConsultor: parseFloat(assignmentData.tarifaConsultor) || 0,
+            tarifaCliente: parseFloat(assignmentData.tarifaCliente) || 0,
+            createdAt: new Date().toISOString()
+        };
+        
+        projectAssignments[assignmentId] = assignment;
+        this.setData('project_assignments', projectAssignments);
+        
+        console.log('✅ Asignación de proyecto creada:', assignmentId);
+        
+        // CORRECCIÓN: Siempre crear entrada en tarifario si hay tarifas > 0
+        const tieneConsultor = assignment.tarifaConsultor > 0;
+        const tieneCliente = assignment.tarifaCliente > 0;
+        
+        if (tieneConsultor || tieneCliente) {
+            console.log('💰 Creando entrada en tarifario con tarifas:', {
+                consultor: assignment.tarifaConsultor,
+                cliente: assignment.tarifaCliente
+            });
+            
+            const tarifaResult = this.createTarifaEntry(assignment);
+            
+            if (tarifaResult.success) {
+                console.log('✅ Entrada en tarifario creada:', tarifaResult.tarifaId);
+            } else {
+                console.error('❌ Error al crear entrada en tarifario:', tarifaResult.message);
+            }
+        } else {
+            console.warn('⚠️ Asignación de proyecto creada sin tarifas, no se agregó al tarifario');
+        }
+        
+        return { success: true, assignmentId: assignmentId };
+        
+    } catch (error) {
+        console.error('Error al crear asignación de proyecto:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+    deleteProjectAssignment(assignmentId) {
+    try {
+        const projectAssignments = this.getData('project_assignments') || {};
+        
+        if (projectAssignments[assignmentId]) {
+            delete projectAssignments[assignmentId];
+            this.setData('project_assignments', projectAssignments);
+            
+            // También eliminar entrada de tarifario
+            const tarifaId = `tarifa_${assignmentId}`;  // ← NUEVO BLOQUE
+            this.deleteTarifaEntry(tarifaId);
+            
+            console.log('✅ Asignación de proyecto eliminada:', assignmentId);
+            return { success: true };
+        }
+        
+        return { success: false, message: 'Asignación no encontrada' };
+        
+    } catch (error) {
+        console.error('Error al eliminar asignación de proyecto:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+    // ===================================================================
+// GESTIÓN DE TARIFARIO
+// ===================================================================
+
+/**
+ * Crear entrada en tarifario para una asignación
+ */
+createTarifaEntry(assignmentData) {
+    try {
+        const tarifario = this.getData('tarifario') || {};
+        
+        // Generar ID único para la entrada de tarifario
+        const tarifaId = `tarifa_${assignmentData.id}`;
+        
+        // Obtener información adicional
+        const consultor = this.getUser(assignmentData.userId);
+        const cliente = this.getCompany(assignmentData.companyId);
+        const modulo = this.getModule(assignmentData.moduleId);
+        
+        // Determinar tipo y trabajo
+        let tipo, trabajoId, trabajoNombre;
+        
+        if (assignmentData.supportId) {
+            tipo = 'soporte';
+            const soporte = this.getSupport(assignmentData.supportId);
+            trabajoId = assignmentData.supportId;
+            trabajoNombre = soporte ? soporte.name : 'Desconocido';
+        } else if (assignmentData.projectId) {
+            tipo = 'proyecto';
+            const proyecto = this.getProject(assignmentData.projectId);
+            trabajoId = assignmentData.projectId;
+            trabajoNombre = proyecto ? proyecto.name : 'Desconocido';
+        }
+        
+        // Calcular margen
+        const margen = (assignmentData.tarifaCliente || 0) - (assignmentData.tarifaConsultor || 0);
+        
+        // Crear entrada de tarifario
+        const tarifaEntry = {
+            id: tarifaId,
+            
+            // Campos principales (Tabla de Unión)
+            modulo: modulo ? modulo.code || modulo.id : 'N/A',
+            idAsignacion: assignmentData.id,
+            costoConsultor: assignmentData.tarifaConsultor || 0,
+            costoCliente: assignmentData.tarifaCliente || 0,
+            
+            // Campos adicionales para gestión
+            tipo: tipo,
+            moduloNombre: modulo ? modulo.name : 'Desconocido',
+            consultorId: assignmentData.userId,
+            consultorNombre: consultor ? consultor.name : 'Desconocido',
+            clienteId: assignmentData.companyId,
+            clienteNombre: cliente ? cliente.name : 'Desconocido',
+            trabajoId: trabajoId,
+            trabajoNombre: trabajoNombre,
+            margen: margen,
+            fechaCreacion: assignmentData.createdAt || new Date().toISOString(),
             isActive: true
         };
         
-        assignments[assignmentId] = newAssignment;
-        this.setData('project_assignments', assignments);
+        // Guardar en tarifario
+        tarifario[tarifaId] = tarifaEntry;
+        this.setData('tarifario', tarifario);
         
-        return { success: true, assignment: newAssignment };
+        console.log('✅ Entrada de tarifario creada:', tarifaId);
+        
+        return { success: true, tarifaId: tarifaId, data: tarifaEntry };
+        
+    } catch (error) {
+        console.error('❌ Error al crear entrada de tarifario:', error);
+        return { success: false, message: error.message };
     }
+}
 
-    deleteProjectAssignment(assignmentId) {
-        const assignments = this.getProjectAssignments();
-        if (!assignments[assignmentId]) {
-            return { success: false, message: 'Asignación de proyecto no encontrada' };
+/**
+ * Actualizar entrada de tarifario
+ */
+updateTarifaEntry(tarifaId, updates) {
+    try {
+        const tarifario = this.getData('tarifario') || {};
+        
+        if (!tarifario[tarifaId]) {
+            return { success: false, message: 'Entrada de tarifario no encontrada' };
         }
         
-        delete assignments[assignmentId];
-        this.setData('project_assignments', assignments);
+        // Actualizar campos
+        tarifario[tarifaId] = {
+            ...tarifario[tarifaId],
+            ...updates
+        };
         
-        return { success: true, message: 'Asignación de proyecto eliminada' };
+        // Recalcular margen si se actualizaron las tarifas
+        if (updates.costoConsultor !== undefined || updates.costoCliente !== undefined) {
+            tarifario[tarifaId].margen = tarifario[tarifaId].costoCliente - tarifario[tarifaId].costoConsultor;
+        }
+        
+        this.setData('tarifario', tarifario);
+        
+        // También actualizar la asignación original
+        const idAsignacion = tarifario[tarifaId].idAsignacion;
+        if (updates.costoConsultor !== undefined || updates.costoCliente !== undefined) {
+            this.updateAssignmentTarifas(idAsignacion, {
+                tarifaConsultor: tarifario[tarifaId].costoConsultor,
+                tarifaCliente: tarifario[tarifaId].costoCliente
+            });
+        }
+        
+        console.log('✅ Entrada de tarifario actualizada:', tarifaId);
+        
+        return { success: true, data: tarifario[tarifaId] };
+        
+    } catch (error) {
+        console.error('❌ Error al actualizar entrada de tarifario:', error);
+        return { success: false, message: error.message };
     }
+}
+
+/**
+ * Actualizar tarifas de una asignación
+ */
+updateAssignmentTarifas(assignmentId, tarifas) {
+    try {
+        // Buscar en assignments (soporte)
+        const assignments = this.getData('assignments') || {};
+        if (assignments[assignmentId]) {
+            assignments[assignmentId].tarifaConsultor = tarifas.tarifaConsultor;
+            assignments[assignmentId].tarifaCliente = tarifas.tarifaCliente;
+            this.setData('assignments', assignments);
+            return { success: true };
+        }
+        
+        // Buscar en project_assignments
+        const projectAssignments = this.getData('project_assignments') || {};
+        if (projectAssignments[assignmentId]) {
+            projectAssignments[assignmentId].tarifaConsultor = tarifas.tarifaConsultor;
+            projectAssignments[assignmentId].tarifaCliente = tarifas.tarifaCliente;
+            this.setData('project_assignments', projectAssignments);
+            return { success: true };
+        }
+        
+        return { success: false, message: 'Asignación no encontrada' };
+        
+    } catch (error) {
+        console.error('❌ Error al actualizar tarifas de asignación:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+/**
+ * Obtener todo el tarifario
+ */
+getTarifario() {
+    return this.getData('tarifario') || {};
+}
+
+/**
+ * Obtener entrada de tarifario por ID de asignación
+ */
+getTarifaByAssignment(assignmentId) {
+    const tarifario = this.getData('tarifario') || {};
+    const tarifaId = `tarifa_${assignmentId}`;
+    return tarifario[tarifaId] || null;
+}
+
+/**
+ * Eliminar entrada de tarifario
+ */
+deleteTarifaEntry(tarifaId) {
+    try {
+        const tarifario = this.getData('tarifario') || {};
+        
+        if (tarifario[tarifaId]) {
+            delete tarifario[tarifaId];
+            this.setData('tarifario', tarifario);
+            console.log('✅ Entrada de tarifario eliminada:', tarifaId);
+            return { success: true };
+        }
+        
+        return { success: false, message: 'Entrada no encontrada' };
+        
+    } catch (error) {
+        console.error('❌ Error al eliminar entrada de tarifario:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+/**
+ * Obtener tarifas por consultor
+ */
+getTarifasByConsultor(consultorId) {
+    const tarifario = this.getData('tarifario') || {};
+    return Object.values(tarifario).filter(t => t.consultorId === consultorId);
+}
+
+/**
+ * Obtener resumen de consultores
+ */
+getConsultoresResumen() {
+    const tarifario = this.getData('tarifario') || {};
+    const consultores = {};
+    
+    // Agrupar por consultor
+    Object.values(tarifario).forEach(tarifa => {
+        const consultorId = tarifa.consultorId;
+        
+        if (!consultores[consultorId]) {
+            consultores[consultorId] = {
+                id: consultorId,
+                nombre: tarifa.consultorNombre,
+                totalAsignaciones: 0,
+                modulos: new Set(),
+                clientes: new Set(),
+                promedioTarifa: 0,
+                sumaTarifas: 0
+            };
+        }
+        
+        consultores[consultorId].totalAsignaciones++;
+        consultores[consultorId].modulos.add(tarifa.moduloNombre);
+        consultores[consultorId].clientes.add(tarifa.clienteNombre);
+        consultores[consultorId].sumaTarifas += tarifa.costoConsultor;
+    });
+    
+    // Calcular promedios y convertir Sets a Arrays
+    Object.keys(consultores).forEach(id => {
+        consultores[id].promedioTarifa = consultores[id].sumaTarifas / consultores[id].totalAsignaciones;
+        consultores[id].modulos = Array.from(consultores[id].modulos).join(', ');
+        consultores[id].clientes = Array.from(consultores[id].clientes).join(', ');
+        delete consultores[id].sumaTarifas;
+    });
+    
+    return consultores;
+}
+
+/**
+ * Configurar tarifas para una asignación existente
+ */
+configurarTarifasAsignacion(assignmentId, tarifas) {
+    try {
+        // Actualizar asignación
+        const updateResult = this.updateAssignmentTarifas(assignmentId, tarifas);
+        
+        if (!updateResult.success) {
+            return updateResult;
+        }
+        
+        // Obtener asignación actualizada
+        let assignment = this.getAssignment(assignmentId);
+        if (!assignment) {
+            assignment = this.getProjectAssignment(assignmentId);
+        }
+        
+        if (!assignment) {
+            return { success: false, message: 'Asignación no encontrada' };
+        }
+        
+        // Crear o actualizar entrada en tarifario
+        const tarifaId = `tarifa_${assignmentId}`;
+        const tarifario = this.getData('tarifario') || {};
+        
+        if (tarifario[tarifaId]) {
+            // Ya existe, actualizar
+            return this.updateTarifaEntry(tarifaId, {
+                costoConsultor: tarifas.tarifaConsultor,
+                costoCliente: tarifas.tarifaCliente
+            });
+        } else {
+            // No existe, crear
+            return this.createTarifaEntry(assignment);
+        }
+        
+    } catch (error) {
+        console.error('❌ Error al configurar tarifas:', error);
+        return { success: false, message: error.message };
+    }
+}
+
 }
 
 // Crear instancia global de la base de datos

@@ -180,27 +180,23 @@ class ARVICPDFExporter {
         doc.text('ARVIC', x + 20, y + 8);
     }
 
-    /**
-     * Añadir logo real de ARVIC (replicando el diseño exacto)
-     */
     addARVICLogo(doc, x, y) {
         try {
-            // El logo completo incluye el círculo + texto
-            // Tamaño ajustado para que se vea bien (puedes modificar el ancho/alto)
+            // Tamaño del logo
             const logoWidth = 70;  
             const logoHeight = 27; 
             
             doc.addImage(
                 ARVIC_LOGO_URL, 
                 'PNG', 
-                x - 10,           // Posición X (ajusta si necesitas)
-                y - 10,           // Posición Y (ajusta si necesitas)
+                x - 10,         
+                y - 10,           
                 logoWidth, 
                 logoHeight
             );
         } catch (error) {
             console.error('❌ Error cargando logo:', error);
-            // Fallback: usar logo simple si falla
+            // En caso de que falle la carga del logo, se agrega el logo hecho
             this.addSimpleLogoFallback(doc, x, y);
         }
     }

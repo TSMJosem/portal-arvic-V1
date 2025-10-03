@@ -761,7 +761,8 @@ class ARVICPDFExporter {
             case 'Soporte':
                 return rowData.soporte || rowData.soporteName || rowData.supportName || 'N/A';
             case 'Modulo':
-                return rowData.modulo || rowData.moduloName || rowData.moduleName || 'N/A';
+                const moduloCompleto = rowData.modulo || rowData.moduloName || rowData.moduleName || 'N/A';
+                return window.convertModuleToAcronym ? window.convertModuleToAcronym(moduloCompleto) : moduloCompleto;
             case 'TIEMPO':
                 const tiempo = rowData.editedTime || rowData.tiempo || rowData.hours || 0;
                 return `${parseFloat(tiempo).toFixed(1)} hrs`;
@@ -906,7 +907,7 @@ class ARVICPDFExporter {
                     const tarifa = row[`posicion_${baseIndex + 2}`] || '$0';
                     const total = row[`posicion_${baseIndex + 3}`] || '$0.00';
                     
-                    flatRow[`modulo${semana}`] = modulo;
+                    flatRow[`modulo${semana}`] = window.convertModuleToAcronym(modulo) || modulo;
                     flatRow[`tiempo${semana}`] = tiempo === '' ? '0.0' : tiempo;
                     flatRow[`tarifa${semana}`] = tarifa === '' ? '$0' : tarifa;
                     flatRow[`total${semana}`] = total;
@@ -969,7 +970,8 @@ class ARVICPDFExporter {
             doc.setFont('helvetica', 'normal');
             
             // MODULO
-            const modulo = rowData[`modulo${semana}`] || '-';
+            const moduloCompleto = rowData[`modulo${semana}`] || '-';
+            const modulo = window.convertModuleToAcronym(moduloCompleto) || moduloCompleto;
             doc.rect(currentX, y, columnWidths[headerIndex], rowHeight);
             doc.text(modulo, currentX + 2, y + rowHeight/2 + 2);
             currentX += columnWidths[headerIndex];

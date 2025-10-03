@@ -5472,7 +5472,7 @@ function generatePagoGeneralExcel() {
             row.idEmpresa || 'N/A',
             row.consultor || 'N/A',
             row.soporte || 'N/A',
-            row.modulo || 'N/A',
+            window.convertModuleToAcronym(row.modulo || 'N/A'),
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -5539,7 +5539,7 @@ function generatePagoConsultorExcel() {
             row.idEmpresa || 'N/A',
             row.consultor || 'N/A',
             row.soporte || 'N/A',
-            row.modulo || 'N/A',
+            window.convertModuleToAcronym(row.modulo || 'N/A'),
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -5595,7 +5595,7 @@ function generateClienteSoporteExcel() {
     Object.values(editablePreviewData).forEach(row => {
         wsData.push([
             row.soporte || 'N/A',
-            row.modulo || 'N/A',
+            window.convertModuleToAcronym(row.modulo || 'N/A'),
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -5703,7 +5703,7 @@ function generateRemanenteExcel() {
                 
                 if (semanaData && typeof semanaData === 'object') {
                     dataRow.push(
-                        row.modulo || '-',
+                        window.convertModuleToAcronym(row.modulo) || '-',
                         parseFloat(semanaData.tiempo || 0),
                         parseFloat(semanaData.tarifa || 0),
                         parseFloat(semanaData.total || 0)
@@ -5778,7 +5778,7 @@ function generateRemanenteExcel() {
                 
                 wsData.push([
                     '',
-                    row.moduleName || 'Módulo Sin Nombre',
+                    window.convertModuleToAcronym(row.moduleName) || 'MSN',
                     hours,
                     tariff,
                     total
@@ -5841,7 +5841,7 @@ function generateProyectoGeneralExcel() {
         wsData.push([
             row.idEmpresa || 'N/A',
             row.consultor || 'N/A',
-            row.modulo || 'N/A',
+            window.convertModuleToAcronym(row.modulo || 'N/A'),
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -5887,7 +5887,7 @@ function generateProyectoClienteExcel() {
     
     Object.values(editablePreviewData).forEach(row => {
         wsData.push([
-            row.modulo || 'N/A',
+            window.convertModuleToAcronym(row.modulo || 'N/A'),
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -5935,7 +5935,7 @@ function generateProyectoConsultorExcel() {
         wsData.push([
             row.idEmpresa || 'N/A',
             row.consultor || 'N/A',
-            row.modulo || 'N/A',
+            window.convertModuleToAcronym(row.modulo || 'N/A'),
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)

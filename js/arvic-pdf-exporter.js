@@ -304,7 +304,8 @@ class ARVICPDFExporter {
             'pago-consultor-general',  // Reporte General de Pagos
             'cliente-soporte',         // Reporte De Soporte Al Cliente
             'proyecto-general',        // Reporte General de Proyectos  
-            'proyecto-cliente'         // Reporte De Proyecto (Cliente)
+            'proyecto-cliente',        // Reporte De Proyecto (Cliente)
+            'remanente'                // Reporte Remanente
         ];
         
         // Si es un reporte que debe omitir consultor Y no hay consultor seleccionado, no mostrar

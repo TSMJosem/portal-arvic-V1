@@ -1485,7 +1485,7 @@ class ARVICPDFExporter {
                 // Módulo
                 doc.setFont('helvetica', 'normal');
                 doc.rect(currentX, currentY, colWidths[1], 8);
-                doc.text(row.moduleName, currentX + 2, currentY + 5.5);
+                doc.text(window.convertModuleToAcronym(row.moduleName) || row.moduleName, currentX + 2, currentY + 5.5);
                 currentX += colWidths[1];
 
                 // Total Horas
@@ -1757,7 +1757,7 @@ async function exportCurrentReportToPDF() {
         const report = ARVIC_REPORTS[reportType];
         const config = {
             title: report.name || 'Reporte ARVIC',
-            reportType: currentReportType,
+            reportType: reportType,
             showTotals: true
         };
         

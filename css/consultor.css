@@ -1,5 +1,177 @@
 /* === ESTILOS PROFESIONALES PARA EL PANEL DE CONSULTOR === */
 
+.consultor-layout {
+    background: var(--gray-50);
+    height: 100vh !important; /* ← Altura fija, no min-height */
+    overflow: hidden !important; /* ← Sin scroll */
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+/* 3. HEADER FIJO (ya está con position: fixed, solo asegurar flex-shrink) */
+.consultor-header {
+    flex-shrink: 0;
+    /* mantén el resto de estilos existentes */
+}
+
+/* 4. CONTENIDO PRINCIPAL SIN SCROLL DE PÁGINA */
+.main-content {
+    /* Nota: El header del consultor es 88px */
+    height: calc(100vh - 88px) !important; /* ← Altura fija */
+    margin-top: 88px !important; /* ← Mantiene el espacio del header fijo */
+    overflow: hidden !important; /* ← Sin scroll de página */
+    background: var(--gray-50);
+    padding: var(--spacing-xl);
+    flex: 1;
+}
+
+/* 5. CONTAINER SIN SCROLL */
+.main-content .container {
+    height: 100%;
+    overflow: hidden;
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* 6. WRAPPER CON ALTURA FIJA */
+.content-wrapper {
+    display: flex;
+    gap: var(--spacing-xl);
+    background: white;
+    border-radius: var(--border-radius-xl);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden !important; /* ← Sin scroll */
+    height: 100% !important; /* ← Usa todo el espacio disponible */
+    border: 1px solid var(--gray-200);
+}
+
+/* 7. SOLO SIDEBAR Y CONTENIDO PRINCIPAL TIENEN SCROLL */
+.consultor-sidebar {
+    width: 280px;
+    background: linear-gradient(180deg, var(--gray-100) 0%, var(--gray-50) 100%);
+    border-right: 1px solid var(--gray-200);
+    flex-shrink: 0;
+    padding: var(--spacing-2xl);
+    
+    /* SCROLL INDEPENDIENTE */
+    height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.consultor-main {
+    flex: 1;
+    padding: var(--spacing-2xl);
+    background: white;
+    
+    /* SCROLL INDEPENDIENTE */
+    height: 100% !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+/* ============================================
+   SCROLLBAR PERSONALIZADA - CONSULTOR
+   ============================================ */
+
+/* Sidebar Scrollbar */
+.consultor-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.consultor-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.consultor-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.consultor-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.8);
+}
+
+/* Contenido Principal Scrollbar */
+.consultor-main::-webkit-scrollbar {
+    width: 4px;
+}
+
+.consultor-main::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.consultor-main::-webkit-scrollbar-thumb {
+    background: rgba(30, 58, 138, 0.4);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.consultor-main::-webkit-scrollbar-thumb:hover {
+    background: rgba(30, 58, 138, 0.7);
+}
+
+/* Firefox */
+.consultor-sidebar,
+.consultor-main {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+/* ============================================
+   RESPONSIVE: Ajustes para pantallas pequeñas
+   ============================================ */
+
+@media (max-width: 768px) {
+    .main-content {
+        /* En mobile, el header es más alto (140px aprox) */
+        height: calc(100vh - 140px) !important;
+        margin-top: 140px !important;
+        padding: var(--spacing-lg);
+    }
+    
+    .content-wrapper {
+        flex-direction: column;
+        /* En mobile, permite que crezca según necesidad */
+        height: auto !important;
+        min-height: calc(100vh - 180px);
+    }
+    
+    .consultor-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--gray-200);
+        /* En mobile, altura máxima para el sidebar */
+        max-height: 250px;
+        height: auto !important;
+        padding: var(--spacing-lg);
+    }
+    
+    .consultor-main {
+        /* En mobile, el contenido crece según necesidad */
+        height: auto !important;
+        overflow-y: visible;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-content {
+        height: calc(100vh - 160px) !important;
+        margin-top: 160px !important;
+        padding: var(--spacing-md);
+    }
+    
+    .consultor-sidebar {
+        max-height: 220px;
+    }
+}
+
+
 /* Layout principal del consultor */
 .consultor-layout {
     background: var(--gray-50);

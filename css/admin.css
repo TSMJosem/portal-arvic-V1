@@ -1,5 +1,69 @@
 /* === ESTILOS PROFESIONALES PARA EL PANEL DE ADMINISTRADOR === */
 
+/* ============================================
+   FIX CRÍTICO: ELIMINAR SCROLL DE PÁGINA COMPLETA
+   Agregar al INICIO de tu admin.css
+   ============================================ */
+
+/* 1. BLOQUEAR SCROLL EN HTML Y BODY */
+html {
+    height: 100%;
+    overflow: hidden; /* ← Elimina scroll de la página */
+}
+
+body {
+    height: 100%;
+    overflow: hidden; /* ← Elimina scroll del body */
+    margin: 0;
+    padding: 0;
+}
+
+/* 2. CONTENEDOR PRINCIPAL CON ALTURA FIJA */
+.admin-layout {
+    background: var(--gray-50);
+    height: 100vh !important; /* ← Altura fija, no min-height */
+    overflow: hidden !important; /* ← Sin scroll */
+    font-family: var(--font-primary);
+    display: flex;
+    flex-direction: column;
+}
+
+/* 3. HEADER FIJO (sin cambios necesarios, ya está sticky) */
+.admin-header {
+    flex-shrink: 0; /* ← No se encoge */
+    /* mantén el resto de estilos */
+}
+
+/* 4. CONTENIDO PRINCIPAL SIN SCROLL */
+.admin-content {
+    background: var(--gray-50);
+    height: calc(100vh - 80px) !important; /* ← Altura fija */
+    overflow: hidden !important; /* ← Sin scroll */
+    flex: 1;
+}
+
+/* 5. WRAPPER CON ALTURA FIJA (YA LO TIENES EN EL OVERRIDE) */
+.admin-layout-wrapper {
+    height: 100% !important; /* ← Usa todo el espacio disponible */
+    overflow: hidden !important; /* ← Sin scroll */
+}
+
+/* 6. SOLO SIDEBAR Y CONTENIDO PRINCIPAL TIENEN SCROLL */
+.admin-sidebar,
+.admin-main-content {
+    height: 100% !important;
+    overflow-y: auto !important; /* ← Solo estos tienen scroll */
+    overflow-x: hidden !important;
+}
+
+/* ============================================
+   IMPORTANTE: CONTAINER TAMBIÉN SIN SCROLL
+   ============================================ */
+.container {
+    height: 100%;
+    overflow: hidden;
+}
+
 /* Layout principal del administrador */
 .admin-layout {
     background: var(--gray-50);
@@ -2523,4 +2587,59 @@
 .btn-sm {
     padding: var(--spacing-xs) var(--spacing-md);
     font-size: 0.875rem;
+}
+
+/* OVERRIDE: Scroll independiente */
+.admin-layout-wrapper {
+    height: calc(100vh - 80px) !important;
+}
+
+.admin-sidebar,
+.admin-main-content {
+    height: 100% !important;
+    overflow-x: hidden !important;
+}
+
+.admin-sidebar::-webkit-scrollbar {
+    width: 6px; /* 👈 CAMBIA ESTE VALOR para ajustar el ancho */
+}
+
+.admin-sidebar::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb {
+    background: rgba(156, 163, 175, 0.5);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.admin-sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 114, 128, 0.8);
+}
+
+/* === SCROLLBAR PERSONALIZADA - CONTENIDO PRINCIPAL === */
+.admin-main-content::-webkit-scrollbar {
+    width: 6px; /* 👈 CAMBIA ESTE VALOR para ajustar el ancho */
+}
+
+.admin-main-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.admin-main-content::-webkit-scrollbar-thumb {
+    background: rgba(30, 58, 138, 0.4);
+    border-radius: 10px;
+    transition: background 0.3s ease;
+}
+
+.admin-main-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(30, 58, 138, 0.7);
+}
+
+/* === FIREFOX === */
+.admin-sidebar,
+.admin-main-content {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
 }

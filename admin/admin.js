@@ -2573,7 +2573,6 @@ function viewReport(reportId) {
         assignmentInfo = `
             <strong>Empresa:</strong> ${company ? company.name : 'No asignada'}<br>
             <strong>Soporte:</strong> ${support ? support.name : 'No asignado'}<br>
-            <strong>Tipo:</strong> ${support ? support.type : 'No especificado'}<br>
             <strong>Módulo:</strong> ${module ? module.name : 'No asignado'}
         `;
     }

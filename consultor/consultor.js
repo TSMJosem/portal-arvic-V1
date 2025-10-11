@@ -669,8 +669,6 @@ function viewAssignmentReports(assignmentId) {
                         <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
                         <p><strong>📞 Soporte:</strong> ${support?.name || 'No encontrado'}</p>
                         <p><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
-                        <p><strong>🔧 Tipo:</strong> ${support?.type || 'No especificado'}</p>
-                        <p><strong>⚡ Prioridad:</strong> ${support?.priority || 'No definida'}</p>
                     </div>
                 `;
             }

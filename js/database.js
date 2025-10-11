@@ -1451,7 +1451,7 @@ createProjectAssignment(assignmentData) {
         
         const assignment = {
             id: assignmentId,
-            userId: assignmentData.userId,
+            consultorId: assignmentData.consultorId,
             companyId: assignmentData.companyId,
             projectId: assignmentData.projectId,
             moduleId: assignmentData.moduleId,
@@ -1533,7 +1533,7 @@ createTarifaEntry(assignmentData) {
         const tarifaId = `tarifa_${assignmentData.id}`;
         
         // Obtener información adicional
-        const consultor = this.getUser(assignmentData.userId);
+        const consultor = this.getUser(assignmentData.consultorId || assignmentData.userId);
         const cliente = this.getCompany(assignmentData.companyId);
         const modulo = this.getModule(assignmentData.moduleId);
         
@@ -1568,7 +1568,7 @@ createTarifaEntry(assignmentData) {
             // Campos adicionales para gestión
             tipo: tipo,
             moduloNombre: modulo ? modulo.name : 'Desconocido',
-            consultorId: assignmentData.userId,
+            consultorId: assignmentData.consultorId || assignmentData.userId,
             consultorNombre: consultor ? consultor.name : 'Desconocido',
             clienteId: assignmentData.companyId,
             clienteNombre: cliente ? cliente.name : 'Desconocido',

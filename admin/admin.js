@@ -2912,7 +2912,7 @@ function createProjectAssignment() {
     }
     
     const assignmentData = {
-        userId: userId,
+        consultorId: userId,
         projectId: projectId,
         companyId: companyId,
         moduleId: moduleId,

@@ -234,9 +234,10 @@ function silentDataRefresh() {
         const supportAssignments = window.PortalDB.getUserAssignments(currentUser.id);
         const allProjectAssignments = window.PortalDB.getProjectAssignments ? 
             window.PortalDB.getProjectAssignments() : {};
-        const userProjectAssignments = Object.values(allProjectAssignments).filter(
-            pa => pa.consultorId === currentUser.id && pa.isActive
-        );
+        const userProjectAssignments = Object.values(allProjectAssignments).filter(pa => {
+            const assignmentUserId = pa.consultorId || pa.userId;  // ✅ ACEPTA AMBOS
+            return assignmentUserId === currentUser.id && (pa.isActive !== false);  // ✅ TAMBIÉN ACEPTA SI NO TIENE isActive
+        });
         
         // Combinar asignaciones
         const combinedAssignments = [
@@ -305,9 +306,10 @@ function loadUserAssignments() {
         // 🟩 OBTENER ASIGNACIONES DE PROYECTO
         const allProjectAssignments = window.PortalDB.getProjectAssignments ? 
             Object.values(window.PortalDB.getProjectAssignments()) : [];
-        const projectAssignments = allProjectAssignments.filter(assignment => 
-            assignment.consultorId === currentUser.id && assignment.isActive
-        );
+        const projectAssignments = allProjectAssignments.filter(assignment => {
+            const assignmentUserId = assignment.consultorId || assignment.userId;  // ✅ ACEPTA AMBOS
+            return assignmentUserId === currentUser.id && (assignment.isActive !== false);  // ✅ TAMBIÉN ACEPTA SI NO TIENE isActive
+        });
         
         // Combinar ambos tipos en el array global
         userAssignments = [

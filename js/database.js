@@ -11,187 +11,76 @@ class PortalDatabase {
 
     // === INICIALIZACIÓN ===
     initializeDefaultData() {
-    if (!this.getData('initialized')) {
-        this.setupDefaultUsers();
-        this.setupDefaultCompanies();
-        this.setupDefaultProjects();
-        this.setupDefaultSupports(); 
-        this.setupDefaultModules();
-        this.setupDefaultTarifario();
-        this.setupDefaultAssignments();
-        this.setupDefaultProjectAssignments();
-        this.setupDefaultReports();
-        this.setData('initialized', true);
-        this.setData('user_counter', 3);
-        this.setData('company_counter', 4);
-        this.setData('project_counter', 4);
-        this.setData('support_counter', 4);
-        this.setData('module_counter', 4);
+        if (!this.getData('initialized')) {
+            this.setupDefaultUsers();
+            this.setupDefaultCompanies();
+            this.setupDefaultProjects();
+            this.setupDefaultSupports(); 
+            this.setupDefaultModules();
+            this.setupDefaultTarifario();
+            this.setupDefaultAssignments();
+            this.setupDefaultProjectAssignments();
+            this.setupDefaultReports();
+            this.setData('initialized', true);
+            this.setData('user_counter', 1);
+            this.setData('company_counter', 1);
+            this.setData('project_counter', 1);
+            this.setData('support_counter', 1);
+            this.setData('module_counter', 1);
+        }
     }
-}
 
     setupDefaultUsers() {
-    console.log('🔄 Inicializando usuarios por defecto...');
-    
-    const defaultUsers = {
-        'admin': {
-            id: 'admin',
-            name: 'Administrador Principal',
-            email: 'admin@arvic.com',
-            password: 'hperez1402.',
-            role: 'admin',
-            createdAt: new Date().toISOString(),
-            isActive: true
-        },
-        '0001': {
-            id: '0001',
-            name: 'Juan Pérez García',
-            email: 'juan.perez@arvic.com',
-            password: 'cons0001.2024',
-            role: 'consultor',
-            createdAt: new Date().toISOString(),
-            isActive: true,
-            assignedCompany: '0001',
-            assignedProject: '0001',
-            reportType: 'Mensual'
-        },
-        '0002': {
-            id: '0002',
-            name: 'María Elena Rodríguez',
-            email: 'maria.rodriguez@arvic.com',
-            password: 'cons0002.1987',
-            role: 'consultor',
-            createdAt: new Date().toISOString(),
-            isActive: true,
-            assignedCompany: '0002',
-            assignedProject: '0002',
-            reportType: 'Semanal'
-        }
-    };
-    
-    this.setData('users', defaultUsers);
-    console.log('✅ Usuarios creados:', Object.keys(defaultUsers));
-    console.log('✅ Admin password:', defaultUsers.admin.password);
-}
-
-    generateUniquePassword(userId) {
-    // Formato: "cons" + userId + "." + 4 dígitos aleatorios
-    const randomNum = Math.floor(1000 + Math.random() * 9000);
-    return `cons${userId}.${randomNum}`;
-}
-
-    setupDefaultCompanies() {
-        const defaultCompanies = {
-            '0001': {
-                id: '0001',
-                name: 'Tecnología Avanzada SA de CV',
-                description: 'Empresa especializada en soluciones tecnológicas',
-                createdAt: new Date().toISOString(),
-                isActive: true
-            },
-            '0002': {
-                id: '0002',
-                name: 'Consultoría Digital SRL',
-                description: 'Servicios de consultoría y transformación digital',
-                createdAt: new Date().toISOString(),
-                isActive: true
-            },
-            '0003': {
-                id: '0003',
-                name: 'Innovación Tech Corp',
-                description: 'Desarrollo de software y aplicaciones móviles',
+        console.log('🔄 Inicializando usuarios por defecto...');
+        
+        const defaultUsers = {
+            'admin': {
+                id: 'admin',
+                name: 'Administrador Principal',
+                email: 'admin@arvic.com',
+                password: 'hperez1402.',
+                role: 'admin',
                 createdAt: new Date().toISOString(),
                 isActive: true
             }
         };
+        
+        this.setData('users', defaultUsers);
+        console.log('✅ Usuario administrador creado');
+        console.log('✅ Admin password:', defaultUsers.admin.password);
+    }
+
+    generateUniquePassword(userId) {
+        // Formato: "cons" + userId + "." + 4 dígitos aleatorios
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        return `cons${userId}.${randomNum}`;
+    }
+
+    setupDefaultCompanies() {
+        const defaultCompanies = {};
         this.setData('companies', defaultCompanies);
+        console.log('✅ Sin empresas por defecto');
     }
 
     setupDefaultProjects() {
-        const defaultProjects = {
-            '0001': {
-                id: '0001',
-                name: 'Sistema de Gestión Empresarial',
-                description: 'ERP completo para gestión de recursos empresariales',
-                createdAt: new Date().toISOString(),
-                isActive: true
-            },
-            '0002': {
-                id: '0002',
-                name: 'Portal Web Corporativo',
-                description: 'Desarrollo de sitio web institucional con CMS',
-                createdAt: new Date().toISOString(),
-                isActive: true
-            },
-            '0003': {
-                id: '0003',
-                name: 'App Móvil de Ventas',
-                description: 'Aplicación móvil para gestión de ventas y clientes',
-                createdAt: new Date().toISOString(),
-                isActive: true
-            }
-        };
+        const defaultProjects = {};
         this.setData('projects', defaultProjects);
+        console.log('✅ Sin proyectos por defecto');
     }
 
     setupDefaultSupports() {
-    const defaultSupports = {
-        '0001': {
-            id: '0001',
-            name: 'Soporte técnico sistema ERP',
-            description: 'Soporte para configuración y resolución de problemas del ERP',
-            createdAt: new Date(Date.now() - 86400000 * 7).toISOString(),
-            isActive: true
-        },
-        '0002': {
-            id: '0002',
-            name: 'Soporte funcional módulo ventas',
-            description: 'Apoyo en el uso y configuración del módulo de ventas',
-            createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-            isActive: true
-        },
-        '0003': {
-            id: '0003',
-            name: 'Mantenimiento preventivo sistema',
-            description: 'Revisión y mantenimiento del sistema completo',
-            createdAt: new Date().toISOString(),
-            isActive: true
-        }
-    };
-    this.setData('supports', defaultSupports);
-}
-
-    setupDefaultModules() {
-        const defaultModules = {
-            '0001': {
-                id: '0001',
-                name: 'Módulo de Autenticación',
-                description: 'Manejo de login, logout y sesiones de usuario',
-                status: 'Completado',
-                createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
-                isActive: true
-            },
-            '0002': {
-                id: '0002',
-                name: 'Panel de Administración',
-                description: 'Interfaz para gestión de usuarios y configuración',
-                status: 'En Desarrollo',
-                createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-                isActive: true
-            },
-            '0003': {
-                id: '0003',
-                name: 'API de Reportes',
-                description: 'Endpoints para creación y gestión de reportes',
-                status: 'Planificación',
-                createdAt: new Date().toISOString(),
-                isActive: true
-            }
-        };
-        this.setData('modules', defaultModules);
+        const defaultSupports = {};
+        this.setData('supports', defaultSupports);
+        console.log('✅ Sin soportes por defecto');
     }
 
-        setupDefaultTarifario() {
+    setupDefaultModules() {
+        const defaultModules = {};
+        this.setData('modules', defaultModules);
+        console.log('✅ Sin módulos por defecto');
+    }
+
+    setupDefaultTarifario() {
         console.log('🔄 Inicializando tarifario...');
         
         // Inicializar con objeto vacío
@@ -202,55 +91,15 @@ class PortalDatabase {
     }
 
     setupDefaultAssignments() {
-    const defaultAssignments = {
-        'assign_001': {
-            id: 'assign_001',
-            userId: '0001',
-            companyId: '0001',
-            supportId: '0001', // Cambiar de taskId
-            moduleId: '0001',
-            createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-            isActive: true
-        },
-        'assign_002': {
-            id: 'assign_002',
-            userId: '0002',
-            companyId: '0002',
-            supportId: '0002', // Cambiar de taskId
-            moduleId: '0002',
-            createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-            isActive: true
-        }
-    };
-    this.setData('assignments', defaultAssignments);
-}
+        const defaultAssignments = {};
+        this.setData('assignments', defaultAssignments);
+        console.log('✅ Sin asignaciones por defecto');
+    }
 
     setupDefaultReports() {
-        const defaultReports = {
-            'report_001': {
-                id: 'report_001',
-                userId: '0001',
-                title: 'Reporte de Configuración de Base de Datos',
-                description: 'Configuración inicial de la base de datos completada exitosamente. Se crearon todas las tablas necesarias.',
-                hours: 8,
-                reportDate: new Date(Date.now() - 86400000 * 2).toISOString(),
-                status: 'Aprobado',
-                createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-                updatedAt: new Date(Date.now() - 86400000 * 1).toISOString()
-            },
-            'report_002': {
-                id: 'report_002',
-                userId: '0002',
-                title: 'Avance en Interfaz de Usuario',
-                description: 'Diseño de mockups para las pantallas principales del sistema. Se completaron 5 pantallas.',
-                hours: 6,
-                reportDate: new Date(Date.now() - 86400000 * 1).toISOString(),
-                status: 'Pendiente',
-                createdAt: new Date(Date.now() - 86400000 * 1).toISOString(),
-                updatedAt: new Date(Date.now() - 86400000 * 1).toISOString()
-            }
-        };
+        const defaultReports = {};
         this.setData('reports', defaultReports);
+        console.log('✅ Sin reportes por defecto');
     }
 
     // === MÉTODOS GENERALES ===
@@ -1421,18 +1270,9 @@ deleteGeneratedReport(reportId) {
     }
 
     setupDefaultProjectAssignments() {
-        const defaultProjectAssignments = {
-            'proj_assign_001': {
-                id: 'proj_assign_001',
-                projectId: '0001',
-                consultorId: '0001',      // UN SOLO consultor
-                companyId: '0001',
-                moduleId: '0001',
-                createdAt: new Date().toISOString(),
-                isActive: true
-            }
-        };
+        const defaultProjectAssignments = {};
         this.setData('project_assignments', defaultProjectAssignments);
+        console.log('✅ Sin asignaciones de proyecto por defecto');
     }
 
     getProjectAssignments() {

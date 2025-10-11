@@ -190,16 +190,103 @@ function setupEventListeners() {
             reportForm.addEventListener('submit', handleCreateReport);
         }
         
-        // Auto-refresh cada 30 segundos
+        // Auto-refresh en segundo plano cada 30 segundos
         setInterval(() => {
-            if (isInitialized) {
-                loadUserAssignments();
+            if (isInitialized && !isUserInteracting()) {
+                silentDataRefresh();
             }
         }, 30000);
         
     } catch (error) {
         console.error('Error en setupEventListeners:', error);
         showError('Error al configurar eventos: ' + error.message);
+    }
+}
+
+// Detectar si el usuario está interactuando
+function isUserInteracting() {
+    // Verificar si hay modales abiertos
+    const modals = document.querySelectorAll('.modal');
+    for (let modal of modals) {
+        if (modal.style.display === 'block') {
+            return true;
+        }
+    }
+    
+    // Verificar si hay inputs con foco
+    const activeElement = document.activeElement;
+    if (activeElement && (activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' || 
+        activeElement.tagName === 'SELECT')) {
+        return true;
+    }
+    
+    return false;
+}
+
+// Actualización silenciosa en segundo plano
+function silentDataRefresh() {
+    try {
+        // Guardar datos antiguos
+        const oldAssignmentsCount = userAssignments.length;
+        
+        // Actualizar datos en memoria sin tocar el DOM
+        const supportAssignments = window.PortalDB.getUserAssignments(currentUser.id);
+        const allProjectAssignments = window.PortalDB.getProjectAssignments ? 
+            window.PortalDB.getProjectAssignments() : {};
+        const userProjectAssignments = Object.values(allProjectAssignments).filter(
+            pa => pa.consultorId === currentUser.id && pa.isActive
+        );
+        
+        // Combinar asignaciones
+        const combinedAssignments = [
+            ...supportAssignments.map(a => ({...a, assignmentType: 'support'})),
+            ...userProjectAssignments.map(a => ({...a, assignmentType: 'project'}))
+        ];
+        
+        userAssignments = combinedAssignments;
+        
+        // Solo actualizar badges/contadores (no regenerar listas)
+        updateCountersOnly();
+        
+        // Si hay nuevas asignaciones, mostrar notificación discreta
+        if (combinedAssignments.length > oldAssignmentsCount) {
+            if (window.NotificationUtils) {
+                window.NotificationUtils.info('Tienes nuevas asignaciones disponibles', 3000);
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error en actualización silenciosa:', error);
+    }
+}
+
+// Actualizar solo contadores sin regenerar HTML
+function updateCountersOnly() {
+    try {
+        // Actualizar contador principal
+        const assignmentsCount = document.getElementById('assignmentsCount');
+        if (assignmentsCount) {
+            assignmentsCount.textContent = userAssignments.length;
+        }
+        
+        // Actualizar contadores de reportes rechazados si existe la función
+        if (typeof updateRejectedReportsSection === 'function') {
+            const rejectedReports = Object.values(window.PortalDB.getReports()).filter(
+                r => r.userId === currentUser.id && r.status === 'Rechazado'
+            );
+            // Solo actualizar el contador, no regenerar la sección
+            const rejectedSection = document.getElementById('rejectedReportsSection');
+            if (rejectedSection) {
+                const countElement = rejectedSection.querySelector('.section-subtitle');
+                if (countElement) {
+                    countElement.textContent = `${rejectedReports.length} reportes requieren tu atención`;
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('Error actualizando contadores:', error);
     }
 }
 
@@ -1328,5 +1415,8 @@ window.hideError = hideError;
 
 window.openProjectReportModal = openProjectReportModal;
 window.viewProjectDetails = viewProjectDetails;
+
+window.silentDataRefresh = silentDataRefresh;
+window.updateCountersOnly = updateCountersOnly;
 
 console.log('✅ Funciones del consultor exportadas globalmente');

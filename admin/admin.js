@@ -2072,8 +2072,65 @@ function setupEventListeners() {
         }
     });
 
-    // Auto-actualización cada 30 segundos
-    setInterval(loadAllData, 30000);
+    // Auto-actualización silenciosa cada 30 segundos
+    setInterval(() => {
+        if (!isAdminInteracting()) {
+            silentAdminRefresh();
+        }
+    }, 30000);
+}
+
+// Detectar si el admin está interactuando
+function isAdminInteracting() {
+    // Verificar modales abiertos
+    const modals = document.querySelectorAll('.modal, .modal-overlay');
+    for (let modal of modals) {
+        if (modal.style.display === 'block' || modal.style.display === 'flex') {
+            return true;
+        }
+    }
+    
+    // Verificar inputs con foco
+    const activeElement = document.activeElement;
+    if (activeElement && (activeElement.tagName === 'INPUT' || 
+        activeElement.tagName === 'TEXTAREA' || 
+        activeElement.tagName === 'SELECT')) {
+        return true;
+    }
+    
+    // No interrumpir si está en reportes pendientes
+    if (currentSection === 'reportes-pendientes' || 
+        currentSection === 'reportes-aprobados' ||
+        currentSection === 'generar-reporte') {
+        return true;
+    }
+    
+    return false;
+}
+
+// Actualización silenciosa en segundo plano
+function silentAdminRefresh() {
+    try {
+        console.log('🔄 Actualización silenciosa en segundo plano...');
+        
+        // Actualizar solo datos en memoria
+        currentData.users = window.PortalDB.getUsers() || {};
+        currentData.companies = window.PortalDB.getCompanies() || {};
+        currentData.projects = window.PortalDB.getProjects() || {};
+        currentData.assignments = window.PortalDB.getAssignments() || {};
+        currentData.supports = window.PortalDB.getSupports() || {};
+        currentData.modules = window.PortalDB.getModules() || {};
+        currentData.reports = window.PortalDB.getReports() || {};
+        currentData.projectAssignments = window.PortalDB.getProjectAssignments() || {};
+        
+        // Solo actualizar contadores del sidebar
+        updateSidebarCounts();
+        
+        console.log('✅ Datos actualizados en segundo plano');
+        
+    } catch (error) {
+        console.error('Error en actualización silenciosa:', error);
+    }
 }
 
 function setupSidebarNavigation() {
@@ -7097,6 +7154,8 @@ window.abrirFormularioTarifa = abrirFormularioTarifa;
 window.guardarTarifaAsignacion = guardarTarifaAsignacion;
 window.cerrarModalTarifas = cerrarModalTarifas;
 window.cerrarFormularioTarifa = cerrarFormularioTarifa;
+window.silentAdminRefresh = silentAdminRefresh;
+window.isAdminInteracting = isAdminInteracting;
 
 console.log('✅ Funciones de asignación de proyectos cargadas');
 console.log('✅ Funciones del administrador exportadas globalmente');

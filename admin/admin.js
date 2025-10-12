@@ -320,13 +320,23 @@ function updateStats() {
 }
 
 function updateSidebarCounts() {
+    console.log('🔍 updateSidebarCounts ejecutándose...');
+    console.log('📊 currentData.assignments:', Object.keys(currentData.assignments || {}).length);
+    console.log('📊 currentData.projectAssignments:', Object.keys(currentData.projectAssignments || {}).length);
+
     const consultorUsers = Object.values(currentData.users).filter(user => 
         user.role === 'consultor' && user.isActive !== false
     );
     const companies = Object.values(currentData.companies);
     const projects = Object.values(currentData.projects);
-    const assignments = Object.values(currentData.assignments).filter(a => a.isActive);
-    const projectAssignments = Object.values(currentData.projectAssignments || {});
+    const assignments = Object.values(currentData.assignments).filter(a => a.isActive !== false);
+    const projectAssignments = Object.values(currentData.projectAssignments || {}).filter(a => a.isActive !== false);
+
+    console.log("Conteo de asignaciones de proyecto:", projectAssignments.length);
+    console.log("Asignaciones de soporte:", assignments.length);
+    
+    const totalAssignments = assignments.length + projectAssignments.length;
+
     document.getElementById('sidebarProjectAssignmentsCount').textContent = projectAssignments.length;
 
     const supports = Object.values(currentData.supports); // Cambiar de tasks
@@ -344,7 +354,7 @@ function updateSidebarCounts() {
         'sidebarProjectsCount': projects.length,
         'sidebarSupportsCount': supports.length, // Cambiar de sidebarTasksCount
         'sidebarModulesCount': modules.length,
-        'sidebarAssignmentsCount': assignments.length,
+        'sidebarAssignmentsCount': totalAssignments,
         'sidebarReportsCount': pendingReports.length,
         'sidebarApprovedReportsCount': approvedReports.length,
         'sidebarGeneratedReportsCount': generatedReports.length
@@ -529,9 +539,9 @@ function updateApprovedReportsList() {
             <tr>
                 <td colspan="7" class="empty-table-message">
                     <div class="empty-state">
-                        <div class="empty-state-icon">✅</div>
+                        <div class="empty-state-icon">📊</div>
                         <div class="empty-state-title">No hay reportes aprobados</div>
-                        <div class="empty-state-desc">No se encontraron reportes aprobados en el período seleccionado</div>
+                        <div class="empty-state-desc">Intenta ajustar los filtros de fecha o categoría</div>
                     </div>
                 </td>
             </tr>
@@ -539,45 +549,51 @@ function updateApprovedReportsList() {
         return;
     }
     
-    // Agrupar por asignación Y contar reportes
+    // Agrupar por asignación usando categoryFilteredReports
     const assignmentSummary = {};
     const reportCounts = {};
     
     categoryFilteredReports.forEach(report => {
-        const user = currentData.users[report.userId];
+        const assignment = Object.values(currentData.assignments).find(a => a.userId === report.userId);
+        const projectAssignment = Object.values(currentData.projectAssignments || {}).find(a => {
+            const assignmentUserId = a.consultorId || a.userId;
+            return assignmentUserId === report.userId;
+        });
         
-        let assignment = null;
-        if (report.assignmentId) {
-            assignment = currentData.assignments[report.assignmentId];
-        } else {
-            assignment = Object.values(currentData.assignments).find(a => 
-                a.userId === report.userId && a.isActive
-            );
+        let assignmentId = null;
+        let user = null;
+        let company = null;
+        let module = null;
+        
+        if (assignment) {
+            assignmentId = assignment.id;
+            user = currentData.users[assignment.userId];
+            company = currentData.companies[assignment.companyId];
+            module = currentData.modules[assignment.moduleId];
+        } else if (projectAssignment) {
+            assignmentId = projectAssignment.id;
+            const consultorId = projectAssignment.consultorId || projectAssignment.userId;
+            user = currentData.users[consultorId];
+            company = currentData.companies[projectAssignment.companyId];
+            module = currentData.modules[projectAssignment.moduleId];
         }
         
-        if (user && assignment) {
-            const key = assignment.id;
+        if (assignmentId && user && company && module) {
+            const key = assignmentId;
             
-            // Contar reportes por asignación
             if (!reportCounts[key]) {
                 reportCounts[key] = 0;
             }
             reportCounts[key]++;
             
-            // Crear resumen de asignación
             if (!assignmentSummary[key]) {
-                const company = currentData.companies[assignment.companyId];
-                const support = currentData.supports[assignment.supportId];
-                const module = currentData.modules[assignment.moduleId];
-
                 assignmentSummary[key] = {
-                    assignmentId: assignment.id,
+                    assignmentId: assignmentId,
                     consultantId: user.id,
                     consultantName: user.name,
-                    companyId: assignment.companyId,
-                    companyName: company ? company.name : 'No asignado',
-                    supportName: support ? support.name : 'No asignado',
-                    moduleName: module ? module.name : 'No asignado',
+                    companyId: company.id,
+                    companyName: company.name,
+                    moduleName: module.name,
                     totalHours: 0
                 };
             }
@@ -586,17 +602,34 @@ function updateApprovedReportsList() {
         }
     });
     
-    // Generar tabla con TODAS las columnas (6 columnas para coincidir con el header)
+    // Generar tabla con detección de tipo
     approvedReportsTableBody.innerHTML = '';
     Object.values(assignmentSummary).forEach(summary => {
         const reportCount = reportCounts[summary.assignmentId];
         const row = document.createElement('tr');
+        
+        // Detectar tipo de asignación
+        const assignment = currentData.assignments[summary.assignmentId];
+        const projectAssignment = currentData.projectAssignments?.[summary.assignmentId];
+        
+        let workName = 'No asignado';
+        
+        if (assignment && assignment.supportId) {
+            // ES SOPORTE
+            const support = currentData.supports[assignment.supportId];
+            workName = support ? support.name : 'Soporte no encontrado';
+        } else if (projectAssignment && projectAssignment.projectId) {
+            // ES PROYECTO
+            const project = currentData.projects[projectAssignment.projectId];
+            workName = project ? project.name : 'Proyecto no encontrado';
+        }
+        
         row.innerHTML = `
             <td><span class="consultant-id">${summary.consultantId}</span></td>
             <td><span class="consultant-name">${summary.consultantName}</span></td>
             <td><span class="consultant-id">${summary.companyId}</span></td>
             <td><span class="company-name">${summary.companyName}</span></td>
-            <td><span class="project-name">${summary.supportName}</span></td>
+            <td><span class="project-name">${workName}</span></td>
             <td>${summary.moduleName}</td>
             <td>
                 <span class="hours-reported">${summary.totalHours.toFixed(1)} hrs</span>
@@ -974,11 +1007,23 @@ function updateProjectAssignmentsList() {
 function updateAssignmentsList() {
     const container = document.getElementById('assignmentsList');
     const recentContainer = document.getElementById('recentAssignments');
-    const assignments = Object.values(currentData.assignments);
+    
+    // 🔄 COMBINAR asignaciones de soporte Y proyecto
+    const supportAssignments = Object.values(currentData.assignments).map(a => ({
+        ...a,
+        assignmentType: 'support'
+    }));
+    
+    const projectAssignments = Object.values(currentData.projectAssignments || {}).map(a => ({
+        ...a,
+        assignmentType: 'project'
+    }));
+    
+    const allAssignments = [...supportAssignments, ...projectAssignments];
     
     // Actualizar lista completa de asignaciones
     if (container) {
-        if (assignments.length === 0) {
+        if (allAssignments.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
                     <div class="empty-state-icon">🔗</div>
@@ -988,33 +1033,69 @@ function updateAssignmentsList() {
             `;
         } else {
             container.innerHTML = '';
-            assignments.forEach(assignment => {
-                const user = currentData.users[assignment.userId];
-                const company = currentData.companies[assignment.companyId];
-                const support = currentData.supports[assignment.supportId]; // Cambiar de taskId
-                const module = currentData.modules[assignment.moduleId];
+            allAssignments.forEach(assignment => {
+                const assignmentDiv = document.createElement('div');
+                assignmentDiv.className = 'item hover-lift';
                 
-                if (user && company && support && module) {
-                    const assignmentDiv = document.createElement('div');
-                    assignmentDiv.className = 'item hover-lift';
-                    assignmentDiv.innerHTML = `
-                        <div>
-                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                                <span class="item-id">${assignment.id.slice(-6)}</span>
-                                <strong>${user.name}</strong>
-                                <span class="custom-badge badge-info">Asignado</span>
+                if (assignment.assignmentType === 'support') {
+                    // 🟦 ASIGNACIÓN DE SOPORTE
+                    const user = currentData.users[assignment.userId];
+                    const company = currentData.companies[assignment.companyId];
+                    const support = currentData.supports[assignment.supportId];
+                    const module = currentData.modules[assignment.moduleId];
+                    
+                    if (user && company && support && module) {
+                        assignmentDiv.innerHTML = `
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                    <span class="item-id">${assignment.id.slice(-6)}</span>
+                                    <strong>${user.name}</strong>
+                                    <span class="custom-badge" style="background: #3498db20; color: #3498db; border: 1px solid #3498db;">
+                                        📞 SOPORTE
+                                    </span>
+                                </div>
+                                <small style="color: #666;">
+                                    🏢 ${company.name} | 📞 ${support.name}<br>
+                                    🧩 ${module.name}<br>
+                                    📅 ${window.DateUtils.formatDate(assignment.createdAt)}
+                                </small>
                             </div>
-                            <small style="color: #666;">
-                                🏢 ${company.name} | 📞 ${support.name}<br>
-                                🔧 ${support.type} | 🧩 ${module.name}<br>
-                                📅 ${window.DateUtils.formatDate(assignment.createdAt)}
-                            </small>
-                        </div>
-                        <button class="delete-btn" onclick="deleteAssignment('${assignment.id}')" title="Eliminar asignación">
-                            🗑️
-                        </button>
-                    `;
-                    container.appendChild(assignmentDiv);
+                            <button class="delete-btn" onclick="deleteAssignment('${assignment.id}')" title="Eliminar asignación">
+                                🗑️
+                            </button>
+                        `;
+                        container.appendChild(assignmentDiv);
+                    }
+                    
+                } else if (assignment.assignmentType === 'project') {
+                    // 🟩 ASIGNACIÓN DE PROYECTO
+                    const consultor = currentData.users[assignment.consultorId];  // ✅ consultorId
+                    const company = currentData.companies[assignment.companyId];
+                    const project = currentData.projects[assignment.projectId];
+                    const module = currentData.modules[assignment.moduleId];
+                    
+                    if (consultor && company && project && module) {
+                        assignmentDiv.innerHTML = `
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                    <span class="item-id">${assignment.id.slice(-6)}</span>
+                                    <strong>${consultor.name}</strong>
+                                    <span class="custom-badge" style="background: #e74c3c20; color: #e74c3c; border: 1px solid #e74c3c;">
+                                        📋 PROYECTO
+                                    </span>
+                                </div>
+                                <small style="color: #666;">
+                                    🏢 ${company.name} | 📋 ${project.name}<br>
+                                    🧩 ${module.name}<br>
+                                    📅 ${window.DateUtils.formatDate(assignment.createdAt)}
+                                </small>
+                            </div>
+                            <button class="delete-btn" onclick="deleteProjectAssignment('${assignment.id}')" title="Eliminar asignación">
+                                🗑️
+                            </button>
+                        `;
+                        container.appendChild(assignmentDiv);
+                    }
                 }
             });
         }
@@ -1022,7 +1103,9 @@ function updateAssignmentsList() {
     
     // Actualizar asignaciones recientes (últimas 5)
     if (recentContainer) {
-        const recentAssignments = window.PortalDB.getRecentAssignments(5);
+        const recentAssignments = allAssignments
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 5);
         
         if (recentAssignments.length === 0) {
             recentContainer.innerHTML = `
@@ -1035,12 +1118,10 @@ function updateAssignmentsList() {
         } else {
             recentContainer.innerHTML = '';
             recentAssignments.forEach(assignment => {
-                
                 const assignmentDiv = document.createElement('div');
                 assignmentDiv.className = 'item hover-lift';
                 
                 if (assignment.assignmentType === 'support') {
-                   
                     const user = currentData.users[assignment.userId];
                     const company = currentData.companies[assignment.companyId];
                     const support = currentData.supports[assignment.supportId];
@@ -1067,8 +1148,7 @@ function updateAssignmentsList() {
                     }
                     
                 } else if (assignment.assignmentType === 'project') {
-                    
-                    const consultor = currentData.users[assignment.consultorId];
+                    const consultor = currentData.users[assignment.consultorId];  // ✅ consultorId
                     const company = currentData.companies[assignment.companyId];
                     const project = currentData.projects[assignment.projectId];
                     const module = currentData.modules[assignment.moduleId];

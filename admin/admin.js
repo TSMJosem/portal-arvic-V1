@@ -2235,6 +2235,15 @@ function setupSidebarNavigation() {
 function showSection(sectionName) {
     console.log(`🔄 === CAMBIANDO A SECCIÓN: ${sectionName} ===`);
     
+    // ✅ AGREGAR: Guardar sección anterior ANTES de cambiar
+    const previousSection = currentSection;
+    
+    // ✅ AGREGAR: Si está saliendo de generar-reporte, resetear
+    if (previousSection === 'generar-reporte' && sectionName !== 'generar-reporte') {
+        console.log('👋 Saliendo de generar-reporte, limpiando estado...');
+        resetReportGenerator();
+    }
+
     currentSection = sectionName;
     
     // Ocultar todas las secciones
@@ -3156,8 +3165,8 @@ function updateGeneratedReportsList() {
         }
     }
     
-    const allReports = Object.values(window.PortalDB.getGeneratedReports());
-    let filteredReports = allReports;
+    const allReportsUnfiltered = Object.values(window.PortalDB.getGeneratedReports());
+    let filteredReports = allReportsUnfiltered;
     
     // Filtrar por fecha
     if (timeFilter) {
@@ -3262,7 +3271,7 @@ function updateGeneratedReportsList() {
                 <td class="file-name-cell">${report.fileName}</td>
                 <td class="report-type-cell">
                     <span class="report-type-${report.reportType}">
-                        ${report.reportType === 'actividades' ? '📊 Actividades' : '💰 Pagos'}
+                        ${getReportTypeLabel(report.reportType)}
                     </span>
                 </td>
                 <td class="period-cell">${report.dateRange}</td>
@@ -3286,7 +3295,24 @@ function updateGeneratedReportsList() {
     }
     
     // Actualizar estadísticas
-    updateGeneratedReportsStats(allReports);
+    updateGeneratedReportsStats(allReportsUnfiltered);
+}
+
+/**
+ * Obtener etiqueta legible del tipo de reporte
+ */
+function getReportTypeLabel(reportType) {
+    const labels = {
+        'pago-consultor-general': '💰 Pago (General)',
+        'pago-consultor-especifico': '👤 Pago (Específico)',
+        'cliente-soporte': '📞 Cliente Soporte',
+        'remanente': '📊 Remanente',
+        'proyecto-general': '📋 Proyecto (General)',
+        'proyecto-cliente': '🏢 Proyecto (Cliente)',
+        'proyecto-consultor': '👤 Proyecto (Consultor)'
+    };
+    
+    return labels[reportType] || '📄 Reporte';
 }
 
 function updateGeneratedReportsStats(reports = null) {
@@ -3294,20 +3320,41 @@ function updateGeneratedReportsStats(reports = null) {
         reports = Object.values(window.PortalDB.getGeneratedReports());
     }
     
-    const actividadReports = reports.filter(r => r.reportType === 'actividades');
-    const pagoReports = reports.filter(r => r.reportType === 'pagos');
-    const totalDownloads = reports.reduce((sum, r) => sum + (r.downloadCount || 0), 0);
+    // Contar cada tipo de reporte específico
+    const counts = {
+        'pago-consultor-general': 0,
+        'pago-consultor-especifico': 0,
+        'cliente-soporte': 0,
+        'remanente': 0,
+        'proyecto-general': 0,
+        'proyecto-cliente': 0,
+        'proyecto-consultor': 0
+    };
+    
+    reports.forEach(r => {
+        if (counts[r.reportType] !== undefined) {
+            counts[r.reportType]++;
+        }
+    });
     
     // Actualizar elementos del DOM
     const totalElement = document.getElementById('totalGeneratedReports');
-    const actividadElement = document.getElementById('totalActividadReports');
-    const pagoElement = document.getElementById('totalPagoReports');
-    const downloadsElement = document.getElementById('totalDownloads');
+    const pagoGeneralEl = document.getElementById('reportPagoGeneral');
+    const pagoEspecificoEl = document.getElementById('reportPagoEspecifico');
+    const clienteSoporteEl = document.getElementById('reportClienteSoporte');
+    const remanenteEl = document.getElementById('reportRemanente');
+    const proyectoGeneralEl = document.getElementById('reportProyectoGeneral');
+    const proyectoClienteEl = document.getElementById('reportProyectoCliente');
+    const proyectoConsultorEl = document.getElementById('reportProyectoConsultor');
     
     if (totalElement) totalElement.textContent = reports.length;
-    if (actividadElement) actividadElement.textContent = actividadReports.length;
-    if (pagoElement) pagoElement.textContent = pagoReports.length;
-    if (downloadsElement) downloadsElement.textContent = totalDownloads;
+    if (pagoGeneralEl) pagoGeneralEl.textContent = counts['pago-consultor-general'];
+    if (pagoEspecificoEl) pagoEspecificoEl.textContent = counts['pago-consultor-especifico'];
+    if (clienteSoporteEl) clienteSoporteEl.textContent = counts['cliente-soporte'];
+    if (remanenteEl) remanenteEl.textContent = counts['remanente'];
+    if (proyectoGeneralEl) proyectoGeneralEl.textContent = counts['proyecto-general'];
+    if (proyectoClienteEl) proyectoClienteEl.textContent = counts['proyecto-cliente'];
+    if (proyectoConsultorEl) proyectoConsultorEl.textContent = counts['proyecto-consultor'];
 }
 
 function refreshGeneratedReportsList() {
@@ -3863,6 +3910,8 @@ function handleTimeFilterChange() {
  */
 function resetReportFilters() {
     console.log('🔄 Reseteando filtros...');
+
+    clearPreviewAndFilters();
     
     const configPanel = document.getElementById('reportConfigPanel');
     if (configPanel) {
@@ -3892,6 +3941,88 @@ function resetReportFilters() {
     validateRequiredFilters();
     
     window.NotificationUtils.info('Filtros restablecidos');
+}
+
+/**
+ * Resetear completamente el generador de reportes
+ * Limpia: tipo seleccionado, configuración, vista previa, datos en memoria
+ */
+function resetReportGenerator() {
+    console.log('🧹 Reseteando generador de reportes...');
+    
+    // 1. Limpiar tipo de reporte seleccionado
+    currentReportType = null;
+    document.querySelectorAll('.report-option').forEach(option => {
+        option.classList.remove('active');
+    });
+    
+    // 2. Ocultar panel de configuración
+    const configPanel = document.getElementById('reportConfigPanel');
+    if (configPanel) configPanel.style.display = 'none';
+    
+    // 3. Limpiar vista previa
+    const previewPanel = document.getElementById('reportPreviewPanel');
+    if (previewPanel) previewPanel.style.display = 'none';
+    
+    // 4. Limpiar datos en memoria
+    currentReportData = null;
+    currentReportConfig = null;
+    editablePreviewData = {};
+    
+    // 5. Deshabilitar botón de generar
+    const generateBtn = document.getElementById('generateBtn');
+    if (generateBtn) generateBtn.disabled = true;
+    
+    console.log('✅ Generador reseteado completamente');
+}
+
+/**
+ * Limpiar solo vista previa y filtros (mantiene tipo de reporte seleccionado)
+ */
+function clearPreviewAndFilters() {
+    console.log('🧹 Limpiando vista previa y filtros (manteniendo tipo seleccionado)...');
+    
+    // 1. Ocultar panel de configuración (pero no limpiar el tipo)
+    const configPanel = document.getElementById('reportConfigPanel');
+    if (configPanel) {
+        // Resetear los campos dentro del panel
+        const selects = configPanel.querySelectorAll('select');
+        const inputs = configPanel.querySelectorAll('input[type="date"]');
+        
+        selects.forEach(select => {
+            if (select.id === 'timeFilter') {
+                select.value = 'all';
+            } else if (select.options[0]) {
+                select.selectedIndex = 0;
+            }
+        });
+        
+        inputs.forEach(input => {
+            input.value = '';
+        });
+    }
+    
+    // 2. Limpiar vista previa
+    const previewPanel = document.getElementById('reportPreviewPanel');
+    if (previewPanel) previewPanel.style.display = 'none';
+    
+    // 3. Limpiar datos en memoria
+    currentReportData = null;
+    currentReportConfig = null;
+    editablePreviewData = {};
+    
+    // 4. Deshabilitar botón de generar
+    const generateBtn = document.getElementById('generateBtn');
+    if (generateBtn) generateBtn.disabled = true;
+    
+    // 5. Ocultar rango personalizado
+    const customDateRange = document.getElementById('customDateRange');
+    if (customDateRange) customDateRange.style.display = 'none';
+    
+    // 6. Revalidar
+    validateRequiredFilters();
+    
+    console.log('✅ Vista previa y filtros limpiados (tipo de reporte mantenido)');
 }
 
 // === FUNCIÓN ADICIONAL: Verificar datos antes de generar vista previa ===
@@ -5641,6 +5772,8 @@ function generatePagoGeneralExcel() {
     saveToReportHistory(fileName, 'pago-consultor-general', totalHours, totalAmount);
     
     window.NotificationUtils.success(`Excel generado: ${fileName}`);
+
+    resetReportGenerator();
 }
 
 /**
@@ -5702,6 +5835,8 @@ function generatePagoConsultorExcel() {
     saveToReportHistory(fileName, 'pago-consultor-especifico', totalHours, totalAmount);
     
     window.NotificationUtils.success(`Excel generado: ${fileName}`);
+
+    resetReportGenerator();
 }
 
 /**
@@ -5755,6 +5890,8 @@ function generateClienteSoporteExcel() {
     saveToReportHistory(fileName, 'cliente-soporte', totalHours, totalAmount);
     
     window.NotificationUtils.success(`Excel generado: ${fileName}`);
+
+    resetReportGenerator();
 }
 
 /**
@@ -5955,6 +6092,8 @@ function generateRemanenteExcel() {
     saveToReportHistory(fileName, 'remanente', totalHours, totalAmount);
     
     window.NotificationUtils.success(`Excel Remanente generado: ${fileName} (${soporteData.length + projectData.length} elementos)`);
+
+    resetReportGenerator();
 }
 
 /**
@@ -6001,6 +6140,8 @@ function generateProyectoGeneralExcel() {
     saveToReportHistory(fileName, 'proyecto-general', totalHours, totalAmount);
     
     window.NotificationUtils.success(`Excel generado: ${fileName}`);
+
+    resetReportGenerator();
 }
 
 /**
@@ -6047,6 +6188,8 @@ function generateProyectoClienteExcel() {
     saveToReportHistory(fileName, 'proyecto-cliente', totalHours, totalAmount);
     
     window.NotificationUtils.success(`Excel generado: ${fileName}`);
+
+    resetReportGenerator();
 }
 
 /**
@@ -6095,6 +6238,8 @@ function generateProyectoConsultorExcel() {
     saveToReportHistory(fileName, 'proyecto-consultor', totalHours, totalAmount);
     
     window.NotificationUtils.success(`Excel generado: ${fileName}`);
+
+    resetReportGenerator();
 }
 
 /**
@@ -6244,11 +6389,14 @@ function generateFileName(reportPrefix) {
 /**
  * Guardar reporte en historial
  */
+/**
+ * Guardar reporte en historial
+ */
 function saveToReportHistory(fileName, reportType, totalHours, totalAmount) {
     try {
         const reportData = {
             fileName: fileName,
-            reportType: reportType,
+            reportType: reportType, 
             generatedBy: 'Hector Perez',
             dateRange: getDateRangeText(),
             recordCount: Object.keys(editablePreviewData).length,

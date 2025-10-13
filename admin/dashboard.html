@@ -625,8 +625,13 @@
                                 <label for="historialTypeFilter">Tipo:</label>
                                 <select id="historialTypeFilter" onchange="updateGeneratedReportsList()">
                                     <option value="all">Todos los Tipos</option>
-                                    <option value="actividades">Reportes de Actividades</option>
-                                    <option value="pagos">Reportes de Pagos</option>
+                                    <option value="pago-consultor-general">💰 Pago Consultor (General)</option>
+                                    <option value="pago-consultor-especifico">👤 Pago Consultor (Específico)</option>
+                                    <option value="cliente-soporte">📞 Cliente Soporte</option>
+                                    <option value="remanente">📊 Remanente</option>
+                                    <option value="proyecto-general">📋 Proyecto (General)</option>
+                                    <option value="proyecto-cliente">🏢 Proyecto (Cliente)</option>
+                                    <option value="proyecto-consultor">👤 Proyecto (Consultor)</option>
                                 </select>
                             </div>
                             
@@ -682,16 +687,32 @@
                                     <div class="stat-label">Total Reportes</div>
                                 </div>
                                 <div class="stat-card">
-                                    <div class="stat-number" id="totalActividadReports">0</div>
-                                    <div class="stat-label">Rep. Actividades</div>
+                                    <div class="stat-number" id="reportPagoGeneral">0</div>
+                                    <div class="stat-label">💰 Pago (General)</div>
                                 </div>
                                 <div class="stat-card">
-                                    <div class="stat-number" id="totalPagoReports">0</div>
-                                    <div class="stat-label">Rep. Pagos</div>
+                                    <div class="stat-number" id="reportPagoEspecifico">0</div>
+                                    <div class="stat-label">👤 Pago (Específico)</div>
                                 </div>
                                 <div class="stat-card">
-                                    <div class="stat-number" id="totalDownloads">0</div>
-                                    <div class="stat-label">Total Descargas</div>
+                                    <div class="stat-number" id="reportClienteSoporte">0</div>
+                                    <div class="stat-label">📞 Cliente Soporte</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="reportRemanente">0</div>
+                                    <div class="stat-label">📊 Remanente</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="reportProyectoGeneral">0</div>
+                                    <div class="stat-label">📋 Proyecto (General)</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="reportProyectoCliente">0</div>
+                                    <div class="stat-label">🏢 Proyecto (Cliente)</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="reportProyectoConsultor">0</div>
+                                    <div class="stat-label">👤 Proyecto (Consultor)</div>
                                 </div>
                             </div>
                         </div>

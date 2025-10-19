@@ -2044,20 +2044,46 @@ body {
     }
 }
 
+/* Contenedor principal del formulario con grid 2 columnas */
+.assignment-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-xl);
+    background: white;
+    padding: var(--spacing-2xl);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+/* Columna izquierda - Campos principales */
+.main-fields-column {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+/* Columna derecha - Sección de tarifas */
+.tarifa-column {
+    display: flex;
+    flex-direction: column;
+}
+
 /* ===================================================================
-   SECCIÓN DE TARIFAS EN FORMULARIOS
+   SECCIÓN DE TARIFAS - ESTILO AGRUPADO
    =================================================================== */
 
 .tarifa-section {
-    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-    border: 2px solid var(--info-color);
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #dee2e6;
     border-radius: var(--border-radius-lg);
     padding: var(--spacing-xl);
-    margin-top: var(--spacing-xl);
-    margin-bottom: var(--spacing-lg);
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-.tarifa-title {
+.tarifa-section h3 {
     color: var(--gray-800);
     font-size: 1rem;
     font-weight: 600;
@@ -2065,13 +2091,17 @@ body {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid #dee2e6;
 }
 
+/* Grid de inputs de tarifas */
 .tarifa-inputs {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-direction: column;
     gap: var(--spacing-lg);
     margin-bottom: var(--spacing-lg);
+    flex: 1;
 }
 
 .tarifa-inputs .form-group {
@@ -2089,9 +2119,17 @@ body {
 /* Visualización del margen */
 .margen-display {
     background: white;
-    border: 1px solid var(--gray-300);
+    border: 2px dashed var(--gray-300);
     border-radius: var(--border-radius-md);
-    padding: var(--spacing-md);
+    padding: var(--spacing-lg);
+    text-align: center;
+    margin-top: auto;
+    transition: all 0.3s ease;
+}
+
+.margen-display:hover {
+    border-color: var(--gray-400);
+    background: var(--gray-50);
 }
 
 .margen-info {
@@ -2099,6 +2137,7 @@ body {
     align-items: center;
     gap: var(--spacing-md);
     justify-content: center;
+    flex-wrap: wrap;
 }
 
 .margen-label {
@@ -2108,7 +2147,7 @@ body {
 }
 
 .margen-value {
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 700;
     color: var(--success-color);
 }
@@ -2134,8 +2173,43 @@ body {
     border: 1px solid #fecaca;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Botón de submit que ocupa todo el ancho */
+.form-submit-row {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid var(--gray-200);
+}
+
+/* ===================================================================
+   RESPONSIVE
+   =================================================================== */
+
+/* Tablets */
+@media (max-width: 968px) {
+    .assignment-form {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xl);
+    }
+    
+    .tarifa-section {
+        margin-top: var(--spacing-lg);
+    }
+    
+    .tarifa-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-lg);
+    }
+}
+
+/* Móviles */
+@media (max-width: 640px) {
+    .assignment-form {
+        padding: var(--spacing-lg);
+    }
+    
     .tarifa-inputs {
         grid-template-columns: 1fr;
     }

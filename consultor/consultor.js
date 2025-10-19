@@ -340,7 +340,7 @@ function updateAssignmentsList() {
         if (userAssignments.length === 0) {
             container.innerHTML = `
                 <div class="empty-state">
-                    <div class="empty-state-icon">🎯</div>
+                    <div class="empty-state-icon"><i class="fa-solid fa-bullseye"></i></div>
                     <div class="empty-state-title">No hay asignaciones</div>
                     <div class="empty-state-desc">Las asignaciones del administrador aparecerán aquí</div>
                 </div>
@@ -368,25 +368,25 @@ function updateAssignmentsList() {
                 assignmentDiv.innerHTML = `
                     <div class="assignment-header">
                         <h3 style="margin: 0; color: #2c3e50;">
-                            🏢 ${company?.name || 'Empresa no encontrada'}
-                            <span class="assignment-type-badge support-badge">📞 SOPORTE</span>
+                            <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
+                            <span class="assignment-type-badge support-badge"><i class="fa-solid fa-headset"></i> SOPORTE</span>
                         </h3>
                         <span class="assignment-id">${assignment.id.slice(-6)}</span>
                     </div>
                     
                     <div class="assignment-details">
-                        <p><strong>📞 Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
-                        <p><strong>🧩 Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                        <p><strong>📊 Reportes:</strong> ${assignmentReports.length} reportes | <strong>⏰ Total:</strong> ${totalHours.toFixed(1)} hrs</p>
-                        <p><small>📅 Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
+                        <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
+                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                        <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
+                        <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
                     </div>
                     
                     <div class="assignment-actions">
                         <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.id}')">
-                            📝 Crear Ticket
+                            <i class="fa-solid fa-file-alt"></i> Crear Ticket
                         </button>
                         <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
-                            📊 Ver Ticket (${assignmentReports.length})
+                            <i class="fa-solid fa-chart-line"></i> Ver Ticket (${assignmentReports.length})
                         </button>
                     </div>
                 `;
@@ -403,28 +403,28 @@ function updateAssignmentsList() {
                 assignmentDiv.innerHTML = `
                     <div class="assignment-header">
                         <h3 style="margin: 0; color: #2c3e50;">
-                            🏢 ${company?.name || 'Empresa no encontrada'}
-                            <span class="assignment-type-badge project-badge">🎯 PROYECTO</span>
+                            <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
+                            <span class="assignment-type-badge project-badge"><i class="fa-solid fa-bullseye"></i> PROYECTO</span>
                         </h3>
                         <span class="assignment-id">${assignment.id.slice(-8)}</span>
                     </div>
                     
                     <div class="assignment-details">
-                        <p><strong>🎯 Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
-                        <p><strong>🧩 Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                        <p><strong>📊 Reportes:</strong> ${assignmentReports.length} reportes | <strong>⏰ Total:</strong> ${totalHours.toFixed(1)} hrs</p>
-                        <p><small>📅 Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
+                        <p><strong><i class="fa-solid fa-bullseye"></i> Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
+                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                        <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
+                        <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
                     </div>
                     
                     <div class="assignment-actions">
                         <button class="btn btn-success" onclick="openProjectReportModal('${assignment.id}')">
-                            📝 Crear Ticket
+                            <i class="fa-solid fa-file-alt"></i> Crear Ticket
                         </button>
                         <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
-                            📊 Ver Tickets (${assignmentReports.length})
+                            <i class="fa-solid fa-chart-line"></i> Ver Tickets (${assignmentReports.length})
                         </button>
                         <button class="btn btn-info" onclick="viewProjectDetails('${assignment.id}')">
-                            ℹ️ Detalles del Proyecto
+                            <i class="fa-solid fa-info-circle"></i> Detalles del Proyecto
                         </button>
                     </div>
                 `;
@@ -437,7 +437,7 @@ function updateAssignmentsList() {
         console.error('Error en updateAssignmentsList:', error);
         container.innerHTML = `
             <div class="error-state">
-                <div class="error-icon">⚠️</div>
+                <div class="error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 <div class="error-title">Error al cargar asignaciones</div>
                 <div class="error-desc">Por favor, recarga la página</div>
             </div>
@@ -484,7 +484,7 @@ function openCreateReportModal(assignmentId) {
             if (assignment.assignmentType === 'project') {
                 const project = window.PortalDB.getProject(assignment.projectId);
                 assignmentDetails = `
-                    <h4>🎯 Proyecto</h4>
+                    <h4><i class="fa-solid fa-bullseye"></i> Proyecto</h4>
                     <p><strong>Empresa:</strong> ${company?.name || 'No encontrada'}</p>
                     <p><strong>Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
                     <p><strong>Módulo:</strong> ${module?.name || 'No encontrado'}</p>
@@ -492,7 +492,7 @@ function openCreateReportModal(assignmentId) {
             } else {
                 const support = window.PortalDB.getSupport(assignment.supportId);
                 assignmentDetails = `
-                    <h4>📞 Soporte</h4>
+                    <h4><i class="fa-solid fa-headset"></i> Soporte</h4>
                     <p><strong>Empresa:</strong> ${company?.name || 'No encontrada'}</p>
                     <p><strong>Soporte:</strong> ${support?.name || 'No encontrado'}</p>
                     <p><strong>Módulo:</strong> ${module?.name || 'No encontrado'}</p>
@@ -538,7 +538,7 @@ function getAssignmentDisplayInfo(assignmentId) {
             
             // Datos para mostrar (igual que en tu dashboard)
             assignmentInfo.displayData = {
-                typeIcon: '📞',
+                typeIcon: '<i class="fa-solid fa-headset"></i>',
                 typeName: 'SOPORTE',
                 typeClass: 'support-badge',
                 mainTitle: assignmentInfo.specificInfo?.name || 'Soporte no encontrado',
@@ -557,7 +557,7 @@ function getAssignmentDisplayInfo(assignmentId) {
                 
                 // Datos para mostrar (igual que en tu dashboard)
                 assignmentInfo.displayData = {
-                    typeIcon: '📋',
+                    typeIcon: '<i class="fa-solid fa-folder-open"></i>',
                     typeName: 'PROYECTO',
                     typeClass: 'project-badge',
                     mainTitle: assignmentInfo.specificInfo?.name || 'Proyecto no encontrado',
@@ -622,7 +622,7 @@ function handleCreateReport(event) {
                 
                 // Mostrar mensaje específico para edición
                 if (window.NotificationUtils) {
-                    window.NotificationUtils.success('✏️ Cambios guardados. Puedes reenviar el ticket cuando estés listo.');
+                    window.NotificationUtils.success('<i class="fa-solid fa-pencil-alt"></i> Cambios guardados. Puedes reenviar el ticket cuando estés listo.');
                 }
                 
                 // Actualizar vistas
@@ -690,13 +690,13 @@ function cleanupEditingMode(modal) {
         // Restaurar título original
         const modalTitle = modal.querySelector('.modal-title');
         if (modalTitle) {
-            modalTitle.textContent = '📝 Crear Ticket de Horas';
+            modalTitle.textContent = '<i class="fa-solid fa-file-alt"></i> Crear Ticket de Horas';
         }
         
         // Restaurar botón original
         const submitButton = modal.querySelector('button[type="submit"]');
         if (submitButton) {
-            submitButton.innerHTML = '📤 Enviar Ticket';
+            submitButton.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar Ticket';
             submitButton.style.background = '';
             submitButton.style.borderColor = '';
             submitButton.classList.remove('editing-mode');
@@ -742,11 +742,11 @@ function viewAssignmentReports(assignmentId) {
                 const project = window.PortalDB.getProject(assignment.projectId);
                 assignmentDetails = `
                     <div class="assignment-info-display">
-                        <h4>📋 Información de la Asignación</h4>
-                        <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
-                        <p><strong>🎯 Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
-                        <p><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
-                        <p><strong>📝 Descripción:</strong> ${project?.description || 'Sin descripción'}</p>
+                        <h4><i class="fa-solid fa-file-alt"></i> Información de la Asignación</h4>
+                        <p><strong><i class="fa-solid fa-building"></i> Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                        <p><strong><i class="fa-solid fa-bullseye"></i> Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
+                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                        <p><strong><i class="fa-solid fa-file-alt"></i> Descripción:</strong> ${project?.description || 'Sin descripción'}</p>
                     </div>
                 `;
             } else {
@@ -754,10 +754,10 @@ function viewAssignmentReports(assignmentId) {
                 const support = window.PortalDB.getSupport(assignment.supportId);
                 assignmentDetails = `
                     <div class="assignment-info-display">
-                        <h4>📋 Información de la Asignación</h4>
-                        <p><strong>🏢 Empresa:</strong> ${company?.name || 'No encontrada'}</p>
-                        <p><strong>📞 Soporte:</strong> ${support?.name || 'No encontrado'}</p>
-                        <p><strong>🧩 Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                        <h4><i class="fa-solid fa-file-alt"></i> Información de la Asignación</h4>
+                        <p><strong><i class="fa-solid fa-building"></i> Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                        <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'No encontrado'}</p>
+                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No encontrado'}</p>
                     </div>
                 `;
             }
@@ -771,13 +771,13 @@ function viewAssignmentReports(assignmentId) {
             if (reports.length === 0) {
                 reportsListElement.innerHTML = `
                     <div class="empty-state">
-                        <div class="empty-state-icon">📄</div>
+                        <div class="empty-state-icon"><i class="fa-solid fa-file-alt"></i></div>
                         <div class="empty-state-title">No hay Tickets</div>
                         <div class="empty-state-desc">No has creado tickets para esta asignación</div>
                     </div>
                 `;
             } else {
-                reportsListElement.innerHTML = '<h4>📊 Tickets Enviados</h4>';
+                reportsListElement.innerHTML = '<h4><i class="fa-solid fa-chart-line"></i> Tickets Enviados</h4>';
                 
                 // Ordenar reportes por fecha (más recientes primero)
                 const sortedReports = reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -791,9 +791,9 @@ function viewAssignmentReports(assignmentId) {
                             <span class="report-status status-${report.status.toLowerCase()}">${report.status}</span>
                         </div>
                         <p style="margin: 5px 0; color: #666; font-size: 0.9em;">
-                            <strong>⏰ Horas:</strong> ${report.hours}h | 
-                            <strong>📅 Fecha:</strong> ${window.DateUtils.formatDate(report.reportDate)} |
-                            <strong>📤 Enviado:</strong> ${window.DateUtils.formatDateTime(report.createdAt)}
+                            <strong><i class="fa-solid fa-clock"></i> Horas:</strong> ${report.hours}h | 
+                            <strong><i class="fa-solid fa-calendar"></i> Fecha:</strong> ${window.DateUtils.formatDate(report.reportDate)} |
+                            <strong><i class="fa-solid fa-paper-plane"></i> Enviado:</strong> ${window.DateUtils.formatDateTime(report.createdAt)}
                         </p>
                         <p style="margin: 10px 0 0 0; color: #555; font-size: 0.9em; line-height: 1.4;">
                             ${report.description}
@@ -906,14 +906,14 @@ function viewProjectDetails(projectAssignmentId) {
     const module = window.PortalDB.getModule(assignment.moduleId);
     
     const details = `
-🎯 DETALLES DEL PROYECTO
+   DETALLES DEL PROYECTO
 ════════════════════════════
-📋 Proyecto: ${project?.name || 'No encontrado'}
-🏢 Cliente: ${company?.name || 'No encontrado'}  
-🧩 Módulo: ${module?.name || 'No encontrado'}
-📝 Descripción: ${project?.description || 'Sin descripción'}
-📅 Fecha de asignación: ${window.DateUtils.formatDate(assignment.createdAt)}
-🆔 ID de asignación: ${assignment.id}
+   Proyecto: ${project?.name || 'No encontrado'}
+   Cliente: ${company?.name || 'No encontrado'}  
+   Módulo: ${module?.name || 'No encontrado'}
+   Descripción: ${project?.description || 'Sin descripción'}
+   Fecha de asignación: ${window.DateUtils.formatDate(assignment.createdAt)}
+   ID de asignación: ${assignment.id}
     `;
     
     // Crear un modal personalizado o usar notificación
@@ -1101,7 +1101,7 @@ function openEditRejectedReportModal(reportId) {
         if (assignmentInfoElement && assignmentInfo.displayData) {
             const displayData = assignmentInfo.displayData;
             assignmentInfoElement.innerHTML = `
-                <h4>${assignmentInfo.assignmentType === 'support' ? '📞 Soporte' : '🎯 Proyecto'}</h4>
+                <h4>${assignmentInfo.assignmentType === 'support' ? '<i class="fa-solid fa-headset"></i> Soporte' : '<i class="fa-solid fa-bullseye"></i> Proyecto'}</h4>
                 <p><strong>Empresa:</strong> ${displayData.companyName}</p>
                 <p><strong>${assignmentInfo.assignmentType === 'support' ? 'Soporte:' : 'Proyecto:'}</strong> ${displayData.mainTitle}</p>
                 <p><strong>Módulo:</strong> ${displayData.moduleName}</p>
@@ -1117,13 +1117,13 @@ function openEditRejectedReportModal(reportId) {
             // Cambiar título del modal
             const modalTitle = modal.querySelector('.modal-title');
             if (modalTitle) {
-                modalTitle.textContent = '✏️ Editar Ticket Rechazado';
+                modalTitle.textContent = '<i class="fa-solid fa-pencil-alt"></i> Editar Ticket Rechazado';
             }
             
             // Modificar botón de submit
             const submitButton = modal.querySelector('.btn-submit');
             if (submitButton) {
-                submitButton.innerHTML = '💾 Guardar Cambios';
+                submitButton.innerHTML = '<i class="fa-solid fa-save"></i> Guardar Cambios';
                 submitButton.style.background = '#ffa502';
             }
             
@@ -1139,8 +1139,8 @@ function openEditRejectedReportModal(reportId) {
             }
             
             infoContainer.innerHTML = `
-                <h4>ℹ️ Modo de Edición</h4>
-                <p>Puedes modificar los datos del reporte. Al guardar los cambios, el reporte seguirá en estado "Rechazado". Después podrás usar el botón "🔄 Reenviar" para enviarlo al administrador.</p>
+                <h4><i class="fa-solid fa-info-circle"></i> Modo de Edición</h4>
+                <p>Puedes modificar los datos del reporte. Al guardar los cambios, el reporte seguirá en estado "Rechazado". Después podrás usar el botón "<i class="fa-solid fa-redo"></i> Reenviar" para enviarlo al administrador.</p>
             `;
             
             // Mostrar feedback de rechazo
@@ -1155,7 +1155,7 @@ function openEditRejectedReportModal(reportId) {
             }
             
             feedbackContainer.innerHTML = `
-                <strong>💬 Comentarios del Administrador:</strong><br>
+                <strong><i class="fa-solid fa-comments"></i> Comentarios del Administrador:</strong><br>
                 <span>${report.feedback || 'Sin comentarios'}</span>
             `;
             
@@ -1183,7 +1183,7 @@ function quickResubmitReport(reportId) {
     if (result.success) {
         // Mensaje más claro
         if (window.NotificationUtils) {
-            window.NotificationUtils.success('🔄 Reporte reenviado exitosamente. El administrador lo revisará nuevamente.');
+            window.NotificationUtils.success('<i class="fa-solid fa-redo"></i> Reporte reenviado exitosamente. El administrador lo revisará nuevamente.');
         }
         
         // Actualizar la vista
@@ -1215,7 +1215,7 @@ function updateRejectedReportsSection() {
             container.innerHTML = `
                 <div class="section-header" style="margin-bottom: 20px; text-align: center;">
                     <h3 style="color: #2ed573; margin-bottom: 10px;">
-                        🎉 ¡Excelente trabajo!
+                        <i class="fa-solid fa-trophy"></i> ¡Excelente trabajo!
                     </h3>
                     <p style="color: #666;">
                         No tienes tickets rechazados actualmente.
@@ -1228,7 +1228,7 @@ function updateRejectedReportsSection() {
         container.innerHTML = `
             <div class="section-header" style="margin-bottom: 20px;">
                 <h3 style="color: #ff4757; margin-bottom: 10px;">
-                    ❌ Tickets Rechazados (${rejectedReports.length})
+                    <i class="fa-solid fa-ban"></i> Tickets Rechazados (${rejectedReports.length})
                 </h3>
                 <p style="color: #666; margin-bottom: 20px;">
                     Estos tickets fueron rechazados por el administrador. Tienen el mismo formato que tus asignaciones normales, solo que aparecen marcados como rechazados.
@@ -1269,14 +1269,14 @@ function renderRejectedReportCard(report) {
                 <div class="report-header" style="margin-bottom: 15px;">
                     <h4 style="color: #2c3e50; margin-bottom: 8px;">${report.title || 'Título no disponible'}</h4>
                     <div style="display: flex; gap: 15px; font-size: 0.9em; color: #7f8c8d;">
-                        <span>📅 ${formatReportDate(report)}</span>
-                        <span style="background: #ff4757; color: white; padding: 2px 8px; border-radius: 12px;">⏰ ${report.hours || 0}h</span>
+                        <span><i class="fa-solid fa-calendar"></i> ${formatReportDate(report)}</span>
+                        <span style="background: #ff4757; color: white; padding: 2px 8px; border-radius: 12px;"><i class="fa-solid fa-clock"></i> ${report.hours || 0}h</span>
                     </div>
                 </div>
                 
                 <div class="assignment-info" style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                    <strong>⚠️ Asignación:</strong> No encontrada<br>
-                    <strong>📄 ID:</strong> ${report.assignmentId}
+                    <strong><i class="fa-solid fa-exclamation-triangle"></i> Asignación:</strong> No encontrada<br>
+                    <strong><i class="fa-solid fa-file"></i> ID:</strong> ${report.assignmentId}
                 </div>
                 
                 ${renderRejectionFeedback(report)}
@@ -1298,13 +1298,13 @@ function renderRejectedReportCard(report) {
         ">
             <!-- Status de Rechazado -->
             <div style="position: absolute; top: 10px; right: 15px; background: #ff4757; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold;">
-                ❌ RECHAZADO
+                <i class="fa-solid fa-ban"></i> RECHAZADO
             </div>
             
             <!-- Header igual que en dashboard -->
             <div class="assignment-header" style="margin-bottom: 15px; margin-top: 20px;">
                 <h3 style="margin: 0; color: #2c3e50; display: flex; align-items: center; gap: 10px;">
-                    🏢 ${displayData.companyName}
+                    <i class="fa-solid fa-building"></i> ${displayData.companyName}
                     <span class="assignment-type-badge ${displayData.typeClass}" style="
                         display: inline-block; padding: 4px 8px; border-radius: 12px; 
                         font-size: 0.75em; font-weight: bold; text-transform: uppercase;
@@ -1318,10 +1318,10 @@ function renderRejectedReportCard(report) {
             
             <!-- Detalles de la asignación (igual que dashboard) -->
             <div class="assignment-details" style="margin-bottom: 15px;">
-                <p><strong>${assignmentInfo.assignmentType === 'support' ? '📞 Soporte:' : '🎯 Proyecto:'}</strong> ${displayData.mainTitle}</p>
-                <p><strong>🧩 Módulo:</strong> ${displayData.moduleName}</p>
-                <p><strong>📄 Ticket:</strong> ${report.title}</p>
-                <p><strong>⏰ Horas:</strong> ${report.hours || 0} hrs | <strong>📅 Fecha:</strong> ${formatReportDate(report)}</p>
+                <p><strong>${assignmentInfo.assignmentType === 'support' ? '<i class="fa-solid fa-headset"></i> Soporte:' : '<i class="fa-solid fa-bullseye"></i> Proyecto:'}</strong> ${displayData.mainTitle}</p>
+                <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${displayData.moduleName}</p>
+                <p><strong><i class="fa-solid fa-file"></i> Ticket:</strong> ${report.title}</p>
+                <p><strong><i class="fa-solid fa-clock"></i> Horas:</strong> ${report.hours || 0} hrs | <strong><i class="fa-solid fa-calendar"></i> Fecha:</strong> ${formatReportDate(report)}</p>
             </div>
             
             <!-- Feedback de rechazo -->
@@ -1361,7 +1361,7 @@ function renderRejectionFeedback(report) {
             padding: 12px; 
             margin-bottom: 15px;
         ">
-            <strong style="color: #ff4757;">💬 Comentarios del Administrador:</strong><br>
+            <strong style="color: #ff4757;"><i class="fa-solid fa-comments"></i> Comentarios del Administrador:</strong><br>
             <span style="color: #721c24;">${report.feedback}</span>
         </div>
     `;
@@ -1378,7 +1378,7 @@ function renderReportActions(reportId) {
                 border-radius: 6px; 
                 cursor: pointer;
             ">
-                ✏️ Editar
+                <i class="fa-solid fa-pencil-alt"></i> Editar
             </button>
             <button class="btn btn-secondary" onclick="quickResubmitReport('${reportId}')" style="
                 background: #2ed573; 
@@ -1388,7 +1388,7 @@ function renderReportActions(reportId) {
                 border-radius: 6px; 
                 cursor: pointer;
             ">
-                🔄 Reenviar
+                <i class="fa-solid fa-redo"></i> Reenviar
             </button>
         </div>
     `;

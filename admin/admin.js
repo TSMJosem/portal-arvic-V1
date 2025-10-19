@@ -5,9 +5,9 @@ let currentApprovedReportFilter = 'all';
 const ARVIC_REPORTS = {
     'pago-consultor-general': {
         name: 'Pago Consultor Soporte (General)',
-        icon: '💰',
+        icon: '<i class="fa-solid fa-money-bill"></i>',
         description: 'Información general de todos los soportes con cálculo de pagos para consultores',
-        audience: '👑 Administradores y Gerentes',
+        audience: '<i class="fa-solid fa-crown"></i> Administradores y Gerentes',
         filters: ['time', 'support'],
         structure: ['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
         editableFields: ['TIEMPO', 'TARIFA de Modulo'],
@@ -15,9 +15,9 @@ const ARVIC_REPORTS = {
     },
     'pago-consultor-especifico': {
         name: 'Pago Consultor Soporte (Consultor)',
-        icon: '👤',
+        icon: '<i class="fa-solid fa-user"></i>',
         description: 'Datos de soportes de un consultor específico con filtros flexibles',
-        audience: '👤 Consultores y Supervisores',
+        audience: '<i class="fa-solid fa-user"></i> Consultores y Supervisores',
         filters: ['consultant', 'support', 'time'],
         structure: ['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
         editableFields: ['TIEMPO', 'TARIFA de Modulo'],
@@ -25,9 +25,9 @@ const ARVIC_REPORTS = {
     },
     'cliente-soporte': {
         name: 'Cliente Soporte (Cliente)',
-        icon: '📞',
+        icon: '<i class="fa-solid fa-headset"></i>',
         description: 'Soportes brindados a un cliente específico para transparencia de servicios',
-        audience: '🏢 Clientes y Atención al Cliente',
+        audience: '<i class="fa-solid fa-building"></i> Clientes y Atención al Cliente',
         filters: ['client', 'support', 'time'],
         structure: ['Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
         editableFields: ['TIEMPO', 'TARIFA de Modulo'],
@@ -35,9 +35,9 @@ const ARVIC_REPORTS = {
     },
     'remanente': {
         name: 'Reporte Remanente',
-        icon: '📊',
+        icon: '<i class="fa-solid fa-chart-pie"></i>',
         description: 'Información acumulada de reportes aprobados dividida por semanas del mes',
-        audience: '👑 Administradores - Seguimiento',
+        audience: '<i class="fa-solid fa-crown"></i> Administradores - Seguimiento',
         filters: ['client', 'supportType', 'month', 'project'],
         structure: ['Total de Horas', 'SEMANA 1', 'SEMANA 2', 'SEMANA 3', 'SEMANA 4'],
         editableFields: ['TIEMPO', 'TARIFA'],
@@ -46,9 +46,9 @@ const ARVIC_REPORTS = {
     },
     'proyecto-general': {
         name: 'Proyecto (General)',
-        icon: '📋',
+        icon: '<i class="fa-solid fa-folder-open"></i>',
         description: 'Información general de todos los proyectos con recursos asignados',
-        audience: '👑 Administradores y Gerentes',
+        audience: '<i class="fa-solid fa-crown"></i> Administradores y Gerentes',
         filters: ['time', 'project'],
         structure: ['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
         editableFields: ['TIEMPO', 'TARIFA de Modulo'],
@@ -56,9 +56,9 @@ const ARVIC_REPORTS = {
     },
     'proyecto-cliente': {
         name: 'Proyecto (Cliente)',
-        icon: '🏢',
+        icon: '<i class="fa-solid fa-building"></i>',
         description: 'Proyectos de un cliente específico con vista simplificada para presentación externa',
-        audience: '🏢 Clientes',
+        audience: '<i class="fa-solid fa-building"></i> Clientes',
         filters: ['client', 'project', 'time'],
         structure: ['Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
         editableFields: ['TIEMPO', 'TARIFA de Modulo'],
@@ -66,9 +66,9 @@ const ARVIC_REPORTS = {
     },
     'proyecto-consultor': {
         name: 'Proyecto (Consultor)',
-        icon: '👤',
+        icon: '<i class="fa-solid fa-user"></i>',
         description: 'Proyectos asignados a un consultor específico para seguimiento personal',
-        audience: '👤 Consultores',
+        audience: '<i class="fa-solid fa-user"></i> Consultores',
         filters: ['consultant', 'project', 'time'],
         structure: ['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
         editableFields: ['TIEMPO', 'TARIFA de Modulo'],
@@ -375,7 +375,7 @@ function updateSupportsList() {
     if (supports.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">📞</div>
+                <div class="empty-state-icon"><i class="fa-solid fa-headset"></i></div>
                 <div class="empty-state-title">No hay soportes</div>
                 <div class="empty-state-desc">Cree el primer soporte</div>
             </div>
@@ -412,12 +412,12 @@ function updateSupportsList() {
                     <strong>${support.name}</strong>
                 </div>
                 <small style="color: #666;">
-                    📅 Creado: ${window.DateUtils.formatDate(support.createdAt)}
-                    ${support.description ? `<br>📝 ${window.TextUtils.truncate(support.description, 60)}` : ''}
+                    <i class="fa-solid fa-calendar"></i> Creado: ${window.DateUtils.formatDate(support.createdAt)}
+                    ${support.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(support.description, 60)}` : ''}
                 </small>
             </div>
             <button class="delete-btn" onclick="deleteSupport('${support.id}')" title="Eliminar soporte">
-                🗑️
+                <i class="fa-solid fa-trash"></i>
             </button>
         `;
         container.appendChild(supportDiv);
@@ -539,7 +539,7 @@ function updateApprovedReportsList() {
             <tr>
                 <td colspan="7" class="empty-table-message">
                     <div class="empty-state">
-                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-icon"><i class="fa-solid fa-chart-pie"></i></div>
                         <div class="empty-state-title">No hay reportes aprobados</div>
                         <div class="empty-state-desc">Intenta ajustar los filtros de fecha o categoría</div>
                     </div>
@@ -634,7 +634,7 @@ function updateApprovedReportsList() {
             <td>
                 <span class="hours-reported">${summary.totalHours.toFixed(1)} hrs</span>
                 <small style="color: #666; display: block; font-size: 0.8em;">
-                    📊 ${reportCount} reporte${reportCount > 1 ? 's' : ''} agrupado${reportCount > 1 ? 's' : ''}
+                    <i class="fa-solid fa-chart-pie"></i> ${reportCount} reporte${reportCount > 1 ? 's' : ''} agrupado${reportCount > 1 ? 's' : ''}
                 </small>
             </td>
         `;
@@ -689,7 +689,7 @@ function updateCompaniesList() {
     if (companies.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">🏢</div>
+                <div class="empty-state-icon"><i class="fa-solid fa-building"></i></div>
                 <div class="empty-state-title">No hay empresas</div>
                 <div class="empty-state-desc">Registre la primera empresa cliente</div>
             </div>
@@ -708,12 +708,12 @@ function updateCompaniesList() {
                     <strong>${company.name}</strong>
                 </div>
                 <small style="color: #666;">
-                    📅 Registrada: ${window.DateUtils.formatDate(company.createdAt)}
-                    ${company.description ? `<br>📝 ${window.TextUtils.truncate(company.description, 60)}` : ''}
+                    <i class="fa-solid fa-calendar"></i> Registrada: ${window.DateUtils.formatDate(company.createdAt)}
+                    ${company.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(company.description, 60)}` : ''}
                 </small>
             </div>
             <button class="delete-btn" onclick="deleteCompany('${company.id}')" title="Eliminar empresa">
-                🗑️
+                <i class="fa-solid fa-trash"></i>
             </button>
         `;
         container.appendChild(companyDiv);
@@ -745,15 +745,15 @@ function updateProjectsList() {
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                     <span class="item-id">${project.id}</span>
                     <strong>${project.name}</strong>
-                    <!-- ✅ Sin badge de status -->
+                    <!-- <i class="fa-solid fa-check"></i> Sin badge de status -->
                 </div>
                 <small style="color: #666;">
-                    📅 Creado: ${window.DateUtils.formatDate(project.createdAt)}
-                    ${project.description ? `<br>📝 ${window.TextUtils.truncate(project.description, 60)}` : ''}
+                    <i class="fa-solid fa-calendar"></i> Creado: ${window.DateUtils.formatDate(project.createdAt)}
+                    ${project.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(project.description, 60)}` : ''}
                 </small>
             </div>
             <button class="delete-btn" onclick="deleteProject('${project.id}')" title="Eliminar proyecto">
-                🗑️
+                <i class="fa-solid fa-trash"></i>
             </button>
         `;
         container.appendChild(projectDiv);
@@ -767,7 +767,7 @@ function updateTasksList() {
     if (tasks.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">✅</div>
+                <div class="empty-state-icon"><i class="fa-solid fa-check"></i></div>
                 <div class="empty-state-title">No hay tareas</div>
                 <div class="empty-state-desc">Cree la primera tarea</div>
             </div>
@@ -808,12 +808,12 @@ function updateTasksList() {
                     ` : ''}
                 </div>
                 <small style="color: #666;">
-                    📅 Creada: ${window.DateUtils.formatDate(task.createdAt)}
-                    ${task.description ? `<br>📝 ${window.TextUtils.truncate(task.description, 60)}` : ''}
+                    <i class="fa-solid fa-calendar"></i> Creada: ${window.DateUtils.formatDate(task.createdAt)}
+                    ${task.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(task.description, 60)}` : ''}
                 </small>
             </div>
             <button class="delete-btn" onclick="deleteTask('${task.id}')" title="Eliminar tarea">
-                🗑️
+                <i class="fa-solid fa-trash"></i>
             </button>
         `;
         container.appendChild(taskDiv);
@@ -847,12 +847,12 @@ function updateModulesList() {
                     <strong>${module.name}</strong>
                 </div>
                 <small style="color: #666;">
-                    📅 Creado: ${window.DateUtils.formatDate(module.createdAt)}
-                    ${module.description ? `<br>📝 ${window.TextUtils.truncate(module.description, 60)}` : ''}
+                    <i class="fa-solid fa-calendar"></i> Creado: ${window.DateUtils.formatDate(module.createdAt)}
+                    ${module.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(module.description, 60)}` : ''}
                 </small>
             </div>
             <button class="delete-btn" onclick="deleteModule('${module.id}')" title="Eliminar módulo">
-                🗑️
+                <i class="fa-solid fa-trash"></i>
             </button>
         `;
         container.appendChild(moduleDiv);
@@ -984,19 +984,19 @@ function updateProjectAssignmentsList() {
         assignmentDiv.className = 'project-assignment-card';
         assignmentDiv.innerHTML = `
             <div class="assignment-header">
-                <h3>🎯 ${project?.name || 'Proyecto no encontrado'}</h3>
+                <h3><i class="fa-solid fa-bullseye"></i> ${project?.name || 'Proyecto no encontrado'}</h3>
                 <span class="assignment-id">${assignment.id.slice(-6)}</span>
             </div>
             
             <div class="assignment-details">
-                <p><strong>🏢 Cliente:</strong> ${company?.name || 'No asignado'}</p>
-                <p><strong>🧩 Módulo:</strong> ${module?.name || 'No asignado'}</p>
-                <p><strong>👤 Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId})</p>
+                <p><strong><i class="fa-solid fa-building"></i> Cliente:</strong> ${company?.name || 'No asignado'}</p>
+                <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No asignado'}</p>
+                <p><strong><i class="fa-solid fa-user"></i> Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId})</p>
             </div>
             
             <div class="assignment-actions">
                 <button class="btn btn-danger btn-sm" onclick="deleteProjectAssignment('${assignment.id}')">
-                    🗑️ Eliminar Asignación
+                    <i class="fa-solid fa-trash"></i> Eliminar Asignación
                 </button>
             </div>
         `;
@@ -1055,13 +1055,13 @@ function updateAssignmentsList() {
                                     </span>
                                 </div>
                                 <small style="color: #666;">
-                                    🏢 ${company.name} | 📞 ${support.name}<br>
-                                    🧩 ${module.name}<br>
-                                    📅 ${window.DateUtils.formatDate(assignment.createdAt)}
+                                    <i class="fa-solid fa-building"></i> ${company.name} | <i class="fa-solid fa-phone"></i> ${support.name}<br>
+                                    <i class="fa-solid fa-puzzle-piece"></i> ${module.name}<br>
+                                    <i class="fa-solid fa-calendar"></i> ${window.DateUtils.formatDate(assignment.createdAt)}
                                 </small>
                             </div>
                             <button class="delete-btn" onclick="deleteAssignment('${assignment.id}')" title="Eliminar asignación">
-                                🗑️
+                                <i class="fa-solid fa-trash"></i>
                             </button>
                         `;
                         container.appendChild(assignmentDiv);
@@ -1081,17 +1081,17 @@ function updateAssignmentsList() {
                                     <span class="item-id">${assignment.id.slice(-6)}</span>
                                     <strong>${consultor.name}</strong>
                                     <span class="custom-badge" style="background: #e74c3c20; color: #e74c3c; border: 1px solid #e74c3c;">
-                                        📋 PROYECTO
+                                        <i class="fa-solid fa-clipboard"></i> PROYECTO
                                     </span>
                                 </div>
                                 <small style="color: #666;">
-                                    🏢 ${company.name} | 📋 ${project.name}<br>
-                                    🧩 ${module.name}<br>
-                                    📅 ${window.DateUtils.formatDate(assignment.createdAt)}
+                                    <i class="fa-solid fa-building"></i> ${company.name} | <i class="fa-solid fa-clipboard"></i> ${project.name}<br>
+                                    <i class="fa-solid fa-puzzle-piece"></i> ${module.name}<br>
+                                    <i class="fa-solid fa-calendar"></i> ${window.DateUtils.formatDate(assignment.createdAt)}
                                 </small>
                             </div>
                             <button class="delete-btn" onclick="deleteProjectAssignment('${assignment.id}')" title="Eliminar asignación">
-                                🗑️
+                                <i class="fa-solid fa-trash"></i>
                             </button>
                         `;
                         container.appendChild(assignmentDiv);
@@ -1133,14 +1133,14 @@ function updateAssignmentsList() {
                                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                                     <strong>${user.name}</strong>
                                     <span class="custom-badge" style="background: #3498db20; color: #3498db; border: 1px solid #3498db;">
-                                        📞 SOPORTE
+                                        <i class="fa-solid fa-phone"></i> SOPORTE
                                     </span>
                                     <span class="custom-badge badge-success">
                                         ${window.DateUtils.formatRelativeTime(assignment.createdAt)}
                                     </span>
                                 </div>
                                 <small style="color: #666;">
-                                    🏢 ${company.name} | 📞 ${support.name} | 🧩 ${module.name}
+                                    <i class="fa-solid fa-building"></i> ${company.name} | <i class="fa-solid fa-phone"></i> ${support.name} | <i class="fa-solid fa-puzzle-piece"></i> ${module.name}
                                 </small>
                             </div>
                         `;
@@ -1159,14 +1159,14 @@ function updateAssignmentsList() {
                                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
                                     <strong>${consultor.name}</strong>
                                     <span class="custom-badge" style="background: #e74c3c20; color: #e74c3c; border: 1px solid #e74c3c;">
-                                        📋 PROYECTO
+                                        <i class="fa-solid fa-clipboard"></i> PROYECTO
                                     </span>
                                     <span class="custom-badge badge-success">
                                         ${window.DateUtils.formatRelativeTime(assignment.createdAt)}
                                     </span>
                                 </div>
                                 <small style="color: #666;">
-                                    🏢 ${company.name} | 📋 ${project.name} | 🧩 ${module.name}
+                                    <i class="fa-solid fa-building"></i> ${company.name} | <i class="fa-solid fa-clipboard"></i> ${project.name} | <i class="fa-solid fa-puzzle-piece"></i> ${module.name}
                                 </small>
                             </div>
                         `;
@@ -1191,7 +1191,7 @@ function updateReportsList() {
             <tr>
                 <td colspan="9" class="empty-table-message">
                     <div class="empty-state">
-                        <div class="empty-state-icon">📄</div>
+                        <div class="empty-state-icon"><i class="fa-solid fa-file-alt"></i></div>
                         <div class="empty-state-title">No hay reportes pendientes</div>
                         <div class="empty-state-desc">Los reportes pendientes aparecerán aquí para su revisión</div>
                     </div>
@@ -1242,13 +1242,13 @@ function updateReportsList() {
                     <td>
                         <div class="action-buttons">
                             <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
-                                ✅ Aprobar
+                                <i class="fa-solid fa-check"></i> Aprobar
                             </button>
                             <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
-                                ❌ Rechazar
+                                <i class="fa-solid fa-xmark"></i> Rechazar
                             </button>
                             <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
-                                👁️ Ver
+                                <i class="fa-solid fa-eye"></i> Ver
                             </button>
                         </div>
                     </td>
@@ -1539,161 +1539,6 @@ function logout() {
     }
 }
 
-function exportData() {
-    try {
-        const data = window.PortalDB.exportData();
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `arvic-backup-${new Date().toISOString().split('T')[0]}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        
-        window.NotificationUtils.success('Datos exportados correctamente');
-    } catch (error) {
-        window.NotificationUtils.error('Error al exportar datos: ' + error.message);
-    }
-}
-
-function importData() {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    
-    input.onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const result = window.PortalDB.importData(e.target.result);
-                if (result.success) {
-                    window.NotificationUtils.success('Datos importados correctamente');
-                    loadAllData();
-                } else {
-                    window.NotificationUtils.error('Error al importar: ' + result.message);
-                }
-            } catch (error) {
-                window.NotificationUtils.error('Archivo inválido');
-            }
-        };
-        reader.readAsText(file);
-    };
-    
-    input.click();
-}
-
-function generateAdminReport() {
-    const stats = window.PortalDB.getStats();
-    const activities = window.AuthSys.getRecentActivities(20);
-    
-    const reportData = {
-        generatedAt: new Date().toISOString(),
-        generatedBy: window.AuthSys.getCurrentUser().name,
-        statistics: stats,
-        recentActivities: activities,
-        totalUsers: Object.keys(currentData.users).length,
-        totalCompanies: Object.keys(currentData.companies).length,
-        totalProjects: Object.keys(currentData.projects).length,
-        totalTasks: Object.keys(currentData.tasks).length,
-        totalModules: Object.keys(currentData.modules).length,
-        totalAssignments: Object.keys(currentData.assignments).length,
-        totalReports: Object.keys(currentData.reports).length
-    };
-    
-    // Crear reporte HTML
-    const reportHTML = `
-        <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
-            <h1 style="color: #2c3e50; text-align: center; margin-bottom: 30px;">
-                📊 Reporte Administrativo - Portal ARVIC
-            </h1>
-            <p style="text-align: center; color: #666; margin-bottom: 40px;">
-                Generado el ${window.DateUtils.formatDateTime(reportData.generatedAt)}<br>
-                Por: ${reportData.generatedBy}
-            </p>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-bottom: 40px;">
-                <div style="background: #3498db; color: white; padding: 20px; border-radius: 8px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 2em;">${reportData.totalUsers}</h2>
-                    <p style="margin: 5px 0 0;">Usuarios</p>
-                </div>
-                <div style="background: #2ecc71; color: white; padding: 20px; border-radius: 8px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 2em;">${reportData.totalCompanies}</h2>
-                    <p style="margin: 5px 0 0;">Empresas</p>
-                </div>
-                <div style="background: #f39c12; color: white; padding: 20px; border-radius: 8px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 2em;">${reportData.totalProjects}</h2>
-                    <p style="margin: 5px 0 0;">Proyectos</p>
-                </div>
-                <div style="background: #e74c3c; color: white; padding: 20px; border-radius: 8px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 2em;">${reportData.totalTasks}</h2>
-                    <p style="margin: 5px 0 0;">Tareas</p>
-                </div>
-                <div style="background: #9b59b6; color: white; padding: 20px; border-radius: 8px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 2em;">${reportData.totalModules}</h2>
-                    <p style="margin: 5px 0 0;">Módulos</p>
-                </div>
-                <div style="background: #1abc9c; color: white; padding: 20px; border-radius: 8px; text-align: center;">
-                    <h2 style="margin: 0; font-size: 2em;">${reportData.totalAssignments}</h2>
-                    <p style="margin: 5px 0 0;">Asignaciones</p>
-                </div>
-            </div>
-            
-            <h3 style="color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px;">
-                🔄 Actividad Reciente
-            </h3>
-            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px;">
-                ${activities.length > 0 ? 
-                    activities.map(activity => `
-                        <div style="margin-bottom: 10px; padding: 10px; background: white; border-left: 4px solid #3498db; border-radius: 4px;">
-                            <strong>${activity.description}</strong><br>
-                            <small style="color: #666;">
-                                Usuario: ${activity.userId} | 
-                                ${window.DateUtils.formatDateTime(activity.timestamp)}
-                            </small>
-                        </div>
-                    `).join('') : 
-                    '<p style="color: #666; text-align: center;">No hay actividad reciente</p>'
-                }
-            </div>
-        </div>
-    `;
-    
-    // Abrir en nueva ventana para imprimir
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Reporte Administrativo - Portal ARVIC</title>
-            <style>
-                @media print {
-                    body { margin: 0; }
-                    .no-print { display: none; }
-                }
-            </style>
-        </head>
-        <body>
-            ${reportHTML}
-            <div class="no-print" style="text-align: center; margin-top: 30px;">
-                <button onclick="window.print()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">
-                    🖨️ Imprimir Reporte
-                </button>
-                <button onclick="window.close()" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">
-                    ❌ Cerrar
-                </button>
-            </div>
-        </body>
-        </html>
-    `);
-    printWindow.document.close();
-}
-
 /**
  * Detecta la categoría de un reporte (soporte o proyecto)
  * @param {Object} report - Objeto del reporte
@@ -1726,8 +1571,8 @@ function getReportCategory(report) {
  * @param {string} category - 'all', 'soporte', 'proyecto'
  */
 function filterApprovedReportsByCategory(category) {
-    console.log(`🔍 Filtrando reportes aprobados por categoría: ${category}`);
-    
+    console.log(`Filtrando reportes aprobados por categoría: ${category}`);
+
     currentApprovedReportFilter = category;
     
     // Actualizar botones activos
@@ -1909,19 +1754,19 @@ function getEmptyStateMessage(category) {
     switch (category) {
         case 'soporte':
             return {
-                icon: '📞',
+                icon: '<i class="fa-solid fa-phone"></i>',
                 title: 'No hay reportes de soporte pendientes',
                 desc: 'Los reportes de soporte aparecerán aquí para su revisión'
             };
         case 'proyecto':
             return {
-                icon: '📋',
+                icon: '<i class="fa-solid fa-clipboard"></i>',
                 title: 'No hay reportes de proyecto pendientes',
                 desc: 'Los reportes de proyecto aparecerán aquí para su revisión'
             };
         default:
             return {
-                icon: '📄',
+                icon: '<i class="fa-solid fa-file-alt"></i>',
                 title: 'No hay reportes pendientes',
                 desc: 'Los reportes enviados por consultores aparecerán aquí'
             };
@@ -1980,13 +1825,13 @@ function createReportTableRow(report) {
             <td>
                 <div class="action-buttons">
                     <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
-                        👁️ Ver
+                        <i class="fa-solid fa-eye"></i> Ver
                     </button>
                     <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
-                        ✅ Aprobar
+                        <i class="fa-solid fa-check"></i> Aprobar
                     </button>
                     <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
-                        ❌ Rechazar
+                        <i class="fa-solid fa-xmark"></i> Rechazar
                     </button>
                 </div>
             </td>
@@ -2008,13 +1853,13 @@ function createReportTableRow(report) {
             <td>
                 <div class="action-buttons">
                     <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
-                        👁️ Ver
+                        <i class="fa-solid fa-eye"></i> Ver
                     </button>
                     <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
-                        ✅ Aprobar
+                        <i class="fa-solid fa-check"></i> Aprobar
                     </button>
                     <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
-                        ❌ Rechazar
+                        <i class="fa-solid fa-xmark"></i> Rechazar
                     </button>
                 </div>
             </td>
@@ -2434,7 +2279,7 @@ function showUserCredentials(user) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">✅ Usuario Creado Exitosamente</h2>
+                <h2 class="modal-title"><i class="fa-solid fa-check"></i> Usuario Creado Exitosamente</h2>
                 <button class="close" onclick="this.closest('.modal').remove()">&times;</button>
             </div>
             <div class="p-3">
@@ -2736,7 +2581,7 @@ function viewUserAssignments(userId) {
     modal.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">🎯 Asignaciones de ${user.name}</h2>
+                <h2 class="modal-title"><i class="fa-solid fa-bullseye"></i> Asignaciones de ${user.name}</h2>
                 <button class="close" onclick="this.closest('.modal').remove()">&times;</button>
             </div>
             <div class="p-3">
@@ -2762,16 +2607,16 @@ function viewUserAssignments(userId) {
                                         <span class="assignment-id">ID: ${assignment.id.slice(-6)}</span>
                                     </div>
                                     <div class="assignment-detail-body">
-                                        <p><strong>📋 Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
-                                        <p><strong>✅ Tarea:</strong> ${task?.name || 'Tarea no encontrada'}</p>
-                                        <p><strong>🧩 Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                                        <p><strong>📊 Reportes:</strong> ${assignmentReports.length} reportes</p>
-                                        <p><strong>⏰ Horas Total:</strong> <span class="total-hours-highlight">${totalHours.toFixed(1)} hrs</span></p>
-                                        <p><small>📅 Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
+                                        <p><strong><i class="fa-solid fa-clipboard"></i> Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
+                                        <p><strong><i class="fa-solid fa-check"></i> Tarea:</strong> ${task?.name || 'Tarea no encontrada'}</p>
+                                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                                        <p><strong><i class="fa-solid fa-chart-bar"></i> Reportes:</strong> ${assignmentReports.length} reportes</p>
+                                        <p><strong><i class="fa-solid fa-clock"></i> Horas Total:</strong> <span class="total-hours-highlight">${totalHours.toFixed(1)} hrs</span></p>
+                                        <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
                                     </div>
                                     <div class="assignment-actions">
                                         <button class="btn btn-sm btn-danger" onclick="deleteAssignment('${assignment.id}'); this.closest('.modal').remove(); loadAllData();">
-                                            🗑️ Eliminar Asignación
+                                            <i class="fa-solid fa-trash"></i> Eliminar Asignación
                                         </button>
                                     </div>
                                 </div>
@@ -3069,25 +2914,25 @@ function updateUsersList() {
                 </div>
                 <div class="user-assignment-info">
                     <small style="color: #666;">
-                        📅 Registrado: ${window.DateUtils.formatDate(user.createdAt)}
-                        ${user.email ? `<br>📧 ${user.email}` : ''}
-                        <br>🔑 Contraseña: <strong style="color: #e74c3c;">${user.password}</strong>
+                        <i class="fa-solid fa-calendar"></i> Registrado: ${window.DateUtils.formatDate(user.createdAt)}
+                        ${user.email ? `<br><i class="fa-solid fa-envelope"></i> ${user.email}` : ''}
+                        <br><i class="fa-solid fa-key"></i> Contraseña: <strong style="color: #e74c3c;">${user.password}</strong>
                     </small>
                     ${userAssignments.length > 0 ? `
                         <div class="user-assignment-count">
-                            📊 ${userAssignments.length} asignación(es) activa(s)
+                            <i class="fa-solid fa-chart-bar"></i> ${userAssignments.length} asignación(es) activa(s)
                         </div>
                     ` : ''}
                 </div>
                 ${userAssignments.length > 1 ? `
                     <button class="btn-sm btn-info" onclick="viewUserAssignments('${user.id}')" style="margin-top: 5px;">
-                        👁️ Ver Asignaciones (${userAssignments.length})
+                        <i class="fa-solid fa-eye"></i> Ver Asignaciones (${userAssignments.length})
                     </button>
                 ` : ''}
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px;">
                 <button class="delete-btn" onclick="deleteUser('${user.id}')" title="Eliminar usuario">
-                    🗑️
+                    <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
         `;
@@ -3250,7 +3095,7 @@ function updateGeneratedReportsList() {
             <tr>
                 <td colspan="9" class="empty-table-message">
                     <div class="empty-state">
-                        <div class="empty-state-icon">📊</div>
+                        <div class="empty-state-icon"><i class="fa-solid fa-chart-bar"></i></div>
                         <div class="empty-state-title">No hay reportes generados</div>
                         <div class="empty-state-desc">No se encontraron reportes en el período y filtros seleccionados</div>
                     </div>
@@ -3285,7 +3130,7 @@ function updateGeneratedReportsList() {
                 <td>
                     <div class="action-buttons">
                         <button class="action-btn btn-delete-report" onclick="deleteGeneratedReportFromHistory('${report.id}')" title="Eliminar del historial">
-                            🗑️ Eliminar
+                            <i class="fa-solid fa-trash"></i> Eliminar
                         </button>
                     </div>
                 </td>
@@ -3303,16 +3148,16 @@ function updateGeneratedReportsList() {
  */
 function getReportTypeLabel(reportType) {
     const labels = {
-        'pago-consultor-general': '💰 Pago (General)',
-        'pago-consultor-especifico': '👤 Pago (Específico)',
-        'cliente-soporte': '📞 Cliente Soporte',
-        'remanente': '📊 Remanente',
-        'proyecto-general': '📋 Proyecto (General)',
-        'proyecto-cliente': '🏢 Proyecto (Cliente)',
-        'proyecto-consultor': '👤 Proyecto (Consultor)'
+        'pago-consultor-general': '<i class="fa-solid fa-money-bill-wave"></i> Pago (General)',
+        'pago-consultor-especifico': '<i class="fa-solid fa-user"></i> Pago (Específico)',
+        'cliente-soporte': '<i class="fa-solid fa-headset"></i> Cliente Soporte',
+        'remanente': '<i class="fa-solid fa-chart-pie"></i> Remanente',
+        'proyecto-general': '<i class="fa-solid fa-folder"></i> Proyecto (General)',
+        'proyecto-cliente': '<i class="fa-solid fa-building"></i> Proyecto (Cliente)',
+        'proyecto-consultor': '<i class="fa-solid fa-user-tie"></i> Proyecto (Consultor)'
     };
-    
-    return labels[reportType] || '📄 Reporte';
+
+    return labels[reportType] || '<i class="fa-solid fa-file"></i> Reporte';
 }
 
 function updateGeneratedReportsStats(reports = null) {
@@ -3466,7 +3311,7 @@ function generateReportConfiguration(reportType) {
     if (report.filters.includes('time')) {
         filtersHTML += `
             <div class="form-group">
-                <label for="timeFilter">🕐 Período de Tiempo:</label>
+                <label for="timeFilter"><i class="fa-solid fa-clock"></i> Período de Tiempo:</label>
                 <select id="timeFilter" onchange="handleTimeFilterChange()">
                     <option value="week">Esta Semana</option>
                     <option value="month">Este Mes</option>
@@ -3481,7 +3326,7 @@ function generateReportConfiguration(reportType) {
     if (report.filters.includes('consultant')) {
         filtersHTML += `
             <div class="form-group">
-                <label for="consultantFilter">👤 Seleccionar Consultor: <span style="color: red;">*</span></label>
+                <label for="consultantFilter"><i class="fa-solid fa-user"></i> Seleccionar Consultor: <span style="color: red;">*</span></label>
                 <select id="consultantFilter" required onchange="validateRequiredFilters()">
                     <option value="">Seleccionar consultor...</option>
                 </select>
@@ -3497,7 +3342,7 @@ if (report.filters.includes('client')) {
     
     filtersHTML += `
         <div class="form-group">
-            <label for="clientFilter">🏢 Seleccionar Cliente: <span style="color: red;">*</span></label>
+            <label for="clientFilter"><i class="fa-solid fa-building"></i> Seleccionar Cliente: <span style="color: red;">*</span></label>
             <select id="clientFilter" required onchange="${clientOnChange}">
                 <option value="">Seleccionar cliente...</option>
             </select>
@@ -3509,7 +3354,7 @@ if (report.filters.includes('client')) {
     if (report.filters.includes('support')) {
         filtersHTML += `
             <div class="form-group">
-                <label for="supportFilter">📞 Filtrar por Soporte:</label>
+                <label for="supportFilter"><i class="fa-solid fa-headset"></i> Filtrar por Soporte:</label>
                 <select id="supportFilter">
                     <option value="all">Todos los Soportes</option>
                 </select>
@@ -3522,21 +3367,21 @@ if (report.filters.includes('project')) {
     if (reportType === 'remanente') {
         filtersHTML += `
             <div class="form-group">
-                <label for="projectFilter">📋 Proyectos del Cliente:</label>
+                <label for="projectFilter"><i class="fa-solid fa-folder"></i> Proyectos del Cliente:</label>
                 <select id="projectFilter" onchange="validateRequiredFilters()">
                     <option value="">Seleccionar cliente primero...</option>
                     <option value="ninguno">Sin proyectos</option>
                     <option value="todos">Todos los proyectos</option>
                 </select>
                 <small style="color: #666; font-size: 0.875rem;">
-                    💡 Primero selecciona un cliente para ver sus proyectos
+                    <i class="fa-solid fa-lightbulb"></i> Primero selecciona un cliente para ver sus proyectos
                 </small>
             </div>
         `;
     } else {
         filtersHTML += `
             <div class="form-group">
-                <label for="projectFilter">📋 Filtrar por Proyecto:</label>
+                <label for="projectFilter"><i class="fa-solid fa-folder"></i> Filtrar por Proyecto:</label>
                 <select id="projectFilter">
                     <option value="all">Todos los Proyectos</option>
                 </select>
@@ -3549,13 +3394,13 @@ if (report.filters.includes('project')) {
         if (reportType === 'remanente') {
             filtersHTML += `
                 <div class="form-group">
-                    <label for="supportTypeFilter">📞 Soporte Específico: <span style="color: red;">*</span></label>
+                    <label for="supportTypeFilter"><i class="fa-solid fa-headset"></i> Soporte Específico: <span style="color: red;">*</span></label>
                     <select id="supportTypeFilter" required onchange="validateRequiredFilters()">
                         <option value="">Seleccionar soporte específico...</option>
                     </select>
                 </div>
             <div class="form-group">
-                <label for="monthFilter">📅 Mes de Análisis: <span style="color: red;">*</span></label>
+                <label for="monthFilter"><i class="fa-solid fa-calendar"></i> Mes de Análisis: <span style="color: red;">*</span></label>
                 <select id="monthFilter" required onchange="validateRequiredFilters()">
                     <option value="">Seleccionar mes...</option>
                 </select>
@@ -3569,11 +3414,11 @@ if (report.filters.includes('project')) {
         customDateRangeHTML = `
             <div class="form-row" id="customDateRange" style="display: none;">
                 <div class="form-group">
-                    <label for="startDate">📅 Fecha Inicio:</label>
+                    <label for="startDate"><i class="fa-solid fa-calendar"></i> Fecha Inicio:</label>
                     <input type="date" id="startDate">
                 </div>
                 <div class="form-group">
-                    <label for="endDate">📅 Fecha Fin:</label>
+                    <label for="endDate"><i class="fa-solid fa-calendar"></i> Fecha Fin:</label>
                     <input type="date" id="endDate">
                 </div>
             </div>
@@ -3588,8 +3433,8 @@ if (report.filters.includes('project')) {
         </div>
 
         <div class="warning-message">
-            <strong>📋 Estructura del Reporte:</strong> ${report.structure.join(' | ')}<br>
-            <strong>✏️ Campos Editables:</strong> ${report.editableFields.join(', ')} (modificables en vista previa)
+            <strong><i class="fa-solid fa-chart-pie"></i> Estructura del Reporte:</strong> ${report.structure.join(' | ')}<br>
+            <strong><i class="fa-solid fa-pencil"></i> Campos Editables:</strong> ${report.editableFields.join(', ')} (modificables en vista previa)
         </div>
 
         <div class="config-form">
@@ -3600,16 +3445,16 @@ if (report.filters.includes('project')) {
             
             <div class="actions-row">
                 <button class="btn btn-secondary" onclick="resetReportFilters()">
-                    🔄 Limpiar Filtros
+                    <i class="fa-solid fa-rotate-left"></i> Limpiar Filtros
                 </button>
                 <button class="btn btn-primary" onclick="generateReportPreview()" id="previewBtn" disabled>
-                    👁️ Vista Previa
+                    <i class="fa-solid fa-eye"></i> Vista Previa
                 </button>
                 <button class="btn btn-primary" onclick="generateFinalReport()" id="generateBtn" disabled>
-                    📊 Generar Excel
+                    <i class="fa-solid fa-file-excel"></i> Generar Excel
                 </button>
                 <button class="btn btn-info" onclick="exportCurrentReportToPDF()" id="exportPDFBtn" disabled>
-                    📄 Exportar PDF
+                    <i class="fa-solid fa-file-pdf"></i> Exportar PDF
                 </button>
             </div>
         </div>
@@ -4954,11 +4799,11 @@ if (currentReportData.proyectos) {
 function showEmptyPreview(previewPanel, report) {
     previewPanel.innerHTML = `
         <div class="preview-header">
-            <div class="preview-title">👁️ Vista Previa - ${report.name}</div>
+            <div class="preview-title"><i class="fa-solid fa-eye"></i> Vista Previa - ${report.name}</div>
             <div class="preview-info">Sin datos</div>
         </div>
         <div class="empty-preview">
-            <div class="empty-preview-icon">📊</div>
+            <div class="empty-preview-icon"><i class="fa-solid fa-chart-pie"></i></div>
             <div><strong>No hay datos disponibles</strong></div>
             <div>Verifique los filtros aplicados o el período seleccionado</div>
         </div>
@@ -5003,29 +4848,29 @@ function generateEditableTable(previewPanel, report) {
     
     previewPanel.innerHTML = `
         <div class="preview-header">
-            <div class="preview-title">👁️ Vista Previa - ${report.name}</div>
+            <div class="preview-title"><i class="fa-solid fa-eye"></i> Vista Previa - ${report.name}</div>
             <div class="preview-info">
                 ${recordCount} registros | 
                 ${totalHours.toFixed(1)} horas | 
                 $${totalAmount.toLocaleString('es-MX', {minimumFractionDigits: 2})}
-                ${currentReportType === 'remanente' && currentReportData.hasProjects ? ' | 📋 Incluye Proyectos' : ''}
+                ${currentReportType === 'remanente' && currentReportData.hasProjects ? ' | <i class="fa-solid fa-folder"></i> Incluye Proyectos' : ''}
             </div>
         </div>
 
         <div class="warning-message">
-            <strong>✏️ Vista Previa Editable:</strong> Haga clic en las celdas amarillas para modificar TIEMPO y TARIFA. 
+            <strong><i class="fa-solid fa-pencil"></i> Vista Previa Editable:</strong> Haga clic en las celdas amarillas para modificar TIEMPO y TARIFA. 
             Los totales se recalculan automáticamente. <br>
-            <strong>📋 Estructura:</strong> ${report.structure.join(' | ')}
+            <strong><i class="fa-solid fa-chart-pie"></i> Estructura:</strong> ${report.structure.join(' | ')}
         </div>
 
         ${tableHTML}
 
         <div class="actions-row">
             <button class="btn btn-secondary" onclick="restoreOriginalValues()">
-                ↩️ Restaurar Valores Originales
+                <i class="fa-solid fa-rotate-left"></i> Restaurar Valores Originales
             </button>
             <button class="btn btn-primary" onclick="generateFinalReport()">
-                📊 Generar Reporte Excel Final
+                <i class="fa-solid fa-file-excel"></i> Generar Reporte Excel Final
             </button>
         </div>
     `;
@@ -5129,8 +4974,8 @@ function generateRemanenteTable() {
     
     let tableHTML = `
         <div style="margin-bottom: 1rem; padding: 1rem; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0ea5e9;">
-            <strong>📅 Distribución del Mes:</strong> ${weekStructure.description}<br>
-            <strong>🔢 Total de Semanas:</strong> ${weekStructure.totalWeeks}
+            <strong><i class="fa-solid fa-calendar"></i> Distribución del Mes:</strong> ${weekStructure.description}<br>
+            <strong><i class="fa-solid fa-hashtag"></i> Total de Semanas:</strong> ${weekStructure.totalWeeks}
         </div>
         <table class="preview-table">
             <thead>
@@ -5268,7 +5113,7 @@ function generateRemanenteTableWithProjects() {
         console.log('📞 No hay soportes, omitiendo sección');
         tableHTML += `
             <div style="margin-bottom: 1rem; padding: 1rem; background: #f1f5f9; border-radius: 8px; text-align: center; color: #64748b;">
-                📞 No hay datos de soporte para este cliente y período
+                <i class="fa-solid fa-headset"></i> No hay datos de soporte para este cliente y período
             </div>
         `;
     }
@@ -5285,7 +5130,7 @@ function generateRemanenteTableWithProjects() {
         if (currentReportData.projectSelection === 'ninguno') {
             tableHTML += `
                 <div style="margin-top: 1rem; padding: 1rem; background: #f8fafc; border-radius: 8px; text-align: center; color: #64748b;">
-                    📋 Proyectos excluidos por selección de filtros
+                    <i class="fa-solid fa-folder"></i> Proyectos excluidos por selección de filtros
                 </div>
             `;
         }
@@ -5295,7 +5140,7 @@ function generateRemanenteTableWithProjects() {
     if (!tableHTML.includes('<table') && !tableHTML.includes('📋') && !tableHTML.includes('📞')) {
         tableHTML = `
             <div style="padding: 2rem; text-align: center; color: #64748b;">
-                <h3>📭 Sin Datos</h3>
+                <h3><i class="fa-solid fa-inbox"></i> Sin Datos</h3>
                 <p>No se encontraron reportes para los filtros seleccionados.</p>
             </div>
         `;
@@ -5313,7 +5158,7 @@ function generateProjectsSection() {
     let projectsHTML = `
         <div style="margin-top: 2rem; padding: 1rem; background: #f8fafc; border-radius: 8px; border-left: 4px solid #3b82f6;">
             <h4 style="margin: 0 0 1rem 0; color: #1e40af; font-size: 1.125rem;">
-                📋 PROYECTOS DEL CLIENTE
+                <i class="fa-solid fa-folder"></i> PROYECTOS DEL CLIENTE
             </h4>
         </div>
         <table class="preview-table projects-table">
@@ -5346,7 +5191,7 @@ function generateProjectsSection() {
         projectsHTML += `
             <tr style="background: #eff6ff; font-weight: bold;">
                 <td colspan="5" style="color: #1d4ed8; font-size: 1rem;">
-                    🎯 ${projectName}
+                    <i class="fa-solid fa-bullseye"></i> ${projectName}
                 </td>
             </tr>
         `;
@@ -6654,7 +6499,7 @@ function updateTarifarioTable(filterType = 'all') {
             <tr>
                 <td colspan="10" class="empty-state-cell">
                     <div class="empty-state">
-                        <div class="empty-state-icon">💰</div>
+                        <div class="empty-state-icon"><i class="fa-solid fa-money-bill-wave"></i></div>
                         <div class="empty-state-title">No hay tarifas con este filtro</div>
                         <div class="empty-state-desc">Prueba con otro filtro o crea nuevas asignaciones</div>
                     </div>
@@ -6679,8 +6524,8 @@ function createTarifaRow(tarifa) {
     
     // Badge de tipo
     const tipoBadge = tarifa.tipo === 'soporte' 
-        ? '<span class="tipo-badge soporte">📞 Soporte</span>'
-        : '<span class="tipo-badge proyecto">📋 Proyecto</span>';
+        ? '<span class="tipo-badge soporte"><i class="fa-solid fa-headset"></i> Soporte</span>'
+        : '<span class="tipo-badge proyecto"><i class="fa-solid fa-folder"></i> Proyecto</span>';
     
     // Margen con color
     const margenClass = tarifa.margen >= 0 ? 'positive' : 'negative';
@@ -6716,7 +6561,7 @@ function createTarifaRow(tarifa) {
             <button class="action-btn btn-view" 
                     onclick="viewTarifaDetails('${tarifa.id}')" 
                     title="Ver detalles">
-                👁️
+                <i class="fa-solid fa-eye"></i>
             </button>
         </td>
     `;
@@ -6749,7 +6594,7 @@ function updateConsultoresTable() {
             <tr>
                 <td colspan="6" class="empty-state-cell">
                     <div class="empty-state">
-                        <div class="empty-state-icon">👥</div>
+                        <div class="empty-state-icon"><i class="fa-solid fa-users"></i></div>
                         <div class="empty-state-title">No hay consultores con asignaciones</div>
                         <div class="empty-state-desc">Asigne proyectos o soportes a consultores</div>
                     </div>
@@ -7017,11 +6862,11 @@ function mostrarModalConfigurarTarifas() {
         listaHTML += `
             <div class="asignacion-sin-tarifa" data-id="${assign.id}">
                 <div class="asignacion-info">
-                    <strong>${assign.tipo === 'soporte' ? '📞' : '📋'} ${assign.id}</strong>
+                    <strong>${assign.tipo === 'soporte' ? '<i class="fa-solid fa-headset"></i>' : '<i class="fa-solid fa-folder"></i>'} ${assign.id}</strong>
                     <div class="asignacion-details">
-                        <span>👤 ${user ? user.name : 'N/A'}</span>
-                        <span>🏢 ${company ? company.name : 'N/A'}</span>
-                        <span>🧩 ${module ? module.name : 'N/A'}</span>
+                        <span><i class="fa-solid fa-user"></i> ${user ? user.name : 'N/A'}</span>
+                        <span><i class="fa-solid fa-building"></i> ${company ? company.name : 'N/A'}</span>
+                        <span><i class="fa-solid fa-puzzle-piece"></i> ${module ? module.name : 'N/A'}</span>
                         <span>${trabajo}</span>
                     </div>
                 </div>
@@ -7036,7 +6881,7 @@ function mostrarModalConfigurarTarifas() {
         <div class="modal-overlay" id="configurarTarifasModal">
             <div class="modal-content" style="max-width: 800px;">
                 <div class="modal-header">
-                    <h2>⚠️ Asignaciones Sin Tarifas Configuradas</h2>
+                    <h2><i class="fa-solid fa-exclamation-triangle"></i> Asignaciones Sin Tarifas Configuradas</h2>
                     <button class="modal-close" onclick="cerrarModalTarifas()">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -7072,7 +6917,7 @@ function abrirFormularioTarifa(assignmentId, tipo) {
         <div class="modal-overlay" id="formularioTarifaModal">
             <div class="modal-content" style="max-width: 500px;">
                 <div class="modal-header">
-                    <h2>💰 Configurar Tarifas</h2>
+                    <h2><i class="fa-solid fa-money-bill-wave"></i> Configurar Tarifas</h2>
                     <button class="modal-close" onclick="cerrarFormularioTarifa()">&times;</button>
                 </div>
                 <div class="modal-body">

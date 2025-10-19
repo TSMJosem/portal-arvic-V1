@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="../css/shared.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link rel="stylesheet" href="../css/arvic-pdf-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
    
@@ -31,35 +32,35 @@
                 <!-- Sidebar de Navegación -->
                 <div class="admin-sidebar">
                     <div class="sidebar-section">
-                        <h3 class="sidebar-section-title">📊 Gestión General</h3>
+                        <h3 class="sidebar-section-title"> <i class="fa-solid fa-chart-bar"></i> Gestión General</h3>
                         <div class="sidebar-menu">
                             <div class="sidebar-menu-item active" data-section="usuarios">
-                                <span class="menu-icon">👥</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-users"></i> </span>
                                 <span class="menu-text">Usuarios</span>
                                 <span class="menu-badge" id="sidebarUsersCount">0</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="empresas">
-                                <span class="menu-icon">🏢</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-building"> </i> </span>
                                 <span class="menu-text">Empresas</span>
                                 <span class="menu-badge" id="sidebarCompaniesCount">0</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="proyectos">
-                                <span class="menu-icon">📋</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-folder-open"></i> </span>
                                 <span class="menu-text">Proyectos</span>
                                 <span class="menu-badge" id="sidebarProjectsCount">0</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="soportes">
-                                <span class="menu-icon">📞</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-headset"></i> </span>
                                 <span class="menu-text">Soportes</span>
                                 <span class="menu-badge" id="sidebarSupportsCount">0</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="modulos">
-                                <span class="menu-icon">🧩</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-puzzle-piece"></i> </span>
                                 <span class="menu-text">Módulos</span>
                                 <span class="menu-badge" id="sidebarModulesCount">0</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="tarifario">
-                                <span class="menu-icon">💰</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-dollar-sign"></i> </span>
                                 <span class="menu-text">Tarifario</span>
                                 <span class="menu-badge" id="sidebarTarifarioCount">0</span>
                             </div>
@@ -67,30 +68,30 @@
                     </div>
 
                     <div class="sidebar-section">
-                        <h3 class="sidebar-section-title">🎯 Asignaciones</h3>
+                        <h3 class="sidebar-section-title"> <i class="fa-solid fa-bullseye"></i> Asignaciones</h3>
                         <div class="sidebar-menu">
                             <div class="sidebar-menu-item" data-section="crear-asignacion">
-                                <span class="menu-icon">➕</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-plus"></i> </span>
                                 <span class="menu-text">Asignar Soportes</span>
                             </div>
 
                             <div class="sidebar-menu-item" data-section="lista-asignaciones">
-                                <span class="menu-icon">📋</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-folder-open"></i> </span>
                                 <span class="menu-text">Lista Completa</span>
                                 <span class="menu-badge" id="sidebarAssignmentsCount">0</span>
                             </div>
                             
                             <div class="sidebar-menu-item" data-section="asignaciones-recientes">
-                                <span class="menu-icon">🕒</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-clock"></i> </span>
                                 <span class="menu-text">Recientes</span>
                             </div>
 
                             <div class="sidebar-menu-item" data-section="asignar-proyectos">
-                                <span class="menu-icon">➕</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-plus"></i> </span>
                                 <span class="menu-text">Asignar Proyectos</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="lista-proyectos-asignados">
-                                <span class="menu-icon">📋</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-folder-open"></i> </span>
                                 <span class="menu-text">Proyectos Asignados</span>
                                 <span class="menu-badge" id="sidebarProjectAssignmentsCount">0</span>
                             </div>
@@ -98,24 +99,24 @@
                     </div>
 
                     <div class="sidebar-section">
-                        <h3 class="sidebar-section-title">📄 Reportes</h3>
+                        <h3 class="sidebar-section-title"> <i class="fa-solid fa-file"></i> Reportes</h3>
                         <div class="sidebar-menu">
                             <div class="sidebar-menu-item" data-section="reportes-pendientes">
-                                <span class="menu-icon">📊</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-chart-bar"></i> </span>
                                 <span class="menu-text">Reportes Pendientes</span>
                                 <span class="menu-badge" id="sidebarReportsCount">0</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="reportes-aprobados">
-                                <span class="menu-icon">✅</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-check"></i> </span>
                                 <span class="menu-text">Reportes Aprobados</span>
                                 <span class="menu-badge" id="sidebarApprovedReportsCount">0</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="generar-reporte">
-                                <span class="menu-icon">📋</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-file-alt"></i> </span>
                                 <span class="menu-text">Generar Reporte</span>
                             </div>
                             <div class="sidebar-menu-item" data-section="historial-reportes">
-                                <span class="menu-icon">📜</span>
+                                <span class="menu-icon"> <i class="fa-solid fa-scroll"></i> </span>
                                 <span class="menu-text">Historial Generados</span>
                                 <span class="menu-badge" id="sidebarGeneratedReportsCount">0</span>
                             </div>
@@ -128,12 +129,12 @@
                     <!-- Sección de Usuarios -->
                     <div id="usuarios-section" class="content-section active">
                         <div class="section-header">
-                            <h2 class="section-title">👥 Gestión de Usuarios</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-users"></i> Gestión de Usuarios</h2>
                             <button class="add-btn" onclick="openUserModal()">+ Nuevo Usuario</button>
                         </div>
                         <div class="items-list" id="usersList">
                             <div class="empty-state">
-                                <div class="empty-state-icon">👤</div>
+                                <div class="empty-state-icon"> <i class="fa-solid fa-user"></i> </div>
                                 <div class="empty-state-title">No hay usuarios</div>
                                 <div class="empty-state-desc">Cree el primer usuario consultor</div>
                             </div>
@@ -143,12 +144,12 @@
                     <!-- Sección de Empresas -->
                     <div id="empresas-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">🏢 Gestión de Empresas</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-building"></i> Gestión de Empresas</h2>
                             <button class="add-btn" onclick="openCompanyModal()">+ Nueva Empresa</button>
                         </div>
                         <div class="items-list" id="companiesList">
                             <div class="empty-state">
-                                <div class="empty-state-icon">🏢</div>
+                                <div class="empty-state-icon"> <i class="fa-solid fa-building"></i> </div>
                                 <div class="empty-state-title">No hay empresas</div>
                                 <div class="empty-state-desc">Registre la primera empresa cliente</div>
                             </div>
@@ -158,12 +159,12 @@
                     <!-- Sección de Proyectos -->
                     <div id="proyectos-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">📋 Gestión de Proyectos</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-folder-open"></i> Gestión de Proyectos</h2>
                             <button class="add-btn" onclick="openProjectModal()">+ Nuevo Proyecto</button>
                         </div>
                         <div class="items-list" id="projectsList">
                             <div class="empty-state">
-                                <div class="empty-state-icon">📋</div>
+                                <div class="empty-state-icon"> <i class="fa-solid fa-folder-open"></i> </div>
                                 <div class="empty-state-title">No hay proyectos</div>
                                 <div class="empty-state-desc">Cree el primer proyecto</div>
                             </div>
@@ -173,12 +174,12 @@
                     <!-- Sección de Tareas -->
                     <div id="soportes-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">📞 Gestión de Soportes</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-headset"></i> Gestión de Soportes</h2>
                             <button class="add-btn" onclick="openSupportModal()">+ Nuevo Soporte</button>
                         </div>
                         <div class="items-list" id="supportsList">
                             <div class="empty-state">
-                                <div class="empty-state-icon">📞</div>
+                                <div class="empty-state-icon"> <i class="fa-solid fa-headset"></i> </div>
                                 <div class="empty-state-title">No hay soportes</div>
                                 <div class="empty-state-desc">Cree el primer soporte</div>
                             </div>
@@ -188,12 +189,12 @@
                     <!-- Sección de Módulos -->
                     <div id="modulos-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">🧩 Gestión de Módulos</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-puzzle-piece"></i> Gestión de Módulos</h2>
                             <button class="add-btn" onclick="openModuleModal()">+ Nuevo Módulo</button>
                         </div>
                         <div class="items-list" id="modulesList">
                             <div class="empty-state">
-                                <div class="empty-state-icon">🧩</div>
+                                <div class="empty-state-icon"> <i class="fa-solid fa-puzzle-piece"></i> </div>
                                 <div class="empty-state-title">No hay módulos</div>
                                 <div class="empty-state-desc">Cree el primer módulo</div>
                             </div>
@@ -203,85 +204,101 @@
                     <!-- Sección de Nueva Asignación -->
                     <div id="crear-asignacion-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">➕ Crear Nueva Asignación de Soporte</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-plus"></i> Crear Nueva Asignación de Soporte</h2>
                         </div>
                         <div class="assignment-form-container">
+                            <!-- ============================================================
+                                FORMULARIO DE ASIGNACIÓN DE SOPORTE CON GRID 2 COLUMNAS
+                                Reemplaza toda la estructura desde <div class="assignment-form">
+                                hasta su cierre en la sección "crear-asignacion-section"
+                                ============================================================ -->
+
                             <div class="assignment-form">
-                                <div class="form-group">
-                                    <label for="assignUser">Usuario Consultor</label>
-                                    <select id="assignUser" name="assignUser" required>
-                                        <option value="">Seleccionar usuario</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="assignCompany">Empresa Cliente</label>
-                                    <select id="assignCompany" name="assignCompany" required>
-                                        <option value="">Seleccionar empresa</option>
-                                    </select>
-                                </div>
-                                <!-- ✅ ELEMENTO CRÍTICO - ASEGURAR QUE ESTÉ EXACTAMENTE ASÍ -->
-                                <div class="form-group">
-                                    <label for="assignSupport">Soporte</label>
-                                    <select id="assignSupport" name="assignSupport" required>
-                                        <option value="">Seleccionar Soporte</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="assignModule">Módulos</label>
-                                    <select id="assignModule" name="assignModule" required>
-                                        <option value="">Seleccionar Módulo</option>
-                                    </select>
-                                </div>
-                                <!-- Sección de Tarifas -->
-                                <div class="tarifa-section">
-                                    <h4 class="tarifa-title">💰 Configuración de Tarifas</h4>
+                                <!-- COLUMNA IZQUIERDA: Campos principales -->
+                                <div class="main-fields-column">
+                                    <div class="form-group">
+                                        <label for="assignUser">Usuario Consultor</label>
+                                        <select id="assignUser" name="assignUser" required>
+                                            <option value="">Seleccionar usuario</option>
+                                        </select>
+                                    </div>
                                     
-                                    <div class="tarifa-inputs">
-                                        <div class="form-group">
-                                            <label for="assignTarifaConsultor">Tarifa Consultor ($/hora)</label>
-                                            <input 
-                                                type="number" 
-                                                id="assignTarifaConsultor" 
-                                                name="assignTarifaConsultor" 
-                                                step="0.01" 
-                                                min="0" 
-                                                placeholder="300.00"
-                                                required
-                                            >
-                                            <small class="form-hint">Costo por hora que se le paga al consultor</small>
+                                    <div class="form-group">
+                                        <label for="assignCompany">Empresa Cliente</label>
+                                        <select id="assignCompany" name="assignCompany" required>
+                                            <option value="">Seleccionar empresa</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="assignSupport">Soporte</label>
+                                        <select id="assignSupport" name="assignSupport" required>
+                                            <option value="">Seleccionar Soporte</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="assignModule">Módulos</label>
+                                        <select id="assignModule" name="assignModule" required>
+                                            <option value="">Seleccionar Módulo</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- COLUMNA DERECHA: Configuración de Tarifas -->
+                                <div class="tarifa-column">
+                                    <div class="tarifa-section">
+                                        <h3> <i class="fa-solid fa-dollar-sign"></i> Configuración de Tarifas</h3>
+                                        
+                                        <div class="tarifa-inputs">
+                                            <div class="form-group">
+                                                <label for="assignTarifaConsultor">Tarifa Consultor ($/hora)</label>
+                                                <input 
+                                                    type="number" 
+                                                    id="assignTarifaConsultor" 
+                                                    name="assignTarifaConsultor" 
+                                                    step="0.01" 
+                                                    min="0" 
+                                                    placeholder="300.00"
+                                                    required
+                                                >
+                                                <small class="form-hint">Costo por hora que se le paga al consultor</small>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="assignTarifaCliente">Tarifa Cliente ($/hora)</label>
+                                                <input 
+                                                    type="number" 
+                                                    id="assignTarifaCliente" 
+                                                    name="assignTarifaCliente" 
+                                                    step="0.01" 
+                                                    min="0" 
+                                                    placeholder="500.00"
+                                                    required
+                                                >
+                                                <small class="form-hint">Costo por hora que se le cobra al cliente</small>
+                                            </div>
                                         </div>
                                         
-                                        <div class="form-group">
-                                            <label for="assignTarifaCliente">Tarifa Cliente ($/hora)</label>
-                                            <input 
-                                                type="number" 
-                                                id="assignTarifaCliente" 
-                                                name="assignTarifaCliente" 
-                                                step="0.01" 
-                                                min="0" 
-                                                placeholder="500.00"
-                                                required
-                                            >
-                                            <small class="form-hint">Costo por hora que se le cobra al cliente</small>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="margen-display">
-                                        <div class="margen-info">
-                                            <span class="margen-label">Margen:</span>
-                                            <span id="assignMargen" class="margen-value">$0.00</span>
-                                            <span id="assignMargenPorcentaje" class="margen-percent">(0%)</span>
-                                        </div>
-                                        <div id="assignMargenWarning" class="margen-warning" style="display: none;">
-                                            ⚠️ El margen es negativo
+                                        <div class="margen-display">
+                                            <div class="margen-info">
+                                                <span class="margen-label">Margen:</span>
+                                                <span id="assignMargen" class="margen-value">$0.00</span>
+                                                <span id="assignMargenPorcentaje" class="margen-percent">(0%)</span>
+                                            </div>
+                                            <div id="assignMargenWarning" class="margen-warning" style="display: none;">
+                                                ⚠️ El margen es negativo
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="form-group" style="text-align: center; margin-top: 20px;">
-                                <button type="button" class="btn btn-primary" onclick="createAssignment()">
-                                    ➕ Crear Asignación
-                                </button>
+
+                                <!-- FILA COMPLETA: Botón de submit -->
+                                <div class="form-submit-row">
+                                    <button type="button" class="btn btn-primary" onclick="createAssignment()">
+                                        <i class="fa-solid fa-plus"></i> Crear Asignación
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -289,93 +306,96 @@
                     <!-- Sección de Asignar Proyectos -->
                     <div id="asignar-proyectos-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">🎯 Asignar Proyecto a Consultor</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-plus"></i> Crear Nueva Asignación de Proyecto</h2>
                         </div>
                         
                         <div class="assignment-form-container">
                             <div class="assignment-form">
-                                <!-- Consultor -->
-                                <div class="form-group">
-                                    <label for="assignProjectConsultor">Consultor</label>
-                                    <select id="assignProjectConsultor" name="assignProjectConsultor" required>
-                                        <option value="">Seleccionar consultor</option>
-                                    </select>
-                                </div>
-                                
-                                <!-- Proyecto -->
-                                <div class="form-group">
-                                    <label for="assignProjectProject">Proyecto</label>
-                                    <select id="assignProjectProject" name="assignProjectProject" required>
-                                        <option value="">Seleccionar proyecto</option>
-                                    </select>
-                                </div>
-                                
-                                <!-- Empresa Cliente -->
-                                <div class="form-group">
-                                    <label for="assignProjectCompany">Empresa Cliente</label>
-                                    <select id="assignProjectCompany" name="assignProjectCompany" required>
-                                        <option value="">Seleccionar empresa cliente</option>
-                                    </select>
-                                </div>
-                                
-                                <!-- Módulo -->
-                                <div class="form-group">
-                                    <label for="assignProjectModule">Módulo</label>
-                                    <select id="assignProjectModule" name="assignProjectModule" required>
-                                        <option value="">Seleccionar módulo</option>
-                                    </select>
-                                </div>
-                                <!-- Sección de Tarifas -->
-                                <div class="tarifa-section">
-                                    <h4 class="tarifa-title">💰 Configuración de Tarifas</h4>
+                                <!-- COLUMNA IZQUIERDA: Campos principales -->
+                                <div class="main-fields-column">
+                                    <div class="form-group">
+                                        <label for="assignProjectConsultor">Consultor</label>
+                                        <select id="assignProjectConsultor" name="assignProjectConsultor" required>
+                                            <option value="">Seleccionar consultor</option>
+                                        </select>
+                                    </div>
                                     
-                                    <div class="tarifa-inputs">
-                                        <div class="form-group">
-                                            <label for="projectAssignTarifaConsultor">Tarifa Consultor ($/hora)</label>
-                                            <input 
-                                                type="number" 
-                                                id="projectAssignTarifaConsultor" 
-                                                name="projectAssignTarifaConsultor" 
-                                                step="0.01" 
-                                                min="0" 
-                                                placeholder="300.00"
-                                                required
-                                            >
-                                            <small class="form-hint">Costo por hora que se le paga al consultor</small>
+                                    <div class="form-group">
+                                        <label for="assignProjectProject">Proyecto</label>
+                                        <select id="assignProjectProject" name="assignProjectProject" required>
+                                            <option value="">Seleccionar proyecto</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="assignProjectCompany">Empresa Cliente</label>
+                                        <select id="assignProjectCompany" name="assignProjectCompany" required>
+                                            <option value="">Seleccionar empresa cliente</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="assignProjectModule">Módulo</label>
+                                        <select id="assignProjectModule" name="assignProjectModule" required>
+                                            <option value="">Seleccionar módulo</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- COLUMNA DERECHA: Configuración de Tarifas -->
+                                <div class="tarifa-column">
+                                    <div class="tarifa-section">
+                                        <h3> <i class="fa-solid fa-dollar-sign"></i> Configuración de Tarifas</h3>
+                                        
+                                        <div class="tarifa-inputs">
+                                            <div class="form-group">
+                                                <label for="projectAssignTarifaConsultor">Tarifa Consultor ($/hora)</label>
+                                                <input 
+                                                    type="number" 
+                                                    id="projectAssignTarifaConsultor" 
+                                                    name="projectAssignTarifaConsultor" 
+                                                    step="0.01" 
+                                                    min="0" 
+                                                    placeholder="300.00"
+                                                    required
+                                                >
+                                                <small class="form-hint">Costo por hora que se le paga al consultor</small>
+                                            </div>
+                                            
+                                            <div class="form-group">
+                                                <label for="projectAssignTarifaCliente">Tarifa Cliente ($/hora)</label>
+                                                <input 
+                                                    type="number" 
+                                                    id="projectAssignTarifaCliente" 
+                                                    name="projectAssignTarifaCliente" 
+                                                    step="0.01" 
+                                                    min="0" 
+                                                    placeholder="500.00"
+                                                    required
+                                                >
+                                                <small class="form-hint">Costo por hora que se le cobra al cliente</small>
+                                            </div>
                                         </div>
                                         
-                                        <div class="form-group">
-                                            <label for="projectAssignTarifaCliente">Tarifa Cliente ($/hora)</label>
-                                            <input 
-                                                type="number" 
-                                                id="projectAssignTarifaCliente" 
-                                                name="projectAssignTarifaCliente" 
-                                                step="0.01" 
-                                                min="0" 
-                                                placeholder="500.00"
-                                                required
-                                            >
-                                            <small class="form-hint">Costo por hora que se le cobra al cliente</small>
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="margen-display">
-                                        <div class="margen-info">
-                                            <span class="margen-label">Margen:</span>
-                                            <span id="projectAssignMargen" class="margen-value">$0.00</span>
-                                            <span id="projectAssignMargenPorcentaje" class="margen-percent">(0%)</span>
-                                        </div>
-                                        <div id="projectAssignMargenWarning" class="margen-warning" style="display: none;">
-                                            ⚠️ El margen es negativo
+                                        <div class="margen-display">
+                                            <div class="margen-info">
+                                                <span class="margen-label">Margen:</span>
+                                                <span id="projectAssignMargen" class="margen-value">$0.00</span>
+                                                <span id="projectAssignMargenPorcentaje" class="margen-percent">(0%)</span>
+                                            </div>
+                                            <div id="projectAssignMargenWarning" class="margen-warning" style="display: none;">
+                                                ⚠️ El margen es negativo
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div class="form-group" style="text-align: center; margin-top: 20px;">
-                                <button type="button" class="btn btn-primary" onclick="createProjectAssignment()">
-                                    🎯 Asignar Proyecto
-                                </button>
+
+                                <!-- FILA COMPLETA: Botón de submit -->
+                                <div class="form-submit-row">
+                                    <button type="button" class="btn btn-primary" onclick="createProjectAssignment()">
+                                        <i class="fa-solid fa-plus"></i> Asignar Proyecto
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -383,12 +403,12 @@
                     <!-- Sección de Lista de Proyectos Asignados -->
                     <div id="lista-proyectos-asignados-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">📋 Proyectos Asignados</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-folder-open"></i> Proyectos Asignados</h2>
                         </div>
                         
                         <div id="projectAssignmentsList" class="project-assignments-container">
                             <div class="empty-state">
-                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-icon"> <i class="fa-solid fa-bullseye"></i> </div>
                                 <div class="empty-state-title">No hay proyectos asignados</div>
                                 <div class="empty-state-desc">Los proyectos asignados a consultores aparecerán aquí</div>
                             </div>
@@ -398,11 +418,11 @@
                     <!-- Sección de Lista de Asignaciones -->
                     <div id="lista-asignaciones-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">📋 Lista Completa de Asignaciones</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-clipboard-list"></i> Lista Completa de Asignaciones</h2>
                         </div>
                         <div class="assignments-list" id="assignmentsList">
                             <div class="empty-state">
-                                <div class="empty-state-icon">🔗</div>
+                                <div class="empty-state-icon"> <i class="fa-solid fa-link"></i> </div>
                                 <div class="empty-state-title">No hay asignaciones</div>
                                 <div class="empty-state-desc">Las asignaciones creadas aparecerán en esta lista</div>
                             </div>
@@ -412,11 +432,11 @@
                     <!-- Sección de Asignaciones Recientes -->
                     <div id="asignaciones-recientes-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">🕒 Asignaciones Recientes</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-clock"></i> Asignaciones Recientes</h2>
                         </div>
                         <div class="items-list" id="recentAssignments">
                             <div class="empty-state">
-                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-icon"> <i class="fa-solid fa-bullseye"></i> </div>
                                 <div class="empty-state-title">Sin asignaciones</div>
                                 <div class="empty-state-desc">Las asignaciones recientes aparecerán aquí</div>
                             </div>
@@ -426,24 +446,24 @@
                     <!-- Tabla de Reportes Pendientes -->
                     <div id="reportes-pendientes-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">📊 Reportes Pendientes</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-chart-line"></i> Reportes Pendientes</h2>
                         </div>
                         
                         <!-- ✨ NUEVO: Filtros por Categoría -->
                         <div class="reports-category-filters">
                             <div class="filter-buttons-group">
                                 <button class="category-filter-btn active" data-category="all" onclick="filterReportsByCategory('all')">
-                                    <span class="filter-icon">📊</span>
+                                    <span class="filter-icon"> <i class="fa-solid fa-chart-pie"></i> </span>
                                     <span class="filter-text">Todos</span>
                                     <span class="filter-count" id="filterCountAll">0</span>
                                 </button>
                                 <button class="category-filter-btn" data-category="soporte" onclick="filterReportsByCategory('soporte')">
-                                    <span class="filter-icon">📞</span>
+                                    <span class="filter-icon"> <i class="fa-solid fa-headset"></i> </span>
                                     <span class="filter-text">Soporte</span>
                                     <span class="filter-count" id="filterCountSoporte">0</span>
                                 </button>
                                 <button class="category-filter-btn" data-category="proyecto" onclick="filterReportsByCategory('proyecto')">
-                                    <span class="filter-icon">📋</span>
+                                    <span class="filter-icon"> <i class="fa-solid fa-folder-open"></i> </span>
                                     <span class="filter-text">Proyecto</span>
                                     <span class="filter-count" id="filterCountProyecto">0</span>
                                 </button>
@@ -458,7 +478,6 @@
                                         <th>Nombre Consultor</th>
                                         <th>Cliente (Empresa)</th>
                                         <th>Soporte</th>
-                                        <!-- Columna "Tipo Soporte" eliminada -->
                                         <th>Módulo</th>
                                         <th>Horas Reportadas</th>
                                         <th>Fecha Reporte</th>
@@ -470,7 +489,7 @@
                                     <tr>
                                         <td colspan="9" class="empty-table-message">
                                             <div class="empty-state">
-                                                <div class="empty-state-icon">📄</div>
+                                                <div class="empty-state-icon"> <i class="fa-solid fa-file"></i> </div>
                                                 <div class="empty-state-title">No hay reportes</div>
                                                 <div class="empty-state-desc">Los reportes enviados por consultores aparecerán aquí</div>
                                             </div>
@@ -484,23 +503,23 @@
                     <!-- Tabla de Reportes Aprobados -->
                     <div id="reportes-aprobados-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">✅ Reportes Aprobados - Horas Acumuladas</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-check"></i> Reportes Aprobados - Horas Acumuladas</h2>
                         </div>
                         
                         <div class="reports-category-filters">
                             <div class="filter-buttons-group">
                                 <button class="category-filter-btn active" data-category="all" onclick="filterApprovedReportsByCategory('all')">
-                                    <span class="filter-icon">📊</span>
+                                    <span class="filter-icon"> <i class="fa-solid fa-chart-pie"></i> </span>
                                     <span class="filter-text">Todos</span>
                                     <span class="filter-count" id="approvedFilterCountAll">0</span>
                                 </button>
                                 <button class="category-filter-btn" data-category="soporte" onclick="filterApprovedReportsByCategory('soporte')">
-                                    <span class="filter-icon">📞</span>
+                                    <span class="filter-icon"> <i class="fa-solid fa-headset"></i> </span>
                                     <span class="filter-text">Soporte</span>
                                     <span class="filter-count" id="approvedFilterCountSoporte">0</span>
                                 </button>
                                 <button class="category-filter-btn" data-category="proyecto" onclick="filterApprovedReportsByCategory('proyecto')">
-                                    <span class="filter-icon">📋</span>
+                                    <span class="filter-icon"> <i class="fa-solid fa-folder-open"></i> </span>
                                     <span class="filter-text">Proyecto</span>
                                     <span class="filter-count" id="approvedFilterCountProyecto">0</span>
                                 </button>
@@ -549,7 +568,7 @@
                                     <tr>
                                         <td colspan="7" class="empty-table-message">
                                             <div class="empty-state">
-                                                <div class="empty-state-icon">✅</div>
+                                                <div class="empty-state-icon"> <i class="fa-solid fa-check"></i> </div>
                                                 <div class="empty-state-title">No hay reportes aprobados</div>
                                                 <div class="empty-state-desc">Los reportes aprobados aparecerán aquí con horas acumuladas</div>
                                             </div>
@@ -563,13 +582,13 @@
                             <!-- Sección de Generar Reporte -->
                             <div id="generar-reporte-section" class="content-section">
                                 <div class="section-header">
-                                    <h2 class="section-title">📋 Sistema de Reportes ARVIC</h2>
+                                    <h2 class="section-title"> <i class="fa-solid fa-clipboard"></i> Sistema de Reportes ARVIC</h2>
                                     <p class="section-subtitle">Genere reportes detallados según documentación oficial</p>
                                 </div>
                                 
                                 <!-- Selector de Reportes -->
                                 <div class="report-selector">
-                                    <h3>🎯 Seleccionar Tipo de Reporte</h3>
+                                    <h3> <i class="fa-solid fa-bullseye"></i> Seleccionar Tipo de Reporte</h3>
                                     <div class="report-grid" id="reportGrid">
                                         <!-- Se generará dinámicamente con JavaScript -->
                                     </div>
@@ -584,29 +603,13 @@
                                 <div class="preview-panel" id="reportPreviewPanel" style="display: none;">
                                     <!-- Se generará dinámicamente según los datos -->
                                 </div>
-
-                                <!-- Opciones Generales (MANTENER) -->
-                                <div class="report-options">
-                                    <h3>Opciones Generales</h3>
-                                    <div class="form-group">
-                                        <button type="button" class="btn btn-secondary" onclick="exportData()">
-                                            💾 Exportar Datos Completos
-                                        </button>
-                                        <button type="button" class="btn btn-secondary" onclick="importData()">
-                                            📁 Importar Datos
-                                        </button>
-                                        <button type="button" class="btn btn-info" onclick="generateAdminReport()">
-                                            📋 Reporte Administrativo
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
 
                     <!-- Sección de Historial de Reportes Generados -->
                     <div id="historial-reportes-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">📜 Historial de Reportes Generados</h2>
-                            <button class="add-btn" onclick="refreshGeneratedReportsList()">🔄 Actualizar</button>
+                            <h2 class="section-title"> <i class="fa-solid fa-scroll"></i> Historial de Reportes Generados</h2>
+                            <button class="add-btn" onclick="refreshGeneratedReportsList()"><i class="fa-solid fa-sync"></i> Actualizar</button>
                         </div>
                         
                         <!-- Filtros para Historial -->
@@ -625,13 +628,13 @@
                                 <label for="historialTypeFilter">Tipo:</label>
                                 <select id="historialTypeFilter" onchange="updateGeneratedReportsList()">
                                     <option value="all">Todos los Tipos</option>
-                                    <option value="pago-consultor-general">💰 Pago Consultor (General)</option>
-                                    <option value="pago-consultor-especifico">👤 Pago Consultor (Específico)</option>
-                                    <option value="cliente-soporte">📞 Cliente Soporte</option>
-                                    <option value="remanente">📊 Remanente</option>
-                                    <option value="proyecto-general">📋 Proyecto (General)</option>
-                                    <option value="proyecto-cliente">🏢 Proyecto (Cliente)</option>
-                                    <option value="proyecto-consultor">👤 Proyecto (Consultor)</option>
+                                    <option value="pago-consultor-general"> <i class="fa-solid fa-money-bill"></i> Pago Consultor (General)</option>
+                                    <option value="pago-consultor-especifico"> <i class="fa-solid fa-user"></i> Pago Consultor (Específico)</option>
+                                    <option value="cliente-soporte"> <i class="fa-solid fa-headset"></i> Cliente Soporte</option>
+                                    <option value="remanente"> <i class="fa-solid fa-chart-pie"></i> Remanente</option>
+                                    <option value="proyecto-general"> <i class="fa-solid fa-folder-open"></i> Proyecto (General)</option>
+                                    <option value="proyecto-cliente"> <i class="fa-solid fa-building"></i> Proyecto (Cliente)</option>
+                                    <option value="proyecto-consultor"> <i class="fa-solid fa-user"></i> Proyecto (Consultor)</option>
                                 </select>
                             </div>
                             
@@ -669,7 +672,7 @@
                                     <tr>
                                         <td colspan="9" class="empty-table-message">
                                             <div class="empty-state">
-                                                <div class="empty-state-icon">📊</div>
+                                                <div class="empty-state-icon"> <i class="fa-solid fa-chart-pie"></i> </div>
                                                 <div class="empty-state-title">No hay reportes generados</div>
                                                 <div class="empty-state-desc">Los reportes Excel generados aparecerán en este historial</div>
                                             </div>
@@ -688,31 +691,31 @@
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number" id="reportPagoGeneral">0</div>
-                                    <div class="stat-label">💰 Pago (General)</div>
+                                    <div class="stat-label"> <i class="fa-solid fa-money-bill"></i> Pago (General)</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number" id="reportPagoEspecifico">0</div>
-                                    <div class="stat-label">👤 Pago (Específico)</div>
+                                    <div class="stat-label"> <i class="fa-solid fa-user"></i> Pago (Específico)</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number" id="reportClienteSoporte">0</div>
-                                    <div class="stat-label">📞 Cliente Soporte</div>
+                                    <div class="stat-label"> <i class="fa-solid fa-headset"></i> Cliente Soporte</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number" id="reportRemanente">0</div>
-                                    <div class="stat-label">📊 Remanente</div>
+                                    <div class="stat-label"> <i class="fa-solid fa-chart-pie"></i> Remanente</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number" id="reportProyectoGeneral">0</div>
-                                    <div class="stat-label">📋 Proyecto (General)</div>
+                                    <div class="stat-label"> <i class="fa-solid fa-folder-open"></i> Proyecto (General)</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number" id="reportProyectoCliente">0</div>
-                                    <div class="stat-label">🏢 Proyecto (Cliente)</div>
+                                    <div class="stat-label"> <i class="fa-solid fa-building"></i> Proyecto (Cliente)</div>
                                 </div>
                                 <div class="stat-card">
                                     <div class="stat-number" id="reportProyectoConsultor">0</div>
-                                    <div class="stat-label">👤 Proyecto (Consultor)</div>
+                                    <div class="stat-label"> <i class="fa-solid fa-user"></i> Proyecto (Consultor)</div>
                                 </div>
                             </div>
                         </div>
@@ -720,43 +723,43 @@
                             <!-- Sección de Tarifario -->
                     <div id="tarifario-section" class="content-section">
                         <div class="section-header">
-                            <h2 class="section-title">💰 Tarifario - Gestión de Costos</h2>
+                            <h2 class="section-title"> <i class="fa-solid fa-dollar-sign"></i> Tarifario - Gestión de Costos</h2>
                             <button class="btn btn-export" onclick="exportTarifarioToExcel()">
-                                📤 Exportar a Excel
+                                <i class="fa-solid fa-file-excel"></i> Exportar a Excel
                             </button>
                         </div>
 
                         <!-- Filtros de tipo -->
                         <div class="tarifario-filters">
                             <button class="filter-btn active" data-type="all" onclick="filterTarifarioByType('all')">
-                                📊 Todos
+                                <i class="fa-solid fa-chart-pie"></i> Todos
                             </button>
                             <button class="filter-btn" data-type="soporte" onclick="filterTarifarioByType('soporte')">
-                                📞 Soportes
+                                <i class="fa-solid fa-headset"></i> Soportes
                             </button>
                             <button class="filter-btn" data-type="proyecto" onclick="filterTarifarioByType('proyecto')">
-                                📋 Proyectos
+                                <i class="fa-solid fa-folder-open"></i> Proyectos
                             </button>
                         </div>
 
                         <!-- Estadísticas rápidas -->
                         <div class="tarifario-stats">
                             <div class="stat-card">
-                                <div class="stat-icon">📊</div>
+                                <div class="stat-icon"><i class="fa-solid fa-chart-pie"></i></div>
                                 <div class="stat-content">
                                     <span class="stat-label">Total Asignaciones</span>
                                     <span class="stat-value" id="totalAsignaciones">0</span>
                                 </div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-icon">💰</div>
+                                <div class="stat-icon"><i class="fa-solid fa-money-bill"></i></div>
                                 <div class="stat-content">
                                     <span class="stat-label">Margen Promedio</span>
                                     <span class="stat-value" id="margenPromedio">$0.00</span>
                                 </div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-icon">📈</div>
+                                <div class="stat-icon"><i class="fa-solid fa-chart-line"></i></div>
                                 <div class="stat-content">
                                     <span class="stat-label">Total Consultores</span>
                                     <span class="stat-value" id="totalConsultores">0</span>
@@ -767,7 +770,7 @@
                         <!-- Tabla de Unión -->
                         <div class="table-container">
                             <div class="table-header">
-                                <h3 class="table-title">📊 Tabla de Unión - Asignaciones con Tarifas</h3>
+                                <h3 class="table-title"><i class="fa-solid fa-chart-pie"></i> Tabla de Unión - Asignaciones con Tarifas</h3>
                                 <div class="table-info">
                                     <span id="tarifarioCount">0 asignaciones</span>
                                 </div>
@@ -793,7 +796,7 @@
                                         <tr>
                                             <td colspan="10" class="empty-state-cell">
                                                 <div class="empty-state">
-                                                    <div class="empty-state-icon">💰</div>
+                                                    <div class="empty-state-icon"><i class="fa-solid fa-money-bill"></i></div>
                                                     <div class="empty-state-title">No hay tarifas configuradas</div>
                                                     <div class="empty-state-desc">Las tarifas se crean automáticamente al crear asignaciones</div>
                                                 </div>
@@ -807,7 +810,7 @@
                         <!-- Tabla de Consultores -->
                         <div class="table-container">
                             <div class="table-header">
-                                <h3 class="table-title">👥 Resumen por Consultor</h3>
+                                <h3 class="table-title"><i class="fa-solid fa-user"></i> Resumen por Consultor</h3>
                                 <div class="table-info">
                                     <span id="consultoresCount">0 consultores</span>
                                 </div>
@@ -829,7 +832,7 @@
                                         <tr>
                                             <td colspan="6" class="empty-state-cell">
                                                 <div class="empty-state">
-                                                    <div class="empty-state-icon">👥</div>
+                                                    <div class="empty-state-icon"><i class="fa-solid fa-user"></i></div>
                                                     <div class="empty-state-title">No hay consultores con asignaciones</div>
                                                     <div class="empty-state-desc">Asigne proyectos o soportes a consultores para ver el resumen</div>
                                                 </div>
@@ -849,7 +852,7 @@
     <div id="userModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">👤 Crear Nuevo Usuario</h2>
+                <h2 class="modal-title"><i class="fa-solid fa-user"></i> Crear Nuevo Usuario</h2>
                 <button class="close" onclick="closeModal('userModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -877,7 +880,7 @@
     <div id="companyModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">🏢 Registrar Nueva Empresa</h2>
+                <h2 class="modal-title"><i class="fa-solid fa-building"></i> Registrar Nueva Empresa</h2>
                 <button class="close" onclick="closeModal('companyModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -902,7 +905,7 @@
     <div id="projectModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">📋 Crear Nuevo Proyecto</h2>
+                <h2 class="modal-title"><i class="fa-solid fa-folder-open"></i> Crear Nuevo Proyecto</h2>
                 <button class="close" onclick="closeModal('projectModal')">&times;</button>
             </div>
             <div class="modal-body">
@@ -927,7 +930,7 @@
     <div id="supportModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 class="modal-title">📞 Crear Nuevo Soporte</h2>
+            <h2 class="modal-title"><i class="fa-solid fa-headset"></i> Crear Nuevo Soporte</h2>
             <button class="close" onclick="closeModal('supportModal')">&times;</button>
         </div>
         <div class="modal-body">
@@ -952,7 +955,7 @@
     <div id="moduleModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2 class="modal-title">🧩 Crear Nuevo Módulo</h2>
+                <h2 class="modal-title"><i class="fa-solid fa-puzzle-piece"></i> Crear Nuevo Módulo</h2>
                 <button class="close" onclick="closeModal('moduleModal')">&times;</button>
             </div>
             <div class="modal-body">

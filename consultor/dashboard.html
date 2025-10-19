@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Consultor - GRUPO IT ARVIC</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <link rel="stylesheet" href="../css/shared.css">
     <link rel="stylesheet" href="../css/consultor.css">
 </head>
@@ -40,7 +41,7 @@
             <div class="content-wrapper">
                 <!-- Sidebar Simplificado -->
                 <div class="sidebar consultor-sidebar">
-                    <h2 class="sidebar-title">📋 Mis Asignaciones</h2>
+                    <h2 class="sidebar-title"><i class="fa-solid fa-folder-open"></i> Mis Asignaciones</h2>
                     <div class="sidebar-menu">
                         <div class="menu-item active">
                             <span class="menu-text">Asignaciones Activas</span>
@@ -53,22 +54,22 @@
                 <div class="main-panel consultor-main">
                     <!-- Sección de Asignaciones -->
                     <div class="content-section active">
-                        <h2 class="section-title">🎯 Mis Asignaciones y Reportes</h2>
-                        
+                        <h2 class="section-title"><i class="fa-solid fa-bullseye"></i> Mis Asignaciones y Reportes</h2>
+
                         <!-- Información del Usuario -->
                         <div class="user-info-card">
-                            <h3>👤 Información del Consultor</h3>
+                            <h3><i class="fa-solid fa-user"></i> Información del Consultor</h3>
                             <div class="user-details">
                                 <p><strong>Nombre:</strong> <span id="userNameDisplay">Cargando...</span></p>
                                 <p><strong>ID:</strong> <span id="userIdDisplay">Cargando...</span></p>
-                                <p><strong>Estado:</strong> <span class="custom-badge badge-success">✅ Activo</span></p>
+                                <p><strong>Estado:</strong> <span class="custom-badge badge-success"><i class="fa-solid fa-check"></i> Activo</span></p>
                             </div>
                         </div>
 
                         <!-- Lista de Asignaciones -->
                         <div id="assignmentsList" class="assignments-container">
                             <div class="empty-state">
-                                <div class="empty-state-icon">🎯</div>
+                                <div class="empty-state-icon"><i class="fa-solid fa-bullseye"></i></div>
                                 <div class="empty-state-title">No hay asignaciones</div>
                                 <div class="empty-state-desc">Las asignaciones del administrador aparecerán aquí</div>
                             </div>
@@ -88,7 +89,7 @@
 <div id="createReportModal" class="modal">
     <div class="modal-content redesigned-modal">
         <div class="modal-header">
-            <h2 class="modal-title">📝 Crear Ticket de Horas</h2>
+            <h2 class="modal-title"><i class="fa-solid fa-file-alt"></i> Crear Ticket de Horas</h2>
             <button class="close-btn" onclick="closeModal('createReportModal')">&times;</button>
         </div>
         
@@ -187,7 +188,7 @@
                     Cancelar
                 </button>
                 <button type="submit" class="btn btn-submit" form="reportForm">
-                    📤 Enviar Ticket
+                    <i class="fa-solid fa-paper-plane"></i> Enviar Ticket
                 </button>
             </div>
         </div>
@@ -198,7 +199,7 @@
 <div id="viewReportsModal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2 class="modal-title">📊 Reportes de Asignación</h2>
+            <h2 class="modal-title"><i class="fa-solid fa-chart-pie"></i> Reportes de Asignación</h2>
             <button class="close" onclick="closeModal('viewReportsModal')">&times;</button>
         </div>
         <div class="modal-body">

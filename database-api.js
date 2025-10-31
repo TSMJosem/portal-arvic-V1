@@ -49,6 +49,11 @@ class PortalDatabase {
         }
     }
 
+    logout() {
+        this.token = null;
+        localStorage.removeItem('arvic_token');
+    }
+
     // === USUARIOS ===
     async getUsers() {
         try {
@@ -182,7 +187,7 @@ class PortalDatabase {
         }
     }
 
-    // === PROYECTOS, SOPORTES, MÓDULOS (mismo patrón) ===
+    // === PROYECTOS ===
     async getProjects() {
         try {
             const response = await fetch(`${this.API_URL}/projects`, { headers: this.getHeaders() });
@@ -190,6 +195,15 @@ class PortalDatabase {
             return data.success ? data.data : [];
         } catch (error) {
             return [];
+        }
+    }
+
+    async getProject(projectId) {
+        try {
+            const projects = await this.getProjects();
+            return projects.find(p => p.id === projectId) || null;
+        } catch (error) {
+            return null;
         }
     }
 
@@ -206,6 +220,7 @@ class PortalDatabase {
         }
     }
 
+    // === SOPORTES ===
     async getSupports() {
         try {
             const response = await fetch(`${this.API_URL}/supports`, { headers: this.getHeaders() });
@@ -213,6 +228,15 @@ class PortalDatabase {
             return data.success ? data.data : [];
         } catch (error) {
             return [];
+        }
+    }
+
+    async getSupport(supportId) {
+        try {
+            const supports = await this.getSupports();
+            return supports.find(s => s.id === supportId) || null;
+        } catch (error) {
+            return null;
         }
     }
 
@@ -229,6 +253,7 @@ class PortalDatabase {
         }
     }
 
+    // === MÓDULOS ===
     async getModules() {
         try {
             const response = await fetch(`${this.API_URL}/modules`, { headers: this.getHeaders() });
@@ -236,6 +261,15 @@ class PortalDatabase {
             return data.success ? data.data : [];
         } catch (error) {
             return [];
+        }
+    }
+
+    async getModule(moduleId) {
+        try {
+            const modules = await this.getModules();
+            return modules.find(m => m.id === moduleId) || null;
+        } catch (error) {
+            return null;
         }
     }
 
@@ -252,7 +286,7 @@ class PortalDatabase {
         }
     }
 
-    // === ASIGNACIONES ===
+    // === ASIGNACIONES DE SOPORTE ===
     async getAssignments() {
         try {
             const response = await fetch(`${this.API_URL}/assignments`, { headers: this.getHeaders() });
@@ -260,6 +294,15 @@ class PortalDatabase {
             return data.success ? data.data : [];
         } catch (error) {
             return [];
+        }
+    }
+
+    async getAssignment(assignmentId) {
+        try {
+            const assignments = await this.getAssignments();
+            return assignments.find(a => a.id === assignmentId) || null;
+        } catch (error) {
+            return null;
         }
     }
 
@@ -276,6 +319,32 @@ class PortalDatabase {
         }
     }
 
+    async updateAssignment(assignmentId, updates) {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/${assignmentId}`, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify(updates)
+            });
+            return await response.json();
+        } catch (error) {
+            return { success: false, message: 'Error de conexión' };
+        }
+    }
+
+    async deleteAssignment(assignmentId) {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/${assignmentId}`, {
+                method: 'DELETE',
+                headers: this.getHeaders()
+            });
+            return await response.json();
+        } catch (error) {
+            return { success: false, message: 'Error de conexión' };
+        }
+    }
+
+    // === ASIGNACIONES DE PROYECTO ===
     async getProjectAssignments() {
         try {
             const response = await fetch(`${this.API_URL}/assignments/projects`, { headers: this.getHeaders() });
@@ -283,6 +352,15 @@ class PortalDatabase {
             return data.success ? data.data : [];
         } catch (error) {
             return [];
+        }
+    }
+
+    async getProjectAssignment(assignmentId) {
+        try {
+            const assignments = await this.getProjectAssignments();
+            return assignments.find(a => a.id === assignmentId) || null;
+        } catch (error) {
+            return null;
         }
     }
 
@@ -299,10 +377,157 @@ class PortalDatabase {
         }
     }
 
+    async updateProjectAssignment(assignmentId, updates) {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/projects/${assignmentId}`, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify(updates)
+            });
+            return await response.json();
+        } catch (error) {
+            return { success: false, message: 'Error de conexión' };
+        }
+    }
+
+    async deleteProjectAssignment(assignmentId) {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/projects/${assignmentId}`, {
+                method: 'DELETE',
+                headers: this.getHeaders()
+            });
+            return await response.json();
+        } catch (error) {
+            return { success: false, message: 'Error de conexión' };
+        }
+    }
+
+    // === ASIGNACIONES DE TAREAS ⭐ NUEVO ===
+    async getTaskAssignments() {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/tasks`, { 
+                headers: this.getHeaders() 
+            });
+            const data = await response.json();
+            return data.success ? data.data : [];
+        } catch (error) {
+            console.error('Error obteniendo task assignments:', error);
+            return [];
+        }
+    }
+
+    async getTaskAssignment(taskId) {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/tasks/${taskId}`, {
+                headers: this.getHeaders()
+            });
+            const data = await response.json();
+            return data.success ? data.data : null;
+        } catch (error) {
+            console.error('Error obteniendo task assignment:', error);
+            return null;
+        }
+    }
+
+    async getTaskAssignmentsBySupport(supportId) {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/tasks/by-support/${supportId}`, {
+                headers: this.getHeaders()
+            });
+            const data = await response.json();
+            return data.success ? data.data : [];
+        } catch (error) {
+            console.error('Error obteniendo tareas por soporte:', error);
+            return [];
+        }
+    }
+
+    async getIndependentTaskAssignments() {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/tasks/independent`, {
+                headers: this.getHeaders()
+            });
+            const data = await response.json();
+            return data.success ? data.data : [];
+        } catch (error) {
+            console.error('Error obteniendo tareas independientes:', error);
+            return [];
+        }
+    }
+
+    async getTaskAssignmentsByConsultor(consultorId) {
+        try {
+            const tasks = await this.getTaskAssignments();
+            return tasks.filter(task => task.consultorId === consultorId && task.isActive);
+        } catch (error) {
+            console.error('Error obteniendo tareas por consultor:', error);
+            return [];
+        }
+    }
+
+    async getTaskAssignmentsByCompany(companyId) {
+        try {
+            const tasks = await this.getTaskAssignments();
+            return tasks.filter(task => task.companyId === companyId && task.isActive);
+        } catch (error) {
+            console.error('Error obteniendo tareas por cliente:', error);
+            return [];
+        }
+    }
+
+    async createTaskAssignment(taskData) {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/tasks`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(taskData)
+            });
+            const result = await response.json();
+            return result.success ? { 
+                success: true, 
+                taskId: result.data.id,
+                data: result.data 
+            } : result;
+        } catch (error) {
+            console.error('Error creando task assignment:', error);
+            return { success: false, message: 'Error de conexión' };
+        }
+    }
+
+    async updateTaskAssignment(taskId, updates) {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify(updates)
+            });
+            const result = await response.json();
+            return result.success ? { success: true, data: result.data } : result;
+        } catch (error) {
+            console.error('Error actualizando task assignment:', error);
+            return { success: false, message: 'Error de conexión' };
+        }
+    }
+
+    async deleteTaskAssignment(taskId) {
+        try {
+            const response = await fetch(`${this.API_URL}/assignments/tasks/${taskId}`, {
+                method: 'DELETE',
+                headers: this.getHeaders()
+            });
+            return await response.json();
+        } catch (error) {
+            console.error('Error eliminando task assignment:', error);
+            return { success: false, message: 'Error de conexión' };
+        }
+    }
+
     // === REPORTES ===
     async getReports(userId = null) {
         try {
-            const url = userId ? `${this.API_URL}/reports?userId=${userId}` : `${this.API_URL}/reports`;
+            const url = userId 
+                ? `${this.API_URL}/reports?userId=${userId}` 
+                : `${this.API_URL}/reports`;
             const response = await fetch(url, { headers: this.getHeaders() });
             const data = await response.json();
             return data.success ? data.data : [];
@@ -340,7 +565,9 @@ class PortalDatabase {
     // === TARIFARIO ===
     async getTarifario() {
         try {
-            const response = await fetch(`${this.API_URL}/tarifario`, { headers: this.getHeaders() });
+            const response = await fetch(`${this.API_URL}/tarifario`, { 
+                headers: this.getHeaders() 
+            });
             const data = await response.json();
             return data.success ? data.data : [];
         } catch (error) {
@@ -360,47 +587,10 @@ class PortalDatabase {
             return { success: false, message: 'Error de conexión' };
         }
     }
-
-    // === MÉTODOS DE COMPATIBILIDAD ===
-    // Estos métodos mantienen compatibilidad con el código existente
-    getProject(projectId) {
-        return this.getProjects().then(projects => 
-            projects.find(p => p.id === projectId) || null
-        );
-    }
-
-    getSupport(supportId) {
-        return this.getSupports().then(supports => 
-            supports.find(s => s.id === supportId) || null
-        );
-    }
-
-    getModule(moduleId) {
-        return this.getModules().then(modules => 
-            modules.find(m => m.id === moduleId) || null
-        );
-    }
-
-    getAssignment(assignmentId) {
-        return this.getAssignments().then(assignments => 
-            assignments.find(a => a.id === assignmentId) || null
-        );
-    }
-
-    getProjectAssignment(assignmentId) {
-        return this.getProjectAssignments().then(assignments => 
-            assignments.find(a => a.id === assignmentId) || null
-        );
-    }
-
-    // === UTILITY ===
-    logout() {
-        this.token = null;
-        localStorage.removeItem('arvic_token');
-    }
 }
 
 // Crear instancia global
 window.PortalDB = new PortalDatabase();
 
 console.log('✅ Sistema de Base de Datos Portal ARVIC inicializado con API');
+console.log('📡 Conectado a:', window.PortalDB.API_URL);

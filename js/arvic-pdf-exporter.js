@@ -543,27 +543,70 @@ class ARVICPDFExporter {
     }
 
     /**
-     * Dibujar headers de tabla (con bordes más sutiles y consistentes)
-     */
-    drawTableHeaders(doc, headers, columnWidths, y) {
-        let currentX = PDF_CONFIG.margin;
+ * Dibujar headers de tabla (con validación completa)
+ */
+drawTableHeaders(doc, headers, columnWidths, y) {
+    console.log('🎨 drawTableHeaders - Validación:', {
+        headers: headers.length,
+        columnWidths: columnWidths.length,
+        widthValues: columnWidths,
+        y: y
+    });
+    
+    // ✅ VALIDACIÓN CRÍTICA - Previene error "Invalid arguments"
+    if (!columnWidths || columnWidths.length === 0) {
+        console.error('❌ columnWidths vacío o indefinido');
+        throw new Error('columnWidths inválido - no se puede dibujar tabla');
+    }
+    
+    if (headers.length !== columnWidths.length) {
+        console.error('❌ Desajuste entre headers y columnWidths:', {
+            headers: headers.length,
+            widths: columnWidths.length
+        });
+        // En lugar de fallar, ajustar columnWidths
+        const avgWidth = 270 / headers.length; // Ancho promedio
+        columnWidths = Array(headers.length).fill(avgWidth);
+        console.warn('⚠️  Usando anchos automáticos:', columnWidths);
+    }
+    
+    let currentX = PDF_CONFIG.margin || 20;
+    
+    headers.forEach((header, index) => {
+        const width = columnWidths[index];
         
-        headers.forEach((header, index) => {
-            const width = columnWidths[index];
-            
+        // ✅ VALIDACIÓN por cada columna
+        if (typeof width !== 'number' || isNaN(width) || width <= 0) {
+            console.error(`❌ Ancho inválido en índice ${index}:`, width);
+            console.log('Headers:', headers);
+            console.log('All widths:', columnWidths);
+            throw new Error(`columnWidth[${index}] es inválido: ${width}`);
+        }
+        
+        if (typeof currentX !== 'number' || isNaN(currentX)) {
+            console.error(`❌ currentX inválido en índice ${index}:`, currentX);
+            throw new Error(`currentX es inválido: ${currentX}`);
+        }
+        
+        if (typeof y !== 'number' || isNaN(y)) {
+            console.error(`❌ y inválido:`, y);
+            throw new Error(`y es inválido: ${y}`);
+        }
+        
+        try {
             // Fondo azul corporativo
-            doc.setFillColor(ARVIC_COLORS.primary);
+            doc.setFillColor(25, 118, 210); // ARVIC_COLORS.primary
             doc.rect(currentX, y, width, 12, 'F');
             
-            // Bordes sutiles (más delgados y grises)
+            // Bordes sutiles
             doc.setLineWidth(0.2);
-            doc.setDrawColor(200, 200, 200); // Gris claro
+            doc.setDrawColor(200, 200, 200);
             doc.rect(currentX, y, width, 12);
             
-            // Texto del header (corregir "TARIFA de Modulo" a solo "TARIFA")
+            // Texto del header
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(PDF_CONFIG.headerFontSize);
-            doc.setTextColor(ARVIC_COLORS.white);
+            doc.setFontSize(10);
+            doc.setTextColor(255, 255, 255);
             
             let headerText = header.toString();
             if (headerText === 'TARIFA de Modulo') {
@@ -576,8 +619,16 @@ class ARVICPDFExporter {
             doc.text(headerText, centerX, y + 8);
             
             currentX += width;
-        });
-    }
+            
+        } catch (rectError) {
+            console.error(`❌ Error al dibujar rectángulo en índice ${index}:`, rectError);
+            console.error('Valores:', { currentX, y, width });
+            throw rectError;
+        }
+    });
+    
+    console.log('✅ Headers dibujados correctamente');
+}
 
     /**
      * NUEVA FUNCIÓN: Dividir texto para que quepa en el ancho especificado
@@ -614,79 +665,100 @@ class ARVICPDFExporter {
         return lines.length > 0 ? lines : [text];
     }
 
-    /**
-     * Dibujar fila de datos (con bordes sutiles y consistentes con headers)
-     */
-    drawDataRow(doc, rowData, headers, columnWidths, y, rowIndex, reportType) {
-        let currentX = PDF_CONFIG.margin;
-        const baseRowHeight = 14; // Altura base de fila (mínima)
+ /**
+ * Dibujar una fila de datos
+ */
+drawDataRow(doc, row, headers, columnWidths, y, rowIndex) {
+    let currentX = PDF_CONFIG.margin;
+    const rowHeight = PDF_CONFIG.lineHeight;
+    
+    // ✅ VALIDACIÓN: Asegurar que columnWidths tenga el mismo tamaño que headers
+    if (!columnWidths || columnWidths.length !== headers.length) {
+        console.warn('⚠️ columnWidths no coincide con headers, recalculando...');
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const availableWidth = pageWidth - (2 * PDF_CONFIG.margin);
+        const defaultWidth = availableWidth / headers.length;
+        columnWidths = new Array(headers.length).fill(defaultWidth);
+    }
+    
+    // ✅ VALIDACIÓN: Asegurar que todos los anchos sean números válidos
+    columnWidths = columnWidths.map((width, index) => {
+        if (typeof width !== 'number' || isNaN(width) || width <= 0) {
+            console.warn(`⚠️ Ancho inválido en columna ${index}:`, width);
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const availableWidth = pageWidth - (2 * PDF_CONFIG.margin);
+            return availableWidth / headers.length;
+        }
+        return width;
+    });
+    
+    // Fondo alternado
+    if (rowIndex % 2 === 0) {
+        doc.setFillColor(ARVIC_COLORS.lightGray);
+        const totalWidth = columnWidths.reduce((sum, w) => sum + w, 0);
+        doc.rect(PDF_CONFIG.margin, y, totalWidth, rowHeight, 'F');
+    }
+    
+    // Configurar texto
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(PDF_CONFIG.dataFontSize);
+    doc.setTextColor(ARVIC_COLORS.black);
+    doc.setLineWidth(0.2);
+    doc.setDrawColor(200, 200, 200);
+    
+    // Dibujar cada celda
+    headers.forEach((header, index) => {
+        const cellWidth = columnWidths[index];
         
-        // Calcular la altura real necesaria para esta fila
-        let maxTextHeight = baseRowHeight;
-        const cellTexts = [];
-        
-        // Pre-procesar todos los textos para calcular altura necesaria
-        headers.forEach((header, index) => {
-            const width = columnWidths[index];
-            let cellValue = this.getCellValue(rowData, header, reportType);
-            
-            // Verificar si el texto necesita ser dividido
-            const lines = this.splitTextToFitWidth(doc, cellValue.toString(), width - 8); // 8mm de padding
-            cellTexts[index] = lines;
-            
-            // Calcular altura necesaria
-            const textHeight = lines.length * 4; // 4mm por línea
-            if (textHeight > maxTextHeight) {
-                maxTextHeight = textHeight;
-            }
-        });
-        
-        // Asegurar altura mínima
-        const finalRowHeight = Math.max(maxTextHeight, baseRowHeight);
-        
-        // Fondo alternado
-        if (rowIndex % 2 === 0) {
-            doc.setFillColor(ARVIC_COLORS.lightGray);
-            doc.rect(PDF_CONFIG.margin, y, columnWidths.reduce((a, b) => a + b, 0), finalRowHeight, 'F');
+        // ✅ VALIDACIÓN: Verificar que cellWidth sea válido antes de dibujar
+        if (typeof cellWidth !== 'number' || isNaN(cellWidth) || cellWidth <= 0) {
+            console.error(`❌ Ancho de celda inválido en columna ${index}:`, cellWidth);
+            return; // Saltar esta celda
         }
         
-        // Dibujar celdas y textos
-        headers.forEach((header, index) => {
-            const width = columnWidths[index];
-            const lines = cellTexts[index];
-            
-            // Dibujar bordes de celda
-            doc.setLineWidth(0.2);
-            doc.setDrawColor(200, 200, 200);
-            doc.rect(currentX, y, width, finalRowHeight);
-            
-            // Configurar texto
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(PDF_CONFIG.dataFontSize);
-            doc.setTextColor(ARVIC_COLORS.black);
-            
-            // Determinar alineación
-            const alignment = this.getCellAlignment(header);
-            
-            // Dibujar cada línea de texto
-            lines.forEach((line, lineIndex) => {
-                let textX = currentX + 4; // Margen izquierdo por defecto
-                
-                if (alignment === 'center') {
-                    textX = currentX + (width / 2);
-                } else if (alignment === 'right') {
-                    textX = currentX + width - 4;
-                }
-                
-                const textY = y + 8 + (lineIndex * 4); // Espaciado entre líneas
-                doc.text(line, textX, textY, { align: alignment });
-            });
-            
-            currentX += width;
-        });
+        // ✅ VALIDACIÓN: Verificar que currentX sea válido
+        if (typeof currentX !== 'number' || isNaN(currentX)) {
+            console.error(`❌ Posición X inválida:`, currentX);
+            currentX = PDF_CONFIG.margin;
+        }
         
-        return finalRowHeight; // Retornar la altura real usada
-    }
+        try {
+            // Dibujar borde de la celda
+            doc.rect(currentX, y, cellWidth, rowHeight);
+            
+            // Obtener valor de la celda
+            const cellValue = this.getCellValue(row, header);
+            
+            // Dibujar texto centrado verticalmente
+            const textY = y + (rowHeight / 2) + 2;
+            
+            // Ajustar alineación según el tipo de dato
+            if (header.toLowerCase().includes('total') || 
+                header.toLowerCase().includes('tarifa') ||
+                header.toLowerCase().includes('tiempo')) {
+                doc.text(String(cellValue), currentX + cellWidth / 2, textY, { align: 'center' });
+            } else {
+                // Truncar texto si es muy largo
+                let displayText = String(cellValue);
+                const maxLength = Math.floor(cellWidth / 2.5);
+                if (displayText.length > maxLength) {
+                    displayText = displayText.substring(0, maxLength - 3) + '...';
+                }
+                doc.text(displayText, currentX + 2, textY);
+            }
+            
+            currentX += cellWidth;
+            
+        } catch (error) {
+            console.error(`❌ Error dibujando celda ${index}:`, error);
+            console.error('Parámetros:', { currentX, y, cellWidth, rowHeight });
+            // Continuar con la siguiente celda
+            currentX += cellWidth || 50; // Usar un ancho por defecto si falla
+        }
+    });
+    
+    return rowHeight;
+}
 
     /**
      * NUEVA FUNCIÓN: Dividir palabras muy largas por caracteres
@@ -716,67 +788,95 @@ class ARVICPDFExporter {
         return lines;
     }
 
-    /**
-     * Obtener valor de celda con mapeo correcto según el tipo de reporte
-     */
-    getCellValue(rowData, header, reportType) {
-        console.log(`🔍 getCellValue - Header: "${header}", ReportType: "${reportType}"`);
+ /**
+ * Obtener valor de celda - CORRECCIÓN DEFINITIVA
+ */
+getCellValue(row, header) {
+    const headerLower = header.toLowerCase();
+    
+    // ✅ TARIFA - Buscar en los campos correctos: tarifaModulo y editedTariff
+    if (headerLower.includes('tarifa')) {
+        const tarifaValue = row.editedTariff ||      // ← Campo editado
+                           row.tarifaModulo ||        // ← Campo original
+                           row.tarifa || 
+                           row.rate;
         
-        // 🔧 MANEJO ESPECIAL PARA REPORTE REMANENTE
-        if (reportType === 'remanente') {
-            console.log('📊 Procesando celda de reporte remanente:', header);
-            
-            if (header === 'Total de Horas') {
-                const totalHoras = rowData.totalHoras || 0;
-                return `${parseFloat(totalHoras).toFixed(1)} hrs`;
-            }
-            
-            // Para subcolomnas de semana (MODULO, TIEMPO, TARIFA, TOTAL)
-            if (header === 'MODULO') {
-                // Determinar qué semana basándose en la posición en headers
-                // Esto se maneja de forma diferente - ver drawDataRow corregida
-                return header; // Placeholder, se maneja en drawDataRow
-            }
-            
-            if (header === 'TIEMPO') {
-                return header; // Placeholder, se maneja en drawDataRow
-            }
-            
-            if (header === 'TARIFA') {
-                return header; // Placeholder, se maneja en drawDataRow
-            }
-            
-            if (header === 'TOTAL') {
-                return header; // Placeholder, se maneja en drawDataRow
-            }
-            
-            return rowData[header] || '';
+        if (tarifaValue !== undefined && tarifaValue !== null && tarifaValue !== '') {
+            const numValue = typeof tarifaValue === 'number' ? tarifaValue : parseFloat(tarifaValue);
+            return isNaN(numValue) ? '' : `$${numValue.toFixed(2)}`;
         }
         
-        // 📋 MANEJO NORMAL PARA OTROS REPORTES
-        switch (header) {
-            case 'ID Empresa':
-                return rowData.idEmpresa || rowData.empresaId || 'N/A';
-            case 'Consultor':
-                return rowData.consultor || rowData.consultorName || 'N/A';
-            case 'Soporte':
-                return rowData.soporte || rowData.soporteName || rowData.supportName || 'N/A';
-            case 'Modulo':
-                const moduloCompleto = rowData.modulo || rowData.moduloName || rowData.moduleName || 'N/A';
-                return window.convertModuleToAcronym ? window.convertModuleToAcronym(moduloCompleto) : moduloCompleto;
-            case 'TIEMPO':
-                const tiempo = rowData.editedTime || rowData.tiempo || rowData.hours || 0;
-                return `${parseFloat(tiempo).toFixed(1)} hrs`;
-            case 'TARIFA de Modulo':
-                const tarifa = rowData.editedTariff || rowData.tarifa || rowData.rate || 0;
-                return `$${parseFloat(tarifa).toLocaleString('es-MX')}`;
-            case 'TOTAL':
-                const total = rowData.editedTotal || rowData.total || 0;
-                return `$${parseFloat(total).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`;
-            default:
-                return rowData[header] || rowData[header.toLowerCase()] || '';
-        }
+        return '';
     }
+    
+    // ✅ TIEMPO - Buscar en los campos correctos: editedTime y tiempo
+    if (headerLower.includes('tiempo')) {
+        const tiempoValue = row.editedTime ||        // ← Campo editado
+                           row.tiempo ||              // ← Campo original
+                           row.hours;
+        
+        if (tiempoValue !== undefined) {
+            const numValue = typeof tiempoValue === 'number' ? tiempoValue : parseFloat(tiempoValue);
+            return isNaN(numValue) ? tiempoValue : `${numValue} hrs`;
+        }
+        return '0 hrs';
+    }
+    
+    // ✅ TOTAL - Buscar en los campos correctos: editedTotal y total
+    if (headerLower.includes('total')) {
+        const totalValue = row.editedTotal ||        // ← Campo editado
+                          row.total ||                // ← Campo original
+                          row.monto;
+        
+        if (totalValue !== undefined) {
+            // Si ya viene formateado, devolverlo tal cual
+            if (typeof totalValue === 'string' && totalValue.includes('$')) {
+                return totalValue;
+            }
+            const numValue = typeof totalValue === 'number' ? totalValue : parseFloat(String(totalValue).replace(/[$,]/g, ''));
+            return isNaN(numValue) ? totalValue : `$${numValue.toFixed(2)}`;
+        }
+        return '$0.00';
+    }
+    
+    // ✅ ID EMPRESA
+    if (headerLower.includes('id') && headerLower.includes('empresa')) {
+        return row.idEmpresa || row.companyId || '';
+    }
+    
+    // ✅ CONSULTOR
+    if (headerLower.includes('consultor')) {
+        return row.consultor || row.consultant || '';
+    }
+    
+    // ✅ SOPORTE
+    if (headerLower.includes('soporte')) {
+        return row.soporte || row.support || '';
+    }
+    
+    // ✅ ORIGEN
+    if (headerLower.includes('origen')) {
+        return row.origen || row.origin || '';
+    }
+    
+    // ✅ DETALLE
+    if (headerLower.includes('detalle')) {
+        return row.detalle || row.detail || '';
+    }
+    
+    // ✅ MÓDULO
+    if (headerLower.includes('módulo') || headerLower.includes('modulo')) {
+        return row.modulo || row.module || '';
+    }
+    
+    // Búsqueda genérica
+    const key = Object.keys(row).find(k => k.toLowerCase() === headerLower);
+    if (key) {
+        return row[key];
+    }
+    
+    return '';
+}
 
     /**
      * Determinar alineación de celda (actualizado para nuevo header)

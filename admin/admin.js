@@ -4055,9 +4055,30 @@ function getReportDataByType(reportType) {
     const timeFilter = document.getElementById('timeFilter');
     console.log('⏰ Filtro de tiempo actual:', timeFilter ? timeFilter.value : 'NO ENCONTRADO');
     
-    // Aplicar filtro de tiempo
+    if (reportType === 'remanente') {
+    const monthKey = document.getElementById('monthFilter')?.value;
+    if (monthKey) {
+        const [year, month] = monthKey.split('-').map(Number);
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
+        
+        approvedReports = approvedReports.filter(report => {
+            const reportDate = new Date(report.createdAt);
+            const reportYear = reportDate.getFullYear();
+            const reportMonth = reportDate.getMonth();
+            const targetYear = monthStart.getFullYear();
+            const targetMonth = monthStart.getMonth();
+            
+            return reportYear === targetYear && reportMonth === targetMonth;
+        });
+        
+        console.log(`📅 Reportes filtrados por mes ${monthKey}:`, approvedReports.length);
+    }
+} else {
+    // Aplicar filtro de tiempo normal para otros tipos de reporte
     approvedReports = applyTimeFilter(approvedReports);
-    console.log('✅ Reportes aprobados DESPUÉS de filtro tiempo:', approvedReports.length);
+}
+console.log('✅ Reportes aprobados DESPUÉS de filtro tiempo:', approvedReports.length);
     
     // Si no hay reportes después del filtro de tiempo, es probable que sea el problema
     if (approvedReports.length === 0) {
@@ -4444,7 +4465,7 @@ function getRemanenteData(reports, clientId, specificSupportId, monthKey) {
     const monthStart = new Date(year, month - 1, 1);
     const monthEnd = new Date(year, month, 0, 23, 59, 59, 999);
     
-    // ✅ NUEVO: Calcular distribución correcta de semanas
+    // ✅ Calcular distribución correcta de semanas
     const weekStructure = calculateMonthWeekDistribution(year, month);
     console.log(`📅 Estructura del mes: ${weekStructure.totalWeeks} semanas`);
     
@@ -4452,9 +4473,72 @@ function getRemanenteData(reports, clientId, specificSupportId, monthKey) {
     const monthReports = reports.filter(report => {
         const reportDate = new Date(report.createdAt);
         
-        // Buscar asignación correspondiente
+        // Verificar rango de fechas primero
+        if (!(reportDate >= monthStart && reportDate <= monthEnd)) {
+            return false;
+        }
+        
+        // ✅ CORREGIDO: Buscar en AMBOS tipos de asignaciones
         let assignment = null;
+        let assignmentType = null;
+        
         if (report.assignmentId) {
+            // Verificar si es una tarea
+            if (report.assignmentId.startsWith('task_')) {
+                const taskAssignments = window.PortalDB ? window.PortalDB.getTaskAssignments() : {};
+                assignment = taskAssignments[report.assignmentId];
+                assignmentType = 'task';
+            } 
+            // Si no, buscar en asignaciones normales
+            else {
+                assignment = currentData.assignments[report.assignmentId];
+                assignmentType = 'support';
+            }
+        } 
+        // Si no tiene assignmentId, buscar asignación activa del usuario
+        else {
+            assignment = Object.values(currentData.assignments || {}).find(a => 
+                a.userId === report.userId && a.isActive
+            );
+            assignmentType = 'support';
+        }
+        
+        if (!assignment) {
+            console.log('⚠️ Reporte sin asignación válida:', report.id);
+            return false;
+        }
+        
+        // Verificar cliente
+        if (assignment.companyId !== clientId) {
+            return false;
+        }
+        
+        // ✅ CORREGIDO: Obtener supportId según el tipo de asignación
+        const supportIdToCheck = assignmentType === 'task' 
+            ? assignment.linkedSupportId 
+            : assignment.supportId;
+        
+        // Verificar soporte específico
+        if (supportIdToCheck !== specificSupportId) {
+            return false;
+        }
+        
+        return true;
+    });
+    
+    console.log(`📋 ${monthReports.length} reportes encontrados para el soporte específico`);
+
+    // Agrupar por módulo y distribuir por semanas dinámicamente
+    const moduleData = {};
+    
+    monthReports.forEach(report => {
+        // ✅ CORREGIDO: Obtener asignación correcta según tipo
+        let assignment = null;
+        
+        if (report.assignmentId?.startsWith('task_')) {
+            const taskAssignments = window.PortalDB ? window.PortalDB.getTaskAssignments() : {};
+            assignment = taskAssignments[report.assignmentId];
+        } else if (report.assignmentId) {
             assignment = currentData.assignments[report.assignmentId];
         } else {
             assignment = Object.values(currentData.assignments || {}).find(a => 
@@ -4462,36 +4546,21 @@ function getRemanenteData(reports, clientId, specificSupportId, monthKey) {
             );
         }
         
-        if (!assignment || assignment.companyId !== clientId) return false;
-        
-        // Verificar soporte específico
-        if (assignment.supportId !== specificSupportId) return false;
-        
-        return reportDate >= monthStart && reportDate <= monthEnd;
-    });
-    
-        console.log(`📋 ${monthReports.length} reportes encontrados para el soporte específico`);
-
-    // Agrupar por módulo y distribuir por semanas dinámicamente
-    const moduleData = {};
-    
-    monthReports.forEach(report => {
-        let assignment = currentData.assignments[report.assignmentId];
         if (!assignment) {
-            assignment = Object.values(currentData.assignments || {}).find(a => 
-                a.userId === report.userId && a.isActive
-            );
+            console.warn('⚠️ No se encontró asignación para reporte:', report.id);
+            return;
         }
         
-        const module = currentData.modules[assignment?.moduleId];
+        const module = currentData.modules[assignment.moduleId];
         const moduleName = module?.name || 'Sin módulo';
         
-        // ✅ NUEVO: Inicializar estructura dinámica de semanas
+        // ✅ Inicializar estructura dinámica de semanas
         if (!moduleData[moduleName]) {
             moduleData[moduleName] = {
                 modulo: moduleName,
                 totalHoras: 0,
-                monthStructure: weekStructure
+                monthStructure: weekStructure,
+                type: 'soporte'  // Marcar como soporte
             };
             
             // Crear semanas dinámicamente
@@ -4504,12 +4573,12 @@ function getRemanenteData(reports, clientId, specificSupportId, monthKey) {
             }
         }
         
-        // ✅ NUEVO: Calcular semana correcta según distribución
+        // ✅ Calcular semana correcta según distribución
         const reportDay = new Date(report.createdAt).getDate();
         const correctWeekNum = getDayWeekNumber(reportDay, weekStructure.distribution);
         const semanaKey = `semana${correctWeekNum}`;
         
-        console.log(`📅 Día ${reportDay} → ${semanaKey}`);
+        console.log(`📅 Reporte ${report.id} - Día ${reportDay} → ${semanaKey}`);
         
         const hours = parseFloat(report.hours || 0);
         

@@ -3415,3 +3415,48 @@ body {
         transform: none;
     }
 }
+
+/* Scroll horizontal para tablas de reportes */
+#reportPreviewPanel {
+    overflow-x: auto;
+    overflow-y: auto;
+    max-height: 70vh;
+    position: relative;
+}
+
+#reportPreviewPanel table {
+    min-width: 100%;
+    width: max-content;
+}
+
+/* Estilos mejorados para scroll */
+#reportPreviewPanel::-webkit-scrollbar {
+    height: 12px;
+    width: 12px;
+}
+
+#reportPreviewPanel::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 6px;
+}
+
+#reportPreviewPanel::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 6px;
+}
+
+#reportPreviewPanel::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Sombra para indicar que hay contenido scrolleable */
+#reportPreviewPanel::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(to left, rgba(255,255,255,0.8), transparent);
+    pointer-events: none;
+}

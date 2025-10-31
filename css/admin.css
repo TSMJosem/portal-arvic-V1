@@ -2717,3 +2717,701 @@ body {
     scrollbar-width: thin;
     scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   SECCIÓN DE TAREAS
+   ═══════════════════════════════════════════════════════════ */
+
+/* Descripción de tarea en tabla */
+.task-description {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.875rem;
+    color: var(--gray-700);
+}
+
+.task-description:hover {
+    white-space: normal;
+    overflow: visible;
+}
+
+/* Margen display en modal */
+.margen-display {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--gray-50);
+    border-radius: var(--border-radius-md);
+    border-left: 4px solid var(--primary-color);
+    margin-top: var(--spacing-md);
+}
+
+.margen-display i {
+    font-size: 1.25rem;
+    color: var(--primary-color);
+}
+
+.margen-display strong {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+/* Form help text */
+.form-help {
+    display: block;
+    margin-top: var(--spacing-xs);
+    font-size: 0.75rem;
+    color: var(--gray-600);
+    font-style: italic;
+}
+
+/* Form sections */
+.form-section {
+    padding: var(--spacing-lg) 0;
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.form-section h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--gray-800);
+    margin-bottom: var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.form-section h4 i {
+    color: var(--primary-color);
+}
+
+/* Form rows */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Inactive row */
+.inactive-row {
+    opacity: 0.6;
+    background: var(--gray-50);
+}
+
+.inactive-row:hover {
+    opacity: 0.8;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BADGES DE ORIGEN EN REPORTES
+   ═══════════════════════════════════════════════════════════ */
+
+/* Badges de origen */
+.origen-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.origen-badge.soporte {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+}
+
+.origen-badge.tarea {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+}
+
+.origen-badge.proyecto {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+}
+
+/* Celda de detalle */
+.detalle-cell {
+    max-width: 300px;
+    line-height: 1.4;
+    font-size: 0.875rem;
+    color: #4b5563;
+}
+
+/* Para tareas, resaltar la descripción */
+.origen-badge.tarea ~ .detalle-cell {
+    font-weight: 500;
+    color: #059669;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTILOS MEJORADOS PARA SECCIÓN DE TAREAS
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════
+   SECCIÓN DE TAREAS - HEADER Y TÍTULO
+   ═══════════════════════════════════════════════════════════════ */
+
+#tasksSection {
+    background: #f8fafc;
+    padding: 2rem;
+    border-radius: 0;
+}
+
+#tasksSection .section-header {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    padding: 2rem;
+    border-radius: 0;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#tasksSection .section-title {
+    color: white;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+#tasksSection .section-title i {
+    font-size: 2.5rem;
+}
+
+#tasksSection .section-header p {
+    color: rgba(255, 255, 255, 0.9);
+    margin: 0;
+    font-size: 1rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTENEDOR DE FILTROS - DISEÑO HORIZONTAL
+   ═══════════════════════════════════════════════════════════════ */
+
+.filters-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    background: white;
+    padding: 2rem;
+    border-radius: 0;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    border: 2px solid #e5e7eb;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    font-weight: 600;
+    color: #374151;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-group label i {
+    color: #3b82f6;
+    font-size: 1rem;
+}
+
+.filter-select {
+    padding: 0.75rem 1rem;
+    border: 2px solid #d1d5db;
+    border-radius: 0;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #1f2937;
+    background: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    outline: none;
+}
+
+.filter-select:hover {
+    border-color: #3b82f6;
+    background: #f9fafb;
+}
+
+.filter-select:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    background: white;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TABLA DE TAREAS - DISEÑO CUADRADO CON SCROLL HORIZONTAL
+   ═══════════════════════════════════════════════════════════════ */
+
+.table-container {
+    background: white;
+    border-radius: 0;
+    overflow-x: auto;
+    overflow-y: visible;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 3px solid #000000;
+    position: relative;
+    width: 100%;
+}
+
+.data-table {
+    min-width: 1600px;
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.data-table thead {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.data-table thead tr {
+    border-bottom: 3px solid #000000;
+}
+
+.data-table th {
+    padding: 1rem 0.75rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-right: 2px solid #374151;
+    white-space: nowrap;
+}
+
+.data-table th:last-child {
+    border-right: none;
+}
+
+.data-table tbody tr {
+    border-bottom: 2px solid #000000;
+    transition: all 0.2s ease;
+}
+
+.data-table tbody tr:hover {
+    background: #f3f4f6;
+    transform: scale(1.002);
+}
+
+.data-table tbody tr:last-child {
+    border-bottom: none;
+}
+
+.data-table td {
+    padding: 1rem 0.75rem;
+    font-size: 0.9rem;
+    color: #1f2937;
+    border-right: 2px solid #e5e7eb;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.data-table td:last-child {
+    border-right: none;
+}
+
+.data-table tbody tr.inactive-row {
+    background: #f9fafb;
+    opacity: 0.7;
+}
+
+.data-table tbody tr.inactive-row:hover {
+    background: #f3f4f6;
+    opacity: 0.85;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTILOS ESPECÍFICOS DE COLUMNAS
+   ═══════════════════════════════════════════════════════════════ */
+
+.data-table th:nth-child(1),
+.data-table td:nth-child(1) {
+    min-width: 180px;
+}
+
+.data-table th:nth-child(2),
+.data-table td:nth-child(2) {
+    min-width: 160px;
+}
+
+.data-table th:nth-child(3),
+.data-table td:nth-child(3) {
+    min-width: 180px;
+}
+
+.data-table th:nth-child(4),
+.data-table td:nth-child(4) {
+    min-width: 180px;
+}
+
+.data-table th:nth-child(5),
+.data-table td:nth-child(5) {
+    min-width: 140px;
+}
+
+.data-table th:nth-child(6),
+.data-table td:nth-child(6) {
+    min-width: 200px;
+}
+
+.data-table th:nth-child(7),
+.data-table td:nth-child(7) {
+    min-width: 130px;
+}
+
+.data-table th:nth-child(8),
+.data-table td:nth-child(8) {
+    min-width: 130px;
+}
+
+.data-table th:nth-child(9),
+.data-table td:nth-child(9) {
+    min-width: 100px;
+}
+
+.data-table th:nth-child(10),
+.data-table td:nth-child(10) {
+    min-width: 200px;
+}
+
+.data-table td code {
+    background: #f3f4f6;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #1f2937;
+    border: 1px solid #d1d5db;
+}
+
+.task-description {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.data-table td:nth-child(7),
+.data-table td:nth-child(8) {
+    font-weight: 600;
+    color: #059669;
+    font-family: 'Courier New', monospace;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-badge.active {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);
+}
+
+.status-badge.inactive {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    box-shadow: 0 2px 4px rgba(107, 114, 128, 0.3);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOTONES DE ACCIÓN
+   ═══════════════════════════════════════════════════════════════ */
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.btn-icon {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: #f3f4f6;
+    color: #374151;
+    border: 2px solid #d1d5db;
+}
+
+.btn-icon:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.btn-icon:active {
+    transform: translateY(0);
+}
+
+.btn-icon:nth-child(1) {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border-color: #1e40af;
+}
+
+.btn-icon:nth-child(1):hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+.btn-icon.btn-danger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    border-color: #b91c1c;
+}
+
+.btn-icon.btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.btn-icon.btn-success {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-color: #047857;
+}
+
+.btn-icon.btn-success:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.btn-icon:last-child {
+    background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+    color: white;
+    border-color: #374151;
+}
+
+.btn-icon:last-child:hover {
+    background: linear-gradient(135deg, #4b5563 0%, #374151 100%);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ESTADO VACÍO
+   ═══════════════════════════════════════════════════════════════ */
+
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: #6b7280;
+}
+
+.empty-state i {
+    color: #d1d5db;
+    margin-bottom: 1.5rem;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: #4b5563;
+    margin: 1rem 0;
+}
+
+.empty-state .btn {
+    margin-top: 1.5rem;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLL HORIZONTAL PERSONALIZADO (SIN INDICADOR AMARILLO)
+   ═══════════════════════════════════════════════════════════════ */
+
+.table-container::-webkit-scrollbar {
+    height: 12px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: #f3f4f6;
+    border-radius: 0;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 0;
+    border: 2px solid #f3f4f6;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+}
+
+.table-container {
+    scrollbar-width: auto;
+    scrollbar-color: #3b82f6 #f3f4f6;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE DESIGN
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+    .filters-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    #tasksSection {
+        padding: 1rem;
+    }
+    
+    .filters-container {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+        gap: 1rem;
+    }
+    
+    #tasksSection .section-title {
+        font-size: 1.5rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMACIONES SUTILES
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.data-table tbody tr {
+    animation: fadeIn 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   BOTÓN NUEVA TAREA
+   ═══════════════════════════════════════════════════════════════ */
+
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-primary:active {
+    transform: translateY(0);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MEJORAS DE ACCESIBILIDAD
+   ═══════════════════════════════════════════════════════════════ */
+
+.filter-select:focus,
+.btn-icon:focus,
+.btn-primary:focus {
+    outline: 3px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+@media (prefers-contrast: high) {
+    .data-table th {
+        border-right: 3px solid #ffffff;
+    }
+    
+    .data-table td {
+        border-right: 3px solid #000000;
+    }
+    
+    .data-table tbody tr {
+        border-bottom: 3px solid #000000;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   OPTIMIZACIONES DE RENDIMIENTO
+   ═══════════════════════════════════════════════════════════════ */
+
+.data-table {
+    will-change: scroll-position;
+}
+
+.data-table tbody tr {
+    will-change: background-color;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .data-table tbody tr,
+    .btn-icon,
+    .btn-primary {
+        animation: none;
+        transition: none;
+    }
+    
+    .data-table tbody tr:hover {
+        transform: none;
+    }
+    
+    .btn-icon:hover {
+        transform: none;
+    }
+}

@@ -307,17 +307,26 @@ function loadUserAssignments() {
         const allProjectAssignments = window.PortalDB.getProjectAssignments ? 
             Object.values(window.PortalDB.getProjectAssignments()) : [];
         const projectAssignments = allProjectAssignments.filter(assignment => {
-            const assignmentUserId = assignment.consultorId || assignment.userId;  // ✅ ACEPTA AMBOS
-            return assignmentUserId === currentUser.id && (assignment.isActive !== false);  // ✅ TAMBIÉN ACEPTA SI NO TIENE isActive
+            const assignmentUserId = assignment.consultorId || assignment.userId;
+            return assignmentUserId === currentUser.id && (assignment.isActive !== false);
         });
         
-        // Combinar ambos tipos en el array global
+        // 🟨 OBTENER ASIGNACIONES DE TAREA
+        const allTaskAssignments = window.PortalDB.getTaskAssignments ? 
+            Object.values(window.PortalDB.getTaskAssignments()) : [];
+        const taskAssignments = allTaskAssignments.filter(assignment => {
+            return assignment.consultorId === currentUser.id && (assignment.isActive !== false);
+        });
+        
+        // Combinar los tres tipos en el array global
         userAssignments = [
             ...supportAssignments.map(a => ({...a, assignmentType: 'support'})),
-            ...projectAssignments.map(a => ({...a, assignmentType: 'project'}))
+            ...projectAssignments.map(a => ({...a, assignmentType: 'project'})),
+            ...taskAssignments.map(a => ({...a, assignmentType: 'task'}))
         ];
         
-        console.log(`📊 Encontradas: ${supportAssignments.length} asignaciones de soporte, ${projectAssignments.length} asignaciones de proyecto`);
+        // ✅ CORRECCIÓN: Paréntesis correctos en console.log
+        console.log(`📊 Encontradas: ${supportAssignments.length} soportes, ${projectAssignments.length} proyectos, ${taskAssignments.length} tareas`);
         
         updateAssignmentsList();
         updateAssignmentsCount();
@@ -326,7 +335,7 @@ function loadUserAssignments() {
         console.error('Error en loadUserAssignments:', error);
         showError('Error al cargar asignaciones: ' + error.message);
     }
-
+    
     setTimeout(() => {
         updateRejectedReportsSection();
     }, 500);
@@ -354,81 +363,116 @@ function updateAssignmentsList() {
             const assignmentDiv = document.createElement('div');
             assignmentDiv.className = `assignment-card ${assignment.assignmentType}-assignment`;
             
-            // Diferenciar entre soporte y proyecto
-            if (assignment.assignmentType === 'support') {
-                // 🟦 ASIGNACIÓN DE SOPORTE
-                const company = window.PortalDB.getCompany(assignment.companyId);
-                const support = window.PortalDB.getSupport(assignment.supportId);
-                const module = window.PortalDB.getModule(assignment.moduleId);
+        // Diferenciar entre soporte, proyecto y tarea
+        if (assignment.assignmentType === 'support') {
+            // 🟦 ASIGNACIÓN DE SOPORTE
+            const company = window.PortalDB.getCompany(assignment.companyId);
+            const support = window.PortalDB.getSupport(assignment.supportId);
+            const module = window.PortalDB.getModule(assignment.moduleId);
+            
+            const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
+            const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+            
+            assignmentDiv.innerHTML = `
+                <div class="assignment-header">
+                    <h3 style="margin: 0; color: #2c3e50;">
+                        <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
+                        <span class="assignment-type-badge support-badge"><i class="fa-solid fa-headset"></i> SOPORTE</span>
+                    </h3>
+                    <span class="assignment-id">${assignment.id.slice(-6)}</span>
+                </div>
                 
-                // Obtener reportes de esta asignación
-                const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
-                const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+                <div class="assignment-details">
+                    <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
+                    <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                    <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
+                    <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
+                </div>
                 
-                assignmentDiv.innerHTML = `
-                    <div class="assignment-header">
-                        <h3 style="margin: 0; color: #2c3e50;">
-                            <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
-                            <span class="assignment-type-badge support-badge"><i class="fa-solid fa-headset"></i> SOPORTE</span>
-                        </h3>
-                        <span class="assignment-id">${assignment.id.slice(-6)}</span>
-                    </div>
-                    
-                    <div class="assignment-details">
-                        <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
-                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                        <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
-                        <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
-                    </div>
-                    
-                    <div class="assignment-actions">
-                        <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.id}')">
-                            <i class="fa-solid fa-file-alt"></i> Crear Ticket
-                        </button>
-                        <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
-                            <i class="fa-solid fa-chart-line"></i> Ver Ticket (${assignmentReports.length})
-                        </button>
-                    </div>
-                `;
-            } else {
-                // 🟩 ASIGNACIÓN DE PROYECTO
-                const company = window.PortalDB.getCompany(assignment.companyId);
-                const project = window.PortalDB.getProject(assignment.projectId);
-                const module = window.PortalDB.getModule(assignment.moduleId);
+                <div class="assignment-actions">
+                    <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.id}')">
+                        <i class="fa-solid fa-file-alt"></i> Crear Ticket
+                    </button>
+                    <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
+                        <i class="fa-solid fa-chart-line"></i> Ver Ticket (${assignmentReports.length})
+                    </button>
+                </div>
+            `;
+            
+        } else if (assignment.assignmentType === 'task') {
+            // 🟨 ⭐ NUEVO: ASIGNACIÓN DE TAREA
+            const company = window.PortalDB.getCompany(assignment.companyId);
+            const support = window.PortalDB.getSupport(assignment.linkedSupportId);  // Nota: linkedSupportId
+            const module = window.PortalDB.getModule(assignment.moduleId);
+            
+            const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
+            const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+            
+            assignmentDiv.innerHTML = `
+                <div class="assignment-header">
+                    <h3 style="margin: 0; color: #2c3e50;">
+                        <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
+                        <span class="assignment-type-badge task-badge"><i class="fa-solid fa-tasks"></i> TAREA</span>
+                    </h3>
+                    <span class="assignment-id">${assignment.id.slice(-6)}</span>
+                </div>
                 
-                // Obtener reportes de esta asignación de proyecto
-                const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
-                const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+                <div class="assignment-details">
+                    <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
+                    <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                    <p><strong><i class="fa-solid fa-info-circle"></i> Descripción:</strong> ${assignment.descripcion || 'Sin descripción'}</p>
+                    <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
+                    <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
+                </div>
                 
-                assignmentDiv.innerHTML = `
-                    <div class="assignment-header">
-                        <h3 style="margin: 0; color: #2c3e50;">
-                            <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
-                            <span class="assignment-type-badge project-badge"><i class="fa-solid fa-bullseye"></i> PROYECTO</span>
-                        </h3>
-                        <span class="assignment-id">${assignment.id.slice(-8)}</span>
-                    </div>
-                    
-                    <div class="assignment-details">
-                        <p><strong><i class="fa-solid fa-bullseye"></i> Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
-                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                        <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
-                        <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
-                    </div>
-                    
-                    <div class="assignment-actions">
-                        <button class="btn btn-success" onclick="openProjectReportModal('${assignment.id}')">
-                            <i class="fa-solid fa-file-alt"></i> Crear Ticket
-                        </button>
-                        <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
-                            <i class="fa-solid fa-chart-line"></i> Ver Tickets (${assignmentReports.length})
-                        </button>
-                        <button class="btn btn-info" onclick="viewProjectDetails('${assignment.id}')">
-                            <i class="fa-solid fa-info-circle"></i> Detalles del Proyecto
-                        </button>
-                    </div>
-                `;
-            }
+                <div class="assignment-actions">
+                    <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.id}')">
+                        <i class="fa-solid fa-file-alt"></i> Crear Ticket
+                    </button>
+                    <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
+                        <i class="fa-solid fa-chart-line"></i> Ver Tickets (${assignmentReports.length})
+                    </button>
+                </div>
+            `;
+            
+        } else {
+            // 🟩 ASIGNACIÓN DE PROYECTO
+            const company = window.PortalDB.getCompany(assignment.companyId);
+            const project = window.PortalDB.getProject(assignment.projectId);
+            const module = window.PortalDB.getModule(assignment.moduleId);
+            
+            const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
+            const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+            
+            assignmentDiv.innerHTML = `
+                <div class="assignment-header">
+                    <h3 style="margin: 0; color: #2c3e50;">
+                        <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
+                        <span class="assignment-type-badge project-badge"><i class="fa-solid fa-bullseye"></i> PROYECTO</span>
+                    </h3>
+                    <span class="assignment-id">${assignment.id.slice(-8)}</span>
+                </div>
+                
+                <div class="assignment-details">
+                    <p><strong><i class="fa-solid fa-bullseye"></i> Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
+                    <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                    <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
+                    <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
+                </div>
+                
+                <div class="assignment-actions">
+                    <button class="btn btn-success" onclick="openProjectReportModal('${assignment.id}')">
+                        <i class="fa-solid fa-file-alt"></i> Crear Ticket
+                    </button>
+                    <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
+                        <i class="fa-solid fa-chart-line"></i> Ver Tickets (${assignmentReports.length})
+                    </button>
+                    <button class="btn btn-info" onclick="viewProjectDetails('${assignment.id}')">
+                        <i class="fa-solid fa-info-circle"></i> Detalles del Proyecto
+                    </button>
+                </div>
+            `;
+        }
             
             container.appendChild(assignmentDiv);
         });
@@ -464,8 +508,12 @@ function openCreateReportModal(assignmentId) {
         
         if (!assignment) {
             showError('Asignación no encontrada');
+            console.error('❌ No se encontró asignación:', assignmentId);
+            console.log('userAssignments disponibles:', userAssignments.map(a => a.id));
             return;
         }
+        
+        console.log('✅ Asignación encontrada:', assignment);
         
         const company = window.PortalDB.getCompany(assignment.companyId);
         const module = window.PortalDB.getModule(assignment.moduleId);
@@ -476,11 +524,12 @@ function openCreateReportModal(assignmentId) {
             employeeDisplay.innerHTML = `${currentUser.name} (ID: ${currentUser.id})`;
         }
         
-        // Mostrar información de la asignación seleccionada (ACTUALIZADO)
+        // ✅ CORRECCIÓN: Mostrar información según tipo de asignación
         const assignmentInfoElement = document.getElementById('selectedAssignmentInfo');
         if (assignmentInfoElement) {
             let assignmentDetails = '';
             
+            // 🟩 PROYECTO
             if (assignment.assignmentType === 'project') {
                 const project = window.PortalDB.getProject(assignment.projectId);
                 assignmentDetails = `
@@ -489,7 +538,28 @@ function openCreateReportModal(assignmentId) {
                     <p><strong>Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
                     <p><strong>Módulo:</strong> ${module?.name || 'No encontrado'}</p>
                 `;
-            } else {
+            } 
+            // 🟨 TAREA (NUEVO - ESTE ES EL CAMBIO IMPORTANTE)
+            else if (assignment.assignmentType === 'task') {
+                // ⚠️ IMPORTANTE: Las tareas usan 'linkedSupportId' NO 'supportId'
+                const support = window.PortalDB.getSupport(assignment.linkedSupportId);
+                
+                console.log('🔍 Buscando soporte para tarea:', {
+                    taskId: assignment.id,
+                    linkedSupportId: assignment.linkedSupportId,
+                    supportFound: !!support,
+                    supportName: support?.name
+                });
+                
+                assignmentDetails = `
+                    <h4><i class="fa-solid fa-tasks"></i> Tarea</h4>
+                    <p><strong>Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                    <p><strong>Soporte:</strong> ${support?.name || 'No encontrado'}</p>
+                    <p><strong>Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                `;
+            }
+            // 🟦 SOPORTE (DEFAULT)
+            else {
                 const support = window.PortalDB.getSupport(assignment.supportId);
                 assignmentDetails = `
                     <h4><i class="fa-solid fa-headset"></i> Soporte</h4>

@@ -9,8 +9,8 @@ const ARVIC_REPORTS = {
         description: 'Información general de todos los soportes con cálculo de pagos para consultores',
         audience: '<i class="fa-solid fa-crown"></i> Administradores y Gerentes',
         filters: ['time', 'support'],
-        structure: ['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
-        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        structure: ['ID Empresa', 'Consultor', 'Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'RESUMEN DE PAGO A CONSULTOR'
     },
     'pago-consultor-especifico': {
@@ -19,8 +19,8 @@ const ARVIC_REPORTS = {
         description: 'Datos de soportes de un consultor específico con filtros flexibles',
         audience: '<i class="fa-solid fa-user"></i> Consultores y Supervisores',
         filters: ['consultant', 'support', 'time'],
-        structure: ['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
-        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        structure: ['ID Empresa', 'Consultor', 'Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'PAGO A CONSULTOR'
     },
     'cliente-soporte': {
@@ -29,8 +29,8 @@ const ARVIC_REPORTS = {
         description: 'Soportes brindados a un cliente específico para transparencia de servicios',
         audience: '<i class="fa-solid fa-building"></i> Clientes y Atención al Cliente',
         filters: ['client', 'support', 'time'],
-        structure: ['Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
-        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        structure: ['Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'Cliente: [Nombre]'
     },
     'remanente': {
@@ -40,7 +40,7 @@ const ARVIC_REPORTS = {
         audience: '<i class="fa-solid fa-crown"></i> Administradores - Seguimiento',
         filters: ['client', 'supportType', 'month', 'project'],
         structure: ['Total de Horas', 'SEMANA 1', 'SEMANA 2', 'SEMANA 3', 'SEMANA 4'],
-        editableFields: ['TIEMPO', 'TARIFA'],
+        editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'REPORTE REMANENTE',
         specialFormat: 'weekly'
     },
@@ -50,8 +50,8 @@ const ARVIC_REPORTS = {
         description: 'Información general de todos los proyectos con recursos asignados',
         audience: '<i class="fa-solid fa-crown"></i> Administradores y Gerentes',
         filters: ['time', 'project'],
-        structure: ['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
-        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        structure: ['ID Empresa', 'Consultor', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'Proyecto: [Nombre]'
     },
     'proyecto-cliente': {
@@ -60,8 +60,8 @@ const ARVIC_REPORTS = {
         description: 'Proyectos de un cliente específico con vista simplificada para presentación externa',
         audience: '<i class="fa-solid fa-building"></i> Clientes',
         filters: ['client', 'project', 'time'],
-        structure: ['Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
-        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        structure: ['Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'Proyecto: [Nombre]'
     },
     'proyecto-consultor': {
@@ -70,8 +70,8 @@ const ARVIC_REPORTS = {
         description: 'Proyectos asignados a un consultor específico para seguimiento personal',
         audience: '<i class="fa-solid fa-user"></i> Consultores',
         filters: ['consultant', 'project', 'time'],
-        structure: ['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL'],
-        editableFields: ['TIEMPO', 'TARIFA de Modulo'],
+        structure: ['ID Empresa', 'Consultor', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'Proyecto: [Nombre]'
     }
 };
@@ -81,6 +81,8 @@ let currentReportType = null;
 let currentReportData = null;
 let currentReportConfig = null;
 let editablePreviewData = {};
+
+
 
 function diagnosticCompleteAdmin() {
     console.log('🔍 === DIAGNÓSTICO COMPLETO ===');
@@ -274,14 +276,14 @@ function loadAllData() {
         currentData.supports = window.PortalDB.getSupports() || {};
         currentData.modules = window.PortalDB.getModules() || {};
         currentData.reports = window.PortalDB.getReports() || {};
-        currentData.projectAssignments = window.PortalDB.getProjectAssignments() || {}; // NUEVA LÍNEA
+        currentData.projectAssignments = window.PortalDB.getProjectAssignments() || {};
+        currentData.taskAssignments = window.PortalDB.getTaskAssignments() || {}; // ✅ NUEVO
         
         updateUI();
     } catch (error) {
         console.error('❌ Error cargando datos:', error);
     }
 }
-
 function updateUI() {
     console.log('🎨 === ACTUALIZANDO UI ===');
     
@@ -339,35 +341,54 @@ function updateSidebarCounts() {
 
     document.getElementById('sidebarProjectAssignmentsCount').textContent = projectAssignments.length;
 
-    const supports = Object.values(currentData.supports); // Cambiar de tasks
+    const supports = Object.values(currentData.supports);
     const modules = Object.values(currentData.modules);
     const reports = Object.values(currentData.reports);
 
-    // Calcular contadores específicos
+    // ✅ NUEVO: Contar TAREAS activas
+    const taskAssignments = Object.values(currentData.taskAssignments || {}).filter(t => t.isActive !== false);
+    console.log("📊 Tareas activas:", taskAssignments.length);
+
+    // ✅ NUEVO: Contar asignaciones CON TARIFAS configuradas
+    // Incluir tanto asignaciones de soporte como de proyecto
+    const assignmentsConTarifas = [
+        ...assignments.filter(a => a.tarifaConsultor && a.tarifaCliente),
+        ...projectAssignments.filter(a => a.tarifaConsultor && a.tarifaCliente)
+    ];
+    console.log("💰 Asignaciones con tarifas:", assignmentsConTarifas.length);
+
+    // Calcular contadores específicos de reportes
     const pendingReports = reports.filter(r => r.status === 'Pendiente');
     const approvedReports = reports.filter(r => r.status === 'Aprobado');
     const generatedReports = Object.values(window.PortalDB.getGeneratedReports());
     
+    // ✅ ACTUALIZADO: Objeto con TODOS los contadores incluyendo Tarifario y Tareas
     const sidebarElements = {
         'sidebarUsersCount': consultorUsers.length,
         'sidebarCompaniesCount': companies.length,
         'sidebarProjectsCount': projects.length,
-        'sidebarSupportsCount': supports.length, // Cambiar de sidebarTasksCount
+        'sidebarSupportsCount': supports.length,
         'sidebarModulesCount': modules.length,
         'sidebarAssignmentsCount': totalAssignments,
         'sidebarReportsCount': pendingReports.length,
         'sidebarApprovedReportsCount': approvedReports.length,
-        'sidebarGeneratedReportsCount': generatedReports.length
+        'sidebarGeneratedReportsCount': generatedReports.length,
+        // ✅ NUEVO: Agregar contadores faltantes
+        'sidebarTarifarioCount': assignmentsConTarifas.length,  // ← ESTE FALTABA
+        'sidebarTaskCount': taskAssignments.length  // ✅ Cambiar ID
     };
 
+    // Actualizar todos los elementos del sidebar
     Object.entries(sidebarElements).forEach(([elementId, count]) => {
         const element = document.getElementById(elementId);
         if (element) {
             element.textContent = count;
+            console.log(`✅ Actualizado ${elementId}: ${count}`);
+        } else {
+            console.warn(`⚠️ No se encontró elemento: ${elementId}`);
         }
     });
 }
-
 function updateSupportsList() {
     const container = document.getElementById('supportsList');
     const supports = Object.values(currentData.supports);
@@ -1788,22 +1809,55 @@ function createReportTableRow(report) {
     let project = null;
     let module = null;
     
-    // Determinar tipo de asignación y obtener datos
+    // ✅ CORRECCIÓN: Determinar tipo de asignación y obtener datos CORRECTAMENTE
     if (report.assignmentId) {
-        // Verificar asignación de soporte
-        assignment = currentData.assignments[report.assignmentId];
-        if (assignment) {
-            company = currentData.companies[assignment.companyId];
-            support = currentData.supports[assignment.supportId];
-            module = currentData.modules[assignment.moduleId];
-        } else {
-            // Verificar asignación de proyecto
+        // 🎯 NUEVO: Verificar si es una TAREA primero
+        if (report.assignmentType === 'task') {
+            console.log('🔍 Buscando tarea:', report.assignmentId);
+            
+            // Obtener taskAssignments
+            const taskAssignments = currentData.taskAssignments || window.PortalDB.getTaskAssignments();
+            assignment = taskAssignments[report.assignmentId];
+            
+            if (assignment) {
+                console.log('✅ Tarea encontrada:', assignment);
+                company = currentData.companies[assignment.companyId];
+                // ⚠️ IMPORTANTE: Las tareas usan 'linkedSupportId' NO 'supportId'
+                support = currentData.supports[assignment.linkedSupportId];
+                module = currentData.modules[assignment.moduleId];
+            } else {
+                console.warn('❌ Tarea NO encontrada:', report.assignmentId);
+            }
+        } 
+        // Verificar si es un PROYECTO
+        else if (report.assignmentType === 'project') {
+            console.log('🔍 Buscando proyecto:', report.assignmentId);
+            
             const projectAssignments = currentData.projectAssignments || {};
             assignment = projectAssignments[report.assignmentId];
+            
             if (assignment) {
+                console.log('✅ Proyecto encontrado:', assignment);
                 company = currentData.companies[assignment.companyId];
                 project = currentData.projects[assignment.projectId];
                 module = currentData.modules[assignment.moduleId];
+            } else {
+                console.warn('❌ Proyecto NO encontrado:', report.assignmentId);
+            }
+        }
+        // Verificar si es un SOPORTE (assignmentType === 'support' o undefined)
+        else {
+            console.log('🔍 Buscando soporte:', report.assignmentId);
+            
+            assignment = currentData.assignments[report.assignmentId];
+            
+            if (assignment) {
+                console.log('✅ Soporte encontrado:', assignment);
+                company = currentData.companies[assignment.companyId];
+                support = currentData.supports[assignment.supportId];
+                module = currentData.modules[assignment.moduleId];
+            } else {
+                console.warn('❌ Soporte NO encontrado:', report.assignmentId);
             }
         }
     }
@@ -1837,7 +1891,7 @@ function createReportTableRow(report) {
             </td>
         `;
     } else {
-        // HTML para SOPORTE y TODOS (10 columnas - con columna tipo)
+        // HTML para SOPORTE, TAREA y TODOS (10 columnas)
         const asignacionContent = support ? support.name : (project ? project.name : 'Sin asignación');
         
         row.innerHTML = `
@@ -1845,7 +1899,6 @@ function createReportTableRow(report) {
             <td><span class="consultant-name">${user?.name || 'Usuario no encontrado'}</span></td>
             <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
             <td><span class="project-name">${asignacionContent}</span></td>
-            
             <td>${module ? module.name : 'Sin módulo'}</td>
             <td><span class="hours-badge">${report.hours || 0} hrs</span></td>
             <td>${window.DateUtils ? window.DateUtils.formatDate(report.createdAt) : new Date(report.createdAt).toLocaleDateString()}</td>
@@ -1875,8 +1928,8 @@ function createReportTableRow(report) {
 function updateReportsList() {
     console.log('📊 Actualizando lista de reportes con sistema de filtros...');
     
-    // Cargar datos actuales
-    currentData.reports = window.PortalDB.getReports();
+    // Cargar datos actuales (ASEGURANDO que incluya taskAssignments)
+    loadCurrentData(); // ✅ Ahora carga taskAssignments
     
     // Aplicar filtro actual
     updateReportsListWithFilter();
@@ -2179,6 +2232,9 @@ function loadSectionData(sectionName) {
                 break;
             case 'lista-proyectos-asignados':
                 updateProjectAssignmentsList();
+                break;
+            case 'taskAssignments':
+                loadTaskAssignments();
                 break;
             case 'reportes-aprobados':
                 updateApprovedReportsList();
@@ -4154,35 +4210,78 @@ function getSoporteData(reports, consultantId, supportId) {
         const user = currentData.users[report.userId];
         if (!user) return;
         
-        // Buscar asignación de soporte
+        // 1️⃣ Buscar asignación (puede ser soporte normal o tarea)
         let assignment = null;
+        let assignmentType = null;
+        
         if (report.assignmentId) {
+            // Primero buscar en asignaciones normales
             assignment = currentData.assignments[report.assignmentId];
+            if (assignment) {
+                assignmentType = 'support';
+            } else {
+                // Si no está, buscar en tareas
+                const taskAssignments = window.PortalDB.getTaskAssignments ? 
+                    window.PortalDB.getTaskAssignments() : {};
+                assignment = taskAssignments[report.assignmentId];
+                if (assignment) {
+                    assignmentType = 'task';
+                }
+            }
         } else {
+            // Fallback: buscar asignación activa del usuario
             assignment = Object.values(currentData.assignments || {}).find(a => 
                 a.userId === report.userId && a.isActive && a.supportId
             );
+            if (assignment) {
+                assignmentType = 'support';
+            }
         }
         
-        if (!assignment || !assignment.supportId) return;
+        if (!assignment) return;
+        
+        // 2️⃣ Obtener el soporte correcto según el tipo
+        let supportIdToCheck = null;
+        if (assignmentType === 'support') {
+            supportIdToCheck = assignment.supportId;
+        } else if (assignmentType === 'task') {
+            supportIdToCheck = assignment.linkedSupportId;
+        }
+        
+        if (!supportIdToCheck) return;
         
         // Filtrar por soporte si especificado
-        if (supportId !== 'all' && assignment.supportId !== supportId) return;
+        if (supportId !== 'all' && supportIdToCheck !== supportId) return;
+        
+        // 3️⃣ Agregar assignmentType al reporte
+        const reportWithType = {
+            ...report,
+            assignmentType: assignmentType
+        };
+        
+        // 4️⃣ Usar generarLineaReporteMejorada
+        const linea = generarLineaReporteMejorada(reportWithType, 'pago-consultor');
+        
+        if (!linea) {
+            console.warn('⚠️ No se pudo generar línea para reporte:', report.id);
+            return;
+        }
         
         const company = currentData.companies[assignment.companyId];
-        const support = currentData.supports[assignment.supportId];
-        const module = currentData.modules[assignment.moduleId];
+        const support = currentData.supports[supportIdToCheck];
         
         soporteData.push({
             reportId: report.id,
             idEmpresa: assignment.companyId,
-            consultor: user.name,
+            consultor: linea.consultorNombre,
             soporte: support?.name || 'Sin soporte',
-            modulo: module?.name || 'Sin módulo',
-            tiempo: parseFloat(report.hours || 0),
-            tarifaModulo: 500, // Tarifa por defecto
-            total: parseFloat(report.hours || 0) * 500,
-            originalTime: parseFloat(report.hours || 0)
+            origen: linea.origen,                    // ✅ NUEVO
+            detalle: linea.detalle,                  // ✅ NUEVO
+            modulo: linea.moduloNombre,
+            tiempo: linea.horas,
+            tarifaModulo: linea.tarifa,
+            total: linea.total,
+            originalTime: linea.horas
         });
     });
     
@@ -4196,31 +4295,66 @@ function getClientSoporteData(reports, clientId, supportId) {
     const clientData = [];
     
     reports.forEach(report => {
+        // Buscar asignación (soporte o tarea)
         let assignment = null;
+        let assignmentType = null;
+        
         if (report.assignmentId) {
+            // Buscar en asignaciones normales
             assignment = currentData.assignments[report.assignmentId];
+            if (assignment) {
+                assignmentType = 'support';
+            } else {
+                // Buscar en tareas
+                const taskAssignments = window.PortalDB.getTaskAssignments ? 
+                    window.PortalDB.getTaskAssignments() : {};
+                assignment = taskAssignments[report.assignmentId];
+                if (assignment) {
+                    assignmentType = 'task';
+                }
+            }
         } else {
             assignment = Object.values(currentData.assignments || {}).find(a => 
                 a.userId === report.userId && a.isActive && a.supportId
             );
+            if (assignment) {
+                assignmentType = 'support';
+            }
         }
         
-        if (!assignment || assignment.companyId !== clientId || !assignment.supportId) return;
+        if (!assignment || assignment.companyId !== clientId) return;
+        
+        // Obtener supportId según el tipo
+        const supportIdToCheck = assignmentType === 'task' ? 
+            assignment.linkedSupportId : assignment.supportId;
+        
+        if (!supportIdToCheck) return;
         
         // Filtrar por soporte si especificado
-        if (supportId !== 'all' && assignment.supportId !== supportId) return;
+        if (supportId !== 'all' && supportIdToCheck !== supportId) return;
         
-        const support = currentData.supports[assignment.supportId];
-        const module = currentData.modules[assignment.moduleId];
+        // Agregar assignmentType y usar generarLineaReporteMejorada
+        const reportWithType = {
+            ...report,
+            assignmentType: assignmentType
+        };
+        
+        const linea = generarLineaReporteMejorada(reportWithType, 'cliente-soporte');
+        
+        if (!linea) return;
+        
+        const support = currentData.supports[supportIdToCheck];
         
         clientData.push({
             reportId: report.id,
             soporte: support?.name || 'Sin soporte',
-            modulo: module?.name || 'Sin módulo',
-            tiempo: parseFloat(report.hours || 0),
-            tarifaModulo: 500,
-            total: parseFloat(report.hours || 0) * 500,
-            originalTime: parseFloat(report.hours || 0)
+            origen: linea.origen,                    // ✅ NUEVO
+            detalle: linea.detalle,                  // ✅ NUEVO
+            modulo: linea.moduloNombre,
+            tiempo: linea.horas,
+            tarifaModulo: linea.tarifa,
+            total: linea.total,
+            originalTime: linea.horas
         });
     });
     
@@ -4600,18 +4734,33 @@ function getProyectoData(reports, consultantId, projectId) {
         // Filtrar por proyecto si especificado
         if (projectId !== 'all' && projectAssignment.projectId !== projectId) return;
         
+        // ✅ NUEVO: Agregar assignmentType al reporte
+        const reportWithType = {
+            ...report,
+            assignmentType: 'project'
+        };
+        
+        // ✅ NUEVO: Usar generarLineaReporteMejorada
+        const linea = generarLineaReporteMejorada(reportWithType, 'pago-consultor');
+        
+        if (!linea) {
+            console.warn('⚠️ No se pudo generar línea para reporte:', report.id);
+            return;
+        }
+        
         const company = currentData.companies[projectAssignment.companyId];
-        const module = currentData.modules[projectAssignment.moduleId];
         
         proyectoData.push({
             reportId: report.id,
             idEmpresa: projectAssignment.companyId,
-            consultor: user.name,
-            modulo: module?.name || 'Sin módulo',
-            tiempo: parseFloat(report.hours || 0),
-            tarifaModulo: 600, // Tarifa diferente para proyectos
-            total: parseFloat(report.hours || 0) * 600,
-            originalTime: parseFloat(report.hours || 0)
+            consultor: linea.consultorNombre,
+            origen: linea.origen,                    // ✅ NUEVO
+            detalle: linea.detalle,                  // ✅ NUEVO
+            modulo: linea.moduloNombre,
+            tiempo: linea.horas,
+            tarifaModulo: linea.tarifa,              // ✅ Ahora del tarifario
+            total: linea.total,                      // ✅ Ahora calculado
+            originalTime: linea.horas
         });
     });
     
@@ -4630,15 +4779,25 @@ function getClientProyectoData(reports, clientId, projectId) {
         if (!projectAssignment || projectAssignment.companyId !== clientId) return;
         if (projectId !== 'all' && projectAssignment.projectId !== projectId) return;
         
-        const module = currentData.modules[projectAssignment.moduleId];
+        // Agregar assignmentType
+        const reportWithType = {
+            ...report,
+            assignmentType: 'project'
+        };
+        
+        const linea = generarLineaReporteMejorada(reportWithType, 'cliente-proyecto');
+        
+        if (!linea) return;
         
         clientData.push({
             reportId: report.id,
-            modulo: module?.name || 'Sin módulo',
-            tiempo: parseFloat(report.hours || 0),
-            tarifaModulo: 600,
-            total: parseFloat(report.hours || 0) * 600,
-            originalTime: parseFloat(report.hours || 0)
+            origen: linea.origen,                    // ✅ NUEVO
+            detalle: linea.detalle,                  // ✅ NUEVO
+            modulo: linea.moduloNombre,
+            tiempo: linea.horas,
+            tarifaModulo: linea.tarifa,
+            total: linea.total,
+            originalTime: linea.horas
         });
     });
     
@@ -4655,18 +4814,29 @@ function getConsultantProyectoData(reports, consultantId, projectId) {
         if (!projectAssignment) return;
         if (projectId !== 'all' && projectAssignment.projectId !== projectId) return;
         
+        // Agregar assignmentType
+        const reportWithType = {
+            ...report,
+            assignmentType: 'project'
+        };
+        
+        const linea = generarLineaReporteMejorada(reportWithType, 'proyecto-consultor');
+        
+        if (!linea) return;
+        
         const company = currentData.companies[projectAssignment.companyId];
-        const module = currentData.modules[projectAssignment.moduleId];
         
         consultantData.push({
             reportId: report.id,
             idEmpresa: projectAssignment.companyId,
-            consultor: currentData.users[consultantId]?.name || 'Consultor',
-            modulo: module?.name || 'Sin módulo',
-            tiempo: parseFloat(report.hours || 0),
-            tarifaModulo: 600,
-            total: parseFloat(report.hours || 0) * 600,
-            originalTime: parseFloat(report.hours || 0)
+            consultor: linea.consultorNombre,
+            origen: linea.origen,                    // ✅ NUEVO
+            detalle: linea.detalle,                  // ✅ NUEVO
+            modulo: linea.moduloNombre,
+            tiempo: linea.horas,
+            tarifaModulo: linea.tarifa,
+            total: linea.total,
+            originalTime: linea.horas
         });
     });
     
@@ -4747,7 +4917,7 @@ if (currentReportData.proyectos) {
                 moduleName: proyecto.moduleName,
                 totalHours: proyecto.totalHours,
                 editedTime: proyecto.totalHours,
-                editedTariff: proyecto.tarifa,
+                editedTariff: proyecto.tarifaModulo || proyecto.tarifa,
                 editedTotal: proyecto.total,
                 originalData: { ...proyecto }
             };
@@ -4763,7 +4933,7 @@ if (currentReportData.proyectos) {
                     moduleName: moduleData.moduleName,
                     totalHours: moduleData.totalHours,
                     editedTime: moduleData.totalHours,
-                    editedTariff: moduleData.tarifa,
+                   editedTariff: moduleData.tarifaModulo || moduleData.tarifa,
                     editedTotal: moduleData.total,
                     originalData: { ...moduleData }
                 };
@@ -4780,11 +4950,15 @@ if (currentReportData.proyectos) {
     // Para otros tipos de reporte (código existente)
     if (Array.isArray(currentReportData)) {
         currentReportData.forEach((row, index) => {
+            // ✅ CORRECCIÓN: Buscar tarifaModulo primero, luego tarifa
+            const tarifaValue = row.tarifaModulo || row.tarifa || row.editedTariff || 0;
+            const tiempoValue = row.tiempo || row.editedTime || 0;
+
             editablePreviewData[index] = {
                 ...row,
-                editedTime: row.tiempo || row.editedTime || 0,
-                editedTariff: row.tarifa || row.editedTariff || 0,
-                editedTotal: (row.tiempo || 0) * (row.tarifa || 0),
+                editedTime: tiempoValue,
+                editedTariff: tarifaValue,
+                editedTotal: tiempoValue * tarifaValue,
                 originalData: { ...row }
             };
         });
@@ -4907,6 +5081,15 @@ function generateStandardTable(report) {
                 case 'Soporte':
                     cellContent = row.soporte || 'N/A';
                     break;
+                // ⭐ NUEVO: Columna Origen
+                case 'Origen':
+                    const origenBadge = generarBadgeOrigen(row.origen || 'N/A');
+                    cellContent = origenBadge;
+                    break;
+                // ⭐ NUEVO: Columna Detalle
+                case 'Detalle':
+                    cellContent = `<div class="detalle-cell">${row.detalle || 'N/A'}</div>`;
+                    break;
                 case 'Modulo':
                     cellContent = row.modulo || 'N/A';
                     break;
@@ -4915,7 +5098,9 @@ function generateStandardTable(report) {
                                          step="0.1" min="0" max="24" 
                                          onchange="updateRowCalculation(${index}, 'time', this.value)">`;
                     break;
-                case 'TARIFA de Modulo':
+                // ⭐ MODIFICADO: Sin "de Modulo"
+                case 'TARIFA':
+                case 'TARIFA de Modulo': // Mantener compatibilidad con reportes viejos
                     cellContent = `<input type="number" class="editable-input" value="${row.editedTariff}" 
                                          step="50" min="100" max="2000" 
                                          onchange="updateRowCalculation(${index}, 'tariff', this.value)">`;
@@ -5558,8 +5743,9 @@ function generateFinalReport() {
 }
 
 /**
- * Generar Excel para Pago Consultor Soporte (General)
+ * Generar Excel para Pago Consultor General
  */
+
 function generatePagoGeneralExcel() {
     console.log('💰 Generando Excel - Pago Consultor General');
     
@@ -5567,13 +5753,13 @@ function generatePagoGeneralExcel() {
     const wsData = [];
     
     // Fila 1: Título fusionado
-    wsData.push(['', '', '', 'RESUMEN DE PAGO A CONSULTOR', '', '', '']);
+    wsData.push(['', '', '', '', 'RESUMEN DE PAGO A CONSULTOR', '', '', '']);
     
     // Fila 2: Espacio
-    wsData.push(['', '', '', '', '', '', '']);
+    wsData.push(['', '', '', '', '', '', '', '']);
     
-    // Fila 3: Headers
-    wsData.push(['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    // Fila 3: Headers (✅ NUEVOS HEADERS)
+    wsData.push(['ID Empresa', 'Consultor', 'Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL']);
     
     // Filas de datos
     let totalHours = 0;
@@ -5584,7 +5770,8 @@ function generatePagoGeneralExcel() {
             row.idEmpresa || 'N/A',
             row.consultor || 'N/A',
             row.soporte || 'N/A',
-            window.convertModuleToAcronym(row.modulo || 'N/A'),
+            row.origen || 'N/A',                    // ✅ NUEVO
+            row.detalle || 'N/A',                   // ✅ NUEVO
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -5595,7 +5782,7 @@ function generatePagoGeneralExcel() {
     });
     
     // Fila de totales
-    wsData.push(['', '', '', 'TOTALES', totalHours, '', totalAmount]);
+    wsData.push(['', '', '', '', 'TOTALES', totalHours, '', totalAmount]);
     
     // Crear worksheet
     const ws = XLSX.utils.aoa_to_sheet(wsData);
@@ -5603,24 +5790,19 @@ function generatePagoGeneralExcel() {
     // Aplicar estilos
     applyExcelStyling(ws, wsData, 'general');
     
-    // Configurar merge para título
-    ws['!merges'] = [{ s: { r: 0, c: 3 }, e: { r: 0, c: 6 } }];
+    // Configurar merge para título (ajustado por nuevas columnas)
+    ws['!merges'] = [{ s: { r: 0, c: 4 }, e: { r: 0, c: 7 } }];
     
-    // Agregar al workbook
-    XLSX.utils.book_append_sheet(wb, ws, "PAGO CONSULTOR GENERAL");
+    // Añadir worksheet
+    XLSX.utils.book_append_sheet(wb, ws, 'Pago General');
     
     // Generar archivo
-    const fileName = generateFileName('PagoConsultorGeneral');
+    const timestamp = new Date().toISOString().split('T')[0];
+    const fileName = `Pago_Consultor_General_${timestamp}.xlsx`;
+    
     XLSX.writeFile(wb, fileName);
-    
-    // Guardar en historial
-    saveToReportHistory(fileName, 'pago-consultor-general', totalHours, totalAmount);
-    
-    window.NotificationUtils.success(`Excel generado: ${fileName}`);
-
-    resetReportGenerator();
+    console.log('✅ Excel generado:', fileName);
 }
-
 /**
  * Generar Excel para Pago Consultor Específico
  */
@@ -5633,16 +5815,16 @@ function generatePagoConsultorExcel() {
     const wsData = [];
     
     // Fila 1: Título
-    wsData.push(['', '', '', 'PAGO A CONSULTOR', '', '', '']);
+    wsData.push(['', '', '', '', 'PAGO A CONSULTOR', '', '', '']);
     
     // Fila 2: Información del consultor
-    wsData.push(['', `CONSULTOR: ${consultantName}`, '', '', '', '', '']);
+    wsData.push(['', `CONSULTOR: ${consultantName}`, '', '', '', '', '', '']);
     
     // Fila 3: Espacio
-    wsData.push(['', '', '', '', '', '', '']);
+    wsData.push(['', '', '', '', '', '', '', '']);
     
-    // Fila 4: Headers
-    wsData.push(['ID Empresa', 'Consultor', 'Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    // Fila 4: Headers (✅ NUEVOS)
+    wsData.push(['ID Empresa', 'Consultor', 'Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL']);
     
     // Datos y totales
     let totalHours = 0;
@@ -5653,7 +5835,8 @@ function generatePagoConsultorExcel() {
             row.idEmpresa || 'N/A',
             row.consultor || 'N/A',
             row.soporte || 'N/A',
-            window.convertModuleToAcronym(row.modulo || 'N/A'),
+            row.origen || 'N/A',                    // ✅ NUEVO
+            row.detalle || 'N/A',                   // ✅ NUEVO
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -5663,13 +5846,13 @@ function generatePagoConsultorExcel() {
         totalAmount += parseFloat(row.editedTotal || 0);
     });
     
-    wsData.push(['', '', '', 'TOTALES', totalHours, '', totalAmount]);
+    wsData.push(['', '', '', '', 'TOTALES', totalHours, '', totalAmount]);
     
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     applyExcelStyling(ws, wsData, 'consultor');
     
     ws['!merges'] = [
-        { s: { r: 0, c: 3 }, e: { r: 0, c: 6 } }, // Título
+        { s: { r: 0, c: 4 }, e: { r: 0, c: 7 } }, // Título (ajustado)
         { s: { r: 1, c: 1 }, e: { r: 1, c: 4 } }  // Nombre consultor
     ];
     
@@ -6048,9 +6231,9 @@ function generateProyectoConsultorExcel() {
     const wb = XLSX.utils.book_new();
     const wsData = [];
     
-    wsData.push(['', '', `Proyecto: ${consultantName}`, '', '', '']);
-    wsData.push(['', '', '', '', '', '']);
-    wsData.push(['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    wsData.push(['', '', '', `Proyecto: ${consultantName}`, '', '', '']);
+    wsData.push(['', '', '', '', '', '', '']);
+    wsData.push(['ID Empresa', 'Consultor', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL']);
     
     let totalHours = 0;
     let totalAmount = 0;
@@ -6059,7 +6242,8 @@ function generateProyectoConsultorExcel() {
         wsData.push([
             row.idEmpresa || 'N/A',
             row.consultor || 'N/A',
-            window.convertModuleToAcronym(row.modulo || 'N/A'),
+            row.origen || 'N/A',                    // ✅ NUEVO
+            row.detalle || 'N/A',                   // ✅ NUEVO
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -6069,12 +6253,12 @@ function generateProyectoConsultorExcel() {
         totalAmount += parseFloat(row.editedTotal || 0);
     });
     
-    wsData.push(['', '', 'TOTALES', totalHours, '', totalAmount]);
+    wsData.push(['', '', '', 'TOTALES', totalHours, '', totalAmount]);
     
     const ws = XLSX.utils.aoa_to_sheet(wsData);
     applyExcelStyling(ws, wsData, 'proyecto-consultor');
     
-    ws['!merges'] = [{ s: { r: 0, c: 2 }, e: { r: 0, c: 4 } }];
+    ws['!merges'] = [{ s: { r: 0, c: 3 }, e: { r: 0, c: 5 } }];
     
     XLSX.utils.book_append_sheet(wb, ws, "PROYECTO CONSULTOR");
     
@@ -7059,12 +7243,22 @@ function verificarTarifasAlCargar() {
         if (sinTarifas.length > 0) {
             console.warn(`⚠️ Hay ${sinTarifas.length} asignaciones sin tarifas configuradas`);
             
-            // Mostrar notificación
             if (window.NotificationUtils) {
                 window.NotificationUtils.warning(
                     `Hay ${sinTarifas.length} asignaciones sin tarifas. Click aquí para configurar.`,
                     () => mostrarModalConfigurarTarifas()
                 );
+                
+                // ✅ AGREGADO - Auto-ocultar después de 10 segundos
+                setTimeout(() => {
+                    const notification = document.querySelector('.notification.notification-warning');
+                    if (notification) {
+                        notification.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                        notification.style.opacity = '0';
+                        notification.style.transform = 'translateX(400px)';
+                        setTimeout(() => notification.remove(), 500);
+                    }
+                }, 2000);
             }
         }
     }, 2000);
@@ -7165,6 +7359,686 @@ async function exportTarifarioToExcel() {
     }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// GESTIÓN DE ASIGNACIONES DE TAREAS
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Cargar sección de tareas
+ */
+function loadTaskAssignments() {
+    console.log('📋 Cargando asignaciones de tareas...');
+    
+    if (!window.PortalDB) {
+        console.error('❌ PortalDB no disponible');
+        return;
+    }
+    
+    // Cargar filtros
+    loadTaskFilters();
+    
+    // Cargar tabla
+    filterTasks();
+    
+    console.log('✅ Tareas cargadas');
+}
+
+/**
+ * Cargar filtros de tareas
+ */
+function loadTaskFilters() {
+    const currentData = {
+        companies: window.PortalDB.getCompanies(),
+        supports: window.PortalDB.getSupports(),
+        users: window.PortalDB.getUsers()
+    };
+    
+    // Filtro de clientes
+    const companyFilter = document.getElementById('taskFilterCompany');
+    if (companyFilter) {
+        companyFilter.innerHTML = '<option value="">Todos los clientes</option>';
+        Object.values(currentData.companies).forEach(company => {
+            const option = document.createElement('option');
+            option.value = company.id;
+            option.textContent = company.name;
+            companyFilter.appendChild(option);
+        });
+    }
+    
+    // Filtro de soportes
+    const supportFilter = document.getElementById('taskFilterSupport');
+    if (supportFilter) {
+        supportFilter.innerHTML = '<option value="">Todos los soportes</option>';
+        Object.values(currentData.supports).forEach(support => {
+            const option = document.createElement('option');
+            option.value = support.id;
+            option.textContent = support.name;
+            supportFilter.appendChild(option);
+        });
+    }
+    
+    // Filtro de consultores
+    const consultorFilter = document.getElementById('taskFilterConsultor');
+    if (consultorFilter) {
+        consultorFilter.innerHTML = '<option value="">Todos los consultores</option>';
+       Object.values(currentData.users).filter(u => u.role === 'Consultor' || u.role === 'consultor').forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = user.name;
+            consultorFilter.appendChild(option);
+        });
+    }
+}
+
+/**
+ * Filtrar tareas según criterios
+ */
+function filterTasks() {
+    const companyId = document.getElementById('taskFilterCompany')?.value || '';
+    const supportId = document.getElementById('taskFilterSupport')?.value || '';
+    const consultorId = document.getElementById('taskFilterConsultor')?.value || '';
+    const status = document.getElementById('taskFilterStatus')?.value || 'active';
+    
+    const taskAssignments = window.PortalDB.getTaskAssignments();
+    let tasks = Object.values(taskAssignments);
+    
+    // Aplicar filtros
+    if (companyId) {
+        tasks = tasks.filter(t => t.companyId === companyId);
+    }
+    
+    if (supportId) {
+        tasks = tasks.filter(t => t.linkedSupportId === supportId);
+    }
+    
+    if (consultorId) {
+        tasks = tasks.filter(t => t.consultorId === consultorId);
+    }
+    
+    if (status === 'active') {
+        tasks = tasks.filter(t => t.isActive);
+    } else if (status === 'inactive') {
+        tasks = tasks.filter(t => !t.isActive);
+    }
+    
+    // Renderizar tabla
+    renderTasksTable(tasks);
+}
+
+/**
+ * Renderizar tabla de tareas
+ */
+function renderTasksTable(tasks) {
+    const tbody = document.getElementById('taskAssignmentsTableBody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+    
+    if (tasks.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" class="empty-state">
+                    <i class="fa-solid fa-tasks fa-3x"></i>
+                    <p>No se encontraron tareas con estos filtros</p>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    const currentData = {
+        users: window.PortalDB.getUsers(),
+        companies: window.PortalDB.getCompanies(),
+        supports: window.PortalDB.getSupports(),
+        modules: window.PortalDB.getModules()
+    };
+    
+    tasks.forEach(task => {
+        const consultor = currentData.users[task.consultorId];
+        const company = currentData.companies[task.companyId];
+        const support = currentData.supports[task.linkedSupportId];
+        const module = currentData.modules[task.moduleId];
+        
+        const row = document.createElement('tr');
+        row.className = task.isActive ? '' : 'inactive-row';
+        
+        row.innerHTML = `
+            <td><code>${task.id}</code></td>
+            <td>${consultor ? consultor.name : 'N/A'}</td>
+            <td>${company ? company.name : 'N/A'}</td>
+            <td>${support ? support.name : 'N/A'}</td>
+            <td>${module ? module.name : 'N/A'}</td>
+            <td class="task-description">${task.descripcion || 'Sin descripción'}</td>
+            <td>${formatCurrency(task.tarifaConsultor)}</td>
+            <td>${formatCurrency(task.tarifaCliente)}</td>
+            <td>
+                <span class="status-badge ${task.isActive ? 'active' : 'inactive'}">
+                    ${task.isActive ? 'Activa' : 'Inactiva'}
+                </span>
+            </td>
+            <td>
+                <div class="action-buttons">
+                    <button class="btn-icon" onclick="editTask('${task.id}')" title="Editar">
+                        <i class="fa-solid fa-edit"></i>
+                    </button>
+                    ${task.isActive ? `
+                        <button class="btn-icon btn-danger" onclick="deactivateTask('${task.id}')" title="Desactivar">
+                            <i class="fa-solid fa-ban"></i>
+                        </button>
+                    ` : `
+                        <button class="btn-icon btn-success" onclick="reactivateTask('${task.id}')" title="Reactivar">
+                            <i class="fa-solid fa-check"></i>
+                        </button>
+                    `}
+                    <button class="btn-icon" onclick="viewTaskDetails('${task.id}')" title="Ver detalles">
+                        <i class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+            </td>
+        `;
+        
+        tbody.appendChild(row);
+    });
+}
+
+/**
+ * Abrir modal para crear tarea
+ */
+function openCreateTaskModal() {
+    document.getElementById('taskModalTitle').innerHTML = 
+        '<i class="fa-solid fa-tasks"></i> Nueva Tarea';
+    document.getElementById('taskForm').reset();
+    document.getElementById('taskId').value = '';
+    
+    // Cargar opciones
+    loadTaskModalOptions();
+    
+    // Mostrar modal
+    document.getElementById('taskModal').style.display = 'flex';
+    
+    // Limpiar margen
+    document.getElementById('taskMargen').textContent = '$0.00';
+    document.getElementById('taskMargenPorcentaje').textContent = '(0%)';
+}
+
+/**
+ * Cargar opciones del modal
+ */
+function loadTaskModalOptions() {
+    const currentData = {
+        companies: window.PortalDB.getCompanies(),
+        users: window.PortalDB.getUsers(),
+        modules: window.PortalDB.getModules()
+    };
+    
+    // Cargar clientes
+    const companySelect = document.getElementById('taskCompany');
+    companySelect.innerHTML = '<option value="">Seleccionar cliente...</option>';
+    Object.values(currentData.companies).forEach(company => {
+        const option = document.createElement('option');
+        option.value = company.id;
+        option.textContent = company.name;
+        companySelect.appendChild(option);
+    });
+    
+    // ⭐ CORREGIDO: Cargar consultores (mayúscula O minúscula)
+    const consultorSelect = document.getElementById('taskConsultor');
+    consultorSelect.innerHTML = '<option value="">Seleccionar consultor...</option>';
+    Object.values(currentData.users)
+        .filter(u => u.role === 'Consultor' || u.role === 'consultor')  // ← FIX AQUÍ
+        .forEach(user => {
+            const option = document.createElement('option');
+            option.value = user.id;
+            option.textContent = user.name;
+            consultorSelect.appendChild(option);
+        });
+    
+    console.log(`✅ ${consultorSelect.options.length - 1} consultores cargados`);
+    
+    // Cargar módulos
+    const moduleSelect = document.getElementById('taskModule');
+    moduleSelect.innerHTML = '<option value="">Seleccionar módulo...</option>';
+    Object.values(currentData.modules).forEach(module => {
+        const option = document.createElement('option');
+        option.value = module.id;
+        option.textContent = module.name;
+        moduleSelect.appendChild(option);
+    });
+}
+/**
+ * Cargar soportes por cliente
+ */
+function loadSupportsByCompany(companyId) {
+    const supportSelect = document.getElementById('taskSupport');
+    supportSelect.innerHTML = '<option value="">Seleccionar soporte...</option>';
+    
+    if (!companyId) {
+        supportSelect.disabled = true;
+        return;
+    }
+    
+    // ✅ CORREGIDO: Obtener soportes a través de las asignaciones
+    const assignments = window.PortalDB.getAssignments();
+    const supports = window.PortalDB.getSupports();
+    
+    // Buscar asignaciones de este cliente
+    const companyAssignments = Object.values(assignments).filter(a => 
+        a.companyId === companyId && a.isActive
+    );
+    
+    // Obtener IDs únicos de soportes
+    const supportIds = new Set();
+    companyAssignments.forEach(assignment => {
+        if (assignment.supportId) {
+            supportIds.add(assignment.supportId);
+        }
+    });
+    
+    // Convertir a array de objetos de soporte
+    const companySupports = Array.from(supportIds)
+        .map(id => supports[id])
+        .filter(s => s && s.isActive);
+    
+    if (companySupports.length === 0) {
+        supportSelect.innerHTML = '<option value="">No hay soportes disponibles para este cliente</option>';
+        supportSelect.disabled = true;
+        return;
+    }
+    
+    // Agregar soportes al select
+    companySupports.forEach(support => {
+        const option = document.createElement('option');
+        option.value = support.id;
+        option.textContent = support.name;
+        supportSelect.appendChild(option);
+    });
+    
+    supportSelect.disabled = false;
+    
+    console.log(`✅ ${companySupports.length} soportes cargados para el cliente`);
+}
+
+/**
+ * Calcular margen de la tarea
+ */
+function calculateTaskMargen() {
+    const tarifaConsultor = parseFloat(document.getElementById('taskTarifaConsultor').value) || 0;
+    const tarifaCliente = parseFloat(document.getElementById('taskTarifaCliente').value) || 0;
+    
+    const margen = tarifaCliente - tarifaConsultor;
+    const porcentaje = tarifaConsultor > 0 ? (margen / tarifaConsultor) * 100 : 0;
+    
+    document.getElementById('taskMargen').textContent = formatCurrency(margen);
+    document.getElementById('taskMargenPorcentaje').textContent = `(${porcentaje.toFixed(1)}%)`;
+    
+    // Cambiar color según margen
+    const margenElement = document.getElementById('taskMargen');
+    if (margen < 0) {
+        margenElement.style.color = 'var(--danger-color)';
+    } else if (margen > 0) {
+        margenElement.style.color = 'var(--success-color)';
+    } else {
+        margenElement.style.color = 'var(--gray-600)';
+    }
+}
+
+/**
+ * Guardar tarea (crear o actualizar)
+ */
+function saveTask(event) {
+    event.preventDefault();
+    
+    const taskId = document.getElementById('taskId').value;
+    const taskData = {
+        consultorId: document.getElementById('taskConsultor').value,
+        companyId: document.getElementById('taskCompany').value,
+        linkedSupportId: document.getElementById('taskSupport').value,
+        moduleId: document.getElementById('taskModule').value,
+        descripcion: document.getElementById('taskDescription').value,
+        tarifaConsultor: parseFloat(document.getElementById('taskTarifaConsultor').value),
+        tarifaCliente: parseFloat(document.getElementById('taskTarifaCliente').value)
+    };
+    
+    let result;
+    if (taskId) {
+        // Actualizar
+        result = window.PortalDB.updateTaskAssignment(taskId, taskData);
+    } else {
+        // Crear
+        result = window.PortalDB.createTaskAssignment(taskData);
+    }
+    
+    if (result.success) {
+        window.NotificationUtils.success(
+            taskId ? 'Tarea actualizada correctamente' : 'Tarea creada correctamente'
+        );
+        closeTaskModal();
+        filterTasks();
+    } else {
+        window.NotificationUtils.error('Error: ' + result.message);
+    }
+}
+
+/**
+ * Cerrar modal de tareas
+ */
+function closeTaskModal() {
+    document.getElementById('taskModal').style.display = 'none';
+}
+
+/**
+ * Editar tarea
+ */
+function editTask(taskId) {
+    const task = window.PortalDB.getTaskAssignment(taskId);
+    
+    if (!task) {
+        window.NotificationUtils.error('Tarea no encontrada');
+        return;
+    }
+    
+    // Llenar formulario
+    document.getElementById('taskModalTitle').innerHTML = 
+        '<i class="fa-solid fa-edit"></i> Editar Tarea';
+    document.getElementById('taskId').value = taskId;
+    document.getElementById('taskCompany').value = task.companyId;
+    
+    // Cargar soportes y seleccionar
+    loadSupportsByCompany(task.companyId);
+    setTimeout(() => {
+        document.getElementById('taskSupport').value = task.linkedSupportId;
+    }, 100);
+    
+    document.getElementById('taskConsultor').value = task.consultorId;
+    document.getElementById('taskModule').value = task.moduleId;
+    document.getElementById('taskDescription').value = task.descripcion;
+    document.getElementById('taskTarifaConsultor').value = task.tarifaConsultor;
+    document.getElementById('taskTarifaCliente').value = task.tarifaCliente;
+    
+    // Calcular margen
+    calculateTaskMargen();
+    
+    // Mostrar modal
+    document.getElementById('taskModal').style.display = 'flex';
+}
+
+/**
+ * Desactivar tarea
+ */
+function deactivateTask(taskId) {
+    if (!confirm('¿Estás seguro de desactivar esta tarea?')) {
+        return;
+    }
+    
+    const result = window.PortalDB.deleteTaskAssignment(taskId);
+    
+    if (result.success) {
+        window.NotificationUtils.success('Tarea desactivada correctamente');
+        filterTasks();
+    } else {
+        window.NotificationUtils.error('Error: ' + result.message);
+    }
+}
+
+/**
+ * Reactivar tarea
+ */
+function reactivateTask(taskId) {
+    const result = window.PortalDB.updateTaskAssignment(taskId, { isActive: true });
+    
+    if (result.success) {
+        window.NotificationUtils.success('Tarea reactivada correctamente');
+        filterTasks();
+    } else {
+        window.NotificationUtils.error('Error: ' + result.message);
+    }
+}
+
+/**
+ * Ver detalles de tarea
+ */
+function viewTaskDetails(taskId) {
+    const task = window.PortalDB.getTaskAssignment(taskId);
+    
+    if (!task) {
+        window.NotificationUtils.error('Tarea no encontrada');
+        return;
+    }
+    
+    const currentData = {
+        users: window.PortalDB.getUsers(),
+        companies: window.PortalDB.getCompanies(),
+        supports: window.PortalDB.getSupports(),
+        modules: window.PortalDB.getModules()
+    };
+    
+    const consultor = currentData.users[task.consultorId];
+    const company = currentData.companies[task.companyId];
+    const support = currentData.supports[task.linkedSupportId];
+    const module = currentData.modules[task.moduleId];
+    
+    const margen = task.tarifaCliente - task.tarifaConsultor;
+    const porcentaje = task.tarifaConsultor > 0 ? (margen / task.tarifaConsultor) * 100 : 0;
+    
+    const details = `
+═══════════════════════════════════════
+📋 DETALLES DE TAREA
+═══════════════════════════════════════
+
+ID: ${task.id}
+Estado: ${task.isActive ? '✅ Activa' : '❌ Inactiva'}
+
+👤 CONSULTOR
+   ${consultor ? consultor.name : 'N/A'}
+   ID: ${task.consultorId}
+
+🏢 CLIENTE
+   ${company ? company.name : 'N/A'}
+   ID: ${task.companyId}
+
+🎧 SOPORTE PADRE
+   ${support ? support.name : 'N/A'}
+   ID: ${task.linkedSupportId}
+
+🧩 MÓDULO
+   ${module ? module.name : 'N/A'}
+   ID: ${task.moduleId}
+
+📝 DESCRIPCIÓN
+   ${task.descripcion || 'Sin descripción'}
+
+💵 TARIFAS
+   Consultor: ${formatCurrency(task.tarifaConsultor)}/hora
+   Cliente:   ${formatCurrency(task.tarifaCliente)}/hora
+   Margen:    ${formatCurrency(margen)} (${porcentaje.toFixed(1)}%)
+
+📅 FECHAS
+   Creada:      ${window.DateUtils ? window.DateUtils.formatDate(task.createdAt) : task.createdAt}
+   Actualizada: ${window.DateUtils ? window.DateUtils.formatDate(task.updatedAt) : task.updatedAt}
+
+═══════════════════════════════════════
+    `;
+    
+    alert(details);
+}
+
+// Contador de caracteres para descripción
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('taskDescription');
+    const counter = document.getElementById('taskDescriptionCount');
+    
+    if (textarea && counter) {
+        textarea.addEventListener('input', function() {
+            counter.textContent = this.value.length;
+        });
+    }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// FUNCIONES PARA POBLAR CONSULTORES
+// ═══════════════════════════════════════════════════════════════
+
+function populateTaskConsultors() {
+    console.log('🔄 Poblando consultores en modal de tarea...');
+    
+    const consultorSelect = document.getElementById('taskConsultor');
+    if (!consultorSelect) {
+        console.error('❌ No se encontró #taskConsultor');
+        return;
+    }
+    
+    // Limpiar opciones actuales (mantener solo el placeholder)
+    consultorSelect.innerHTML = '<option value="">Seleccionar consultor...</option>';
+    
+    // Obtener consultores de la BD
+    const users = window.PortalDB.getUsers();
+    const consultores = Object.values(users).filter(u => 
+        u.role === 'Consultor' || u.role === 'consultor'
+    );
+    
+    console.log(`   ✓ Consultores encontrados: ${consultores.length}`);
+    
+    // Agregar cada consultor como opción
+    consultores.forEach(consultor => {
+        const option = document.createElement('option');
+        option.value = consultor.id;
+        option.textContent = consultor.name;
+        consultorSelect.appendChild(option);
+    });
+    
+    console.log(`✅ ${consultores.length} consultores agregados al dropdown`);
+}
+
+function populateTaskConsultorFilter() {
+    console.log('🔄 Poblando filtro de consultores...');
+    
+    const filterSelect = document.getElementById('taskConsultantFilter');
+    if (!filterSelect) {
+        console.warn('⚠️ Filtro #taskConsultantFilter no existe, saltando...');
+        return;
+    }
+    
+    // Limpiar y agregar opción "Todos"
+    filterSelect.innerHTML = '<option value="all">Todos los consultores</option>';
+    
+    // Obtener consultores
+    const users = window.PortalDB.getUsers();
+    const consultores = Object.values(users).filter(u => 
+        u.role === 'Consultor' || u.role === 'consultor'
+    );
+    
+    // Agregar consultores al filtro
+    consultores.forEach(consultor => {
+        const option = document.createElement('option');
+        option.value = consultor.id;
+        option.textContent = consultor.name;
+        filterSelect.appendChild(option);
+    });
+    
+    console.log(`✅ ${consultores.length} consultores en filtro`);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FUNCIONES AUXILIARES PARA REPORTES MEJORADOS
+// ═══════════════════════════════════════════════════════════════
+
+/**
+ * Generar detalle contextual para reportes
+ */
+function generarDetalleContextual(assignmentType, tarifa) {
+    if (assignmentType === 'support') {
+        // Para soporte directo: mostrar módulo
+        return `Módulo: ${tarifa.moduloNombre}`;
+        
+    } else if (assignmentType === 'task') {
+        // Para tarea: mostrar descripción + módulo
+        return `${tarifa.descripcionTarea} (${tarifa.moduloNombre})`;
+        
+    } else if (assignmentType === 'project') {
+        // Para proyecto: mostrar módulo del proyecto
+        return `Proyecto: ${tarifa.moduloNombre}`;
+    }
+    
+    return 'N/A';
+}
+
+/**
+ * Generar badge de origen para columna
+ */
+function generarBadgeOrigen(origen) {
+    const badges = {
+        'SUPPORT': '<span class="origen-badge soporte"><i class="fa-solid fa-headset"></i> SOPORTE</span>',
+        'TASK': '<span class="origen-badge tarea"><i class="fa-solid fa-tasks"></i> TAREA</span>',
+        'PROJECT': '<span class="origen-badge proyecto"><i class="fa-solid fa-folder"></i> PROYECTO</span>'
+    };
+    
+    return badges[origen] || origen;
+}
+
+/**
+ * Generar línea de reporte con nueva estructura
+ */
+function generarLineaReporteMejorada(report, tipoReporte) {
+    // 1. Obtener tarifa del tarifario (fuente única de verdad)
+    const tarifaId = `tarifa_${report.assignmentId}`;
+    const tarifa = window.PortalDB.getTarifario()[tarifaId];
+    
+    if (!tarifa) {
+        console.warn('⚠️ No se encontró tarifa para:', report.assignmentId);
+        return null;
+    }
+    
+    // 2. Determinar qué tarifa usar según el tipo de reporte
+    const tarifaAUsar = tipoReporte.includes('consultor') 
+        ? tarifa.costoConsultor 
+        : tarifa.costoCliente;
+    
+    // 3. Generar detalle contextual
+    const detalle = generarDetalleContextual(report.assignmentType, tarifa);
+    
+    // 4. Construir línea completa
+    return {
+        consultorId: tarifa.consultorId,
+        consultorNombre: tarifa.consultorNombre,
+        trabajoNombre: tarifa.trabajoNombre,
+        origen: report.assignmentType.toUpperCase(),  // ✅ NUEVO
+        detalle: detalle,                              // ✅ NUEVO
+        moduloNombre: tarifa.moduloNombre,
+        descripcionTarea: tarifa.descripcionTarea || null,
+        horas: report.hours,
+        tarifa: tarifaAUsar,
+        total: report.hours * tarifaAUsar
+    };
+}
+
+
+function loadCurrentData() {
+    console.log('📊 Cargando datos actuales para reportes...');
+    
+    currentData = {
+        users: window.PortalDB.getUsers(),
+        companies: window.PortalDB.getCompanies(),
+        supports: window.PortalDB.getSupports(),
+        modules: window.PortalDB.getModules(),
+        projects: window.PortalDB.getProjects(),
+        assignments: window.PortalDB.getAssignments(),
+        projectAssignments: window.PortalDB.getProjectAssignments(),
+        taskAssignments: window.PortalDB.getTaskAssignments(), // ✅ AGREGADO
+        reports: window.PortalDB.getReports()
+    };
+    
+    console.log('✅ Datos cargados:', {
+        users: Object.keys(currentData.users).length,
+        companies: Object.keys(currentData.companies).length,
+        supports: Object.keys(currentData.supports).length,
+        modules: Object.keys(currentData.modules).length,
+        projects: Object.keys(currentData.projects).length,
+        assignments: Object.keys(currentData.assignments).length,
+        projectAssignments: Object.keys(currentData.projectAssignments).length,
+        taskAssignments: Object.keys(currentData.taskAssignments).length, // ✅ AGREGADO
+        reports: Object.keys(currentData.reports).length
+    });
+}
 
 
 // === FUNCIONES EXPORTADAS GLOBALMENTE ===

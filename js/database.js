@@ -353,7 +353,7 @@ class PortalDatabase {
         return { success: true, message: 'Proyecto eliminado correctamente' };
     }
 
-    // === GESTIÓN DE TAREAS ===
+    // === GESTIÓN DE SOPORTES ===
     getSupports() {
     return this.getData('supports') || {};
 }
@@ -405,6 +405,53 @@ deleteSupport(supportId) {
     this.setData('supports', supports);
     
     return { success: true, message: 'Soporte eliminado correctamente' };
+}
+
+// === GESTIÓN DE TASK ASSIGNMENTS (TAREAS) ===
+
+/**
+ * Obtener todas las asignaciones de tareas
+ */
+getTaskAssignments() {
+    return this.getData('taskAssignments') || {};
+}
+
+/**
+ * Obtener una asignación de tarea por ID
+ */
+getTaskAssignment(taskId) {
+    const taskAssignments = this.getTaskAssignments();
+    return taskAssignments[taskId] || null;
+}
+
+/**
+ * Obtener tareas por consultor
+ */
+getTaskAssignmentsByConsultor(consultorId) {
+    const taskAssignments = this.getTaskAssignments();
+    return Object.values(taskAssignments).filter(task => 
+        task.consultorId === consultorId && task.isActive
+    );
+}
+
+/**
+ * Obtener tareas por soporte padre
+ */
+getTaskAssignmentsBySupport(supportId) {
+    const taskAssignments = this.getTaskAssignments();
+    return Object.values(taskAssignments).filter(task => 
+        task.linkedSupportId === supportId && task.isActive
+    );
+}
+
+/**
+ * Obtener tareas por cliente
+ */
+getTaskAssignmentsByCompany(companyId) {
+    const taskAssignments = this.getTaskAssignments();
+    return Object.values(taskAssignments).filter(task => 
+        task.companyId === companyId && task.isActive
+    );
 }
 
     // === GESTIÓN DE MÓDULOS ===
@@ -597,35 +644,46 @@ createAssignment(assignmentData) {
         return { success: false, message: 'El ID de asignación es requerido' };
     }
     
-    // 🔄 BUSCAR LA ASIGNACIÓN EN AMBAS TABLAS (SOPORTES Y PROYECTOS)
-    let assignment = null;
-    let assignmentType = null;
-    
-    // Primero buscar en asignaciones de soporte
-    assignment = this.getAssignment(reportData.assignmentId);
-    if (assignment) {
-        assignmentType = 'support';
-    } else {
-        // Si no se encuentra, buscar en asignaciones de proyecto
-        assignment = this.getProjectAssignment ? this.getProjectAssignment(reportData.assignmentId) : null;
+    // 🔄 BUSCAR LA ASIGNACIÓN EN TODAS LAS TABLAS (SOPORTES, PROYECTOS, TAREAS)
+        let assignment = null;
+        let assignmentType = null;
+
+        // 1. Buscar en asignaciones de soporte
+        assignment = this.getAssignment(reportData.assignmentId);
         if (assignment) {
-            assignmentType = 'project';
+            assignmentType = 'support';
+        } else {
+            // 2. Buscar en asignaciones de proyecto
+            assignment = this.getProjectAssignment ? 
+                this.getProjectAssignment(reportData.assignmentId) : null;
+            if (assignment) {
+                assignmentType = 'project';
+            } else {
+                // 3. ⭐ NUEVO: Buscar en asignaciones de tarea
+                assignment = this.getTaskAssignment ? 
+                    this.getTaskAssignment(reportData.assignmentId) : null;
+                if (assignment) {
+                    assignmentType = 'task';
+                }
+            }
         }
-    }
     
     // Si no se encuentra en ninguna tabla
     if (!assignment) {
         return { success: false, message: 'La asignación especificada no existe' };
     }
     
-    // 🔄 VALIDAR QUE EL USUARIO COINCIDE (DIFERENTES CAMPOS SEGÚN EL TIPO)
-    let assignmentUserId = null;
+    // 🔄 VALIDAR QUE EL USUARIO COINCIDE
+        let assignmentUserId = null;
 
-    if (assignmentType === 'support') {
-        assignmentUserId = assignment.userId;
-    } else if (assignmentType === 'project') {
-        assignmentUserId = assignment.consultorId; // En proyectos se llama 'consultorId'
-    }
+        if (assignmentType === 'support') {
+            assignmentUserId = assignment.userId;
+        } else if (assignmentType === 'project') {
+            assignmentUserId = assignment.consultorId;
+        } else if (assignmentType === 'task') {
+            // ⭐ NUEVO: Para tareas usar consultorId
+            assignmentUserId = assignment.consultorId;
+        }
     
     if (reportData.userId !== assignmentUserId) {
         return { success: false, message: 'El usuario no coincide con la asignación' };
@@ -1358,6 +1416,160 @@ createProjectAssignment(assignmentData) {
     }
 }
 
+/**
+ * Crear nueva asignación de tarea
+ */
+createTaskAssignment(taskData) {
+    try {
+        const taskAssignments = this.getTaskAssignments();
+        
+        // Generar ID único
+        const taskId = `task_${Date.now()}`;
+        
+        // Validaciones
+        if (!taskData.consultorId) {
+            return { success: false, message: 'El ID del consultor es requerido' };
+        }
+        
+        if (!taskData.companyId) {
+            return { success: false, message: 'El ID del cliente es requerido' };
+        }
+        
+        if (!taskData.linkedSupportId) {
+            return { success: false, message: 'El ID del soporte padre es requerido' };
+        }
+        
+        if (!taskData.moduleId) {
+            return { success: false, message: 'El ID del módulo es requerido' };
+        }
+        
+        // Verificar que el soporte padre existe
+        const support = this.getSupport(taskData.linkedSupportId);
+        if (!support) {
+            return { success: false, message: 'El soporte padre no existe' };
+        }
+        
+        // Verificar que el consultor existe
+        const consultor = this.getUser(taskData.consultorId);
+        if (!consultor) {
+            return { success: false, message: 'El consultor no existe' };
+        }
+        
+        // Verificar que el cliente existe
+        const company = this.getCompany(taskData.companyId);
+        if (!company) {
+            return { success: false, message: 'El cliente no existe' };
+        }
+        
+        // Crear objeto de tarea
+        const newTask = {
+            id: taskId,
+            consultorId: taskData.consultorId,
+            companyId: taskData.companyId,
+            linkedSupportId: taskData.linkedSupportId,
+            moduleId: taskData.moduleId,
+            descripcion: taskData.descripcion || '',
+            tarifaConsultor: taskData.tarifaConsultor || 0,
+            tarifaCliente: taskData.tarifaCliente || 0,
+            isActive: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        };
+        
+        // Guardar en la colección
+        taskAssignments[taskId] = newTask;
+        this.setData('taskAssignments', taskAssignments);
+        
+        console.log('✅ Task Assignment creada:', taskId);
+        
+        // Crear entrada en tarifario automáticamente
+        const tarifaResult = this.createTarifaEntry(newTask);
+        
+        if (!tarifaResult.success) {
+            console.warn('⚠️ No se pudo crear entrada en tarifario:', tarifaResult.message);
+        }
+        
+        return { 
+            success: true, 
+            taskId: taskId,
+            data: newTask
+        };
+        
+    } catch (error) {
+        console.error('❌ Error al crear task assignment:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+/**
+ * Actualizar asignación de tarea
+ */
+updateTaskAssignment(taskId, updates) {
+    try {
+        const taskAssignments = this.getTaskAssignments();
+        
+        if (!taskAssignments[taskId]) {
+            return { success: false, message: 'Tarea no encontrada' };
+        }
+        
+        // Actualizar campos
+        taskAssignments[taskId] = {
+            ...taskAssignments[taskId],
+            ...updates,
+            updatedAt: new Date().toISOString()
+        };
+        
+        this.setData('taskAssignments', taskAssignments);
+        
+        // Si se actualizaron tarifas, actualizar también en tarifario
+        if (updates.tarifaConsultor !== undefined || updates.tarifaCliente !== undefined) {
+            const tarifaId = `tarifa_${taskId}`;
+            this.updateTarifaEntry(tarifaId, {
+                costoConsultor: taskAssignments[taskId].tarifaConsultor,
+                costoCliente: taskAssignments[taskId].tarifaCliente
+            });
+        }
+        
+        console.log('✅ Task Assignment actualizada:', taskId);
+        return { success: true, data: taskAssignments[taskId] };
+        
+    } catch (error) {
+        console.error('❌ Error al actualizar task assignment:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+/**
+ * Eliminar (desactivar) asignación de tarea
+ */
+deleteTaskAssignment(taskId) {
+    try {
+        const taskAssignments = this.getTaskAssignments();
+        
+        if (!taskAssignments[taskId]) {
+            return { success: false, message: 'Tarea no encontrada' };
+        }
+        
+        // Desactivar en lugar de eliminar
+        taskAssignments[taskId].isActive = false;
+        taskAssignments[taskId].updatedAt = new Date().toISOString();
+        
+        this.setData('taskAssignments', taskAssignments);
+        
+        // También desactivar en tarifario
+        const tarifaId = `tarifa_${taskId}`;
+        this.updateTarifaEntry(tarifaId, { isActive: false });
+        
+        console.log('✅ Task Assignment desactivada:', taskId);
+        return { success: true };
+        
+    } catch (error) {
+        console.error('❌ Error al eliminar task assignment:', error);
+        return { success: false, message: error.message };
+    }
+}
+
+
     // ===================================================================
 // GESTIÓN DE TARIFARIO
 // ===================================================================
@@ -1378,18 +1590,29 @@ createTarifaEntry(assignmentData) {
         const modulo = this.getModule(assignmentData.moduleId);
         
         // Determinar tipo y trabajo
-        let tipo, trabajoId, trabajoNombre;
-        
+        let tipo, trabajoId, trabajoNombre, descripcionTarea = null;
+
         if (assignmentData.supportId) {
+            // Asignación de soporte directa
             tipo = 'soporte';
             const soporte = this.getSupport(assignmentData.supportId);
             trabajoId = assignmentData.supportId;
             trabajoNombre = soporte ? soporte.name : 'Desconocido';
+            
         } else if (assignmentData.projectId) {
+            // Asignación de proyecto
             tipo = 'proyecto';
             const proyecto = this.getProject(assignmentData.projectId);
             trabajoId = assignmentData.projectId;
             trabajoNombre = proyecto ? proyecto.name : 'Desconocido';
+            
+        } else if (assignmentData.linkedSupportId) {
+            // ⭐ NUEVO: Asignación de tarea
+            tipo = 'tarea';
+            const soporte = this.getSupport(assignmentData.linkedSupportId);
+            trabajoId = assignmentData.linkedSupportId;
+            trabajoNombre = soporte ? soporte.name : 'Desconocido';
+            descripcionTarea = assignmentData.descripcion || 'Sin descripción';
         }
         
         // Calcular margen
@@ -1414,6 +1637,7 @@ createTarifaEntry(assignmentData) {
             clienteNombre: cliente ? cliente.name : 'Desconocido',
             trabajoId: trabajoId,
             trabajoNombre: trabajoNombre,
+            descripcionTarea: descripcionTarea,  // ⭐ NUEVO CAMPO
             margen: margen,
             fechaCreacion: assignmentData.createdAt || new Date().toISOString(),
             isActive: true

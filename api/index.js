@@ -25,7 +25,7 @@ const companiesRoutes = require('./routes/companies');
 const projectsRoutes = require('./routes/projects');
 const supportsRoutes = require('./routes/supports');
 const modulesRoutes = require('./routes/modules');
-const assignmentsRoutes = require('./routes/assignments');
+const assignmentsRoutes = require('./routes/assignments'); // ⭐ Incluye: soportes, proyectos Y tareas
 const reportsRoutes = require('./routes/reports');
 const tarifarioRoutes = require('./routes/tarifario');
 
@@ -36,7 +36,7 @@ app.use('/api/companies', companiesRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/supports', supportsRoutes);
 app.use('/api/modules', modulesRoutes);
-app.use('/api/assignments', assignmentsRoutes);
+app.use('/api/assignments', assignmentsRoutes); // Maneja /assignments, /assignments/projects, /assignments/tasks
 app.use('/api/reports', reportsRoutes);
 app.use('/api/tarifario', tarifarioRoutes);
 

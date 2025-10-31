@@ -61,12 +61,27 @@ const projectAssignmentSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true }
 });
 
+// ========== TASK ASSIGNMENT ========== ⭐ NUEVO
+const taskAssignmentSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  consultorId: { type: String, required: true },
+  companyId: { type: String, required: true },
+  linkedSupportId: { type: String, required: false }, // ⭐ OPCIONAL - null para tareas independientes
+  moduleId: { type: String, required: true },
+  descripcion: { type: String, default: '' },
+  tarifaConsultor: { type: Number, default: 0 },
+  tarifaCliente: { type: Number, default: 0 },
+  isActive: { type: Boolean, default: true },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now }
+});
+
 // ========== REPORT ==========
 const reportSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
   userId: { type: String, required: true },
   assignmentId: { type: String, required: true },
-  assignmentType: { type: String, enum: ['support', 'project'], required: true },
+  assignmentType: { type: String, enum: ['support', 'project', 'task'], required: true }, // ⭐ AGREGADO 'task'
   companyId: { type: String, required: true },
   supportId: String,
   projectId: String,
@@ -103,7 +118,8 @@ const tarifarioSchema = new mongoose.Schema({
   costoCliente: { type: Number, required: true },
   margen: { type: Number, required: true },
   margenPorcentaje: { type: Number, required: true },
-  tipo: { type: String, enum: ['support', 'project'], required: true },
+  tipo: { type: String, enum: ['support', 'project', 'task'], required: true }, // ⭐ AGREGADO 'task'
+  descripcionTarea: String, // ⭐ NUEVO - para tareas
   fechaCreacion: { type: Date, default: Date.now }
 });
 
@@ -115,6 +131,7 @@ module.exports = {
   Module: mongoose.model('Module', moduleSchema),
   Assignment: mongoose.model('Assignment', assignmentSchema),
   ProjectAssignment: mongoose.model('ProjectAssignment', projectAssignmentSchema),
+  TaskAssignment: mongoose.model('TaskAssignment', taskAssignmentSchema), // ⭐ NUEVO
   Report: mongoose.model('Report', reportSchema),
   Tarifario: mongoose.model('Tarifario', tarifarioSchema)
 };

@@ -11,7 +11,8 @@ app.use(cors({
     'http://localhost:5500',
     'http://127.0.0.1:5500',
     'https://tsmjosem.github.io',
-    'https://portalarvic-8fovmmmwa-josems-projects.vercel.app'
+    'https://portalarvic-8fovmmmwa-josems-projects.vercel.app',
+    'https://portalarvic-git-main-josems-projects.vercel.app'
   ],
   credentials: true
 }));

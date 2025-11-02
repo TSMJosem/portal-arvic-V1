@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Module } = require('../models');
+const Module = require('../models/Module');
 
 router.get('/', async (req, res) => {
   try {
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const module = await Module.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    const module = await Module.findOneAndUpdate({ moduleId: req.params.id }, req.body, { new: true });
     if (!module) return res.status(404).json({ success: false, message: 'Módulo no encontrado' });
     res.json({ success: true, message: 'Módulo actualizado', data: module });
   } catch (error) {

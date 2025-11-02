@@ -101,24 +101,54 @@ class PortalDatabase {
         }
     }
 
-    async createUser(userData) {
+    async getAllUsers() {
         try {
             const response = await fetch(`${this.API_URL}/users`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': this.token ? `Bearer ${this.token}` : ''
+                }
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Error al obtener usuarios');
+            }
+
+            return data;
+        } catch (error) {
+            console.error('❌ Error obteniendo usuarios:', error);
+            throw error;
+        }
+    }
+
+    async createUser(userData) {
+        try {
+            console.log('📤 Enviando datos de usuario:', userData);
+            
+            const response = await fetch(`${this.API_URL}/users`, {
                 method: 'POST',
-                headers: this.getHeaders(),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': this.token ? `Bearer ${this.token}` : ''
+                },
                 body: JSON.stringify(userData)
             });
-            const result = await response.json();
+
+            const data = await response.json();
             
-            if (result.success) {
-                console.log('✅ Usuario creado:', result.data.id);
-                return { success: true, user: result.data };
+            console.log('📥 Respuesta del servidor:', data);
+
+            if (!response.ok) {
+                throw new Error(data.message || 'Error al crear usuario');
             }
-            
-            return { success: false, message: result.message };
+
+            return data;
         } catch (error) {
-            console.error('❌ Error creando usuario:', error);
-            return { success: false, message: 'Error de conexión' };
+            console.error('❌ Error en createUser:', error);
+            throw error;
         }
     }
 
@@ -206,12 +236,15 @@ class PortalDatabase {
 
     async createCompany(companyData) {
         try {
+            console.log('📤 Enviando datos de empresa:', companyData);
             const response = await fetch(`${this.API_URL}/companies`, {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify(companyData)
             });
             const result = await response.json();
+
+            console.log('📥 Respuesta del servidor:', result);
             
             if (result.success) {
                 console.log('✅ Empresa creada:', result.data.id);
@@ -384,6 +417,7 @@ class PortalDatabase {
 
     async createSupport(supportData) {
         try {
+            console.log('📤 Enviando datos de soporte:', supportData);
             const response = await fetch(`${this.API_URL}/supports`, {
                 method: 'POST',
                 headers: this.getHeaders(),
@@ -391,8 +425,10 @@ class PortalDatabase {
             });
             const result = await response.json();
             
+            console.log('📥 Respuesta del servidor:', result);
+
             if (result.success) {
-                console.log('✅ Soporte creado:', result.data.id);
+                console.log('✅ Soporte creado:', result.data.supportId);
                 return { success: true, support: result.data };
             }
             
@@ -473,15 +509,19 @@ class PortalDatabase {
 
     async createModule(moduleData) {
         try {
+            console.log('📤 Enviando datos de módulo:', moduleData);  // ✅ Agrega este log
+            
             const response = await fetch(`${this.API_URL}/modules`, {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify(moduleData)
             });
             const result = await response.json();
+
+            console.log('📥 Respuesta del servidor:', result);  // ✅ Agrega este log
             
             if (result.success) {
-                console.log('✅ Módulo creado:', result.data.id);
+                console.log('✅ Módulo creado:', result.data.moduleId);  // ✅ Cambia de .id a .moduleId
                 return { success: true, module: result.data };
             }
             

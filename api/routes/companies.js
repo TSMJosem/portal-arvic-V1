@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Company } = require('../models');
+const Company = require('../models/Company');
 
 router.get('/', async (req, res) => {
   try {
@@ -13,7 +13,7 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const company = await Company.findOne({ id: req.params.id });
+    const company = await Company.findOne({ companyId: req.params.id });
     if (!company) return res.status(404).json({ success: false, message: 'Empresa no encontrada' });
     res.json({ success: true, data: company });
   } catch (error) {

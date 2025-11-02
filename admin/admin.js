@@ -2292,39 +2292,58 @@ function loadSectionData(sectionName) {
 }
 
 // === GESTIÓN DE USUARIOS ===
-function handleCreateUser(e) {
-    e.preventDefault();
+async function handleCreateUser(event) {
+    event.preventDefault();
     
-    const name = document.getElementById('userName').value.trim();
-    const email = document.getElementById('userEmail').value.trim();
-    
-    if (!name) {
-        window.NotificationUtils.error('El nombre es requerido');
-        return;
-    }
-
-    const userData = {
-        name: name,
-        email: email,
-        role: 'consultor'
-    };
-
-    const result = window.PortalDB.createUser(userData);
-    
-    if (result.success) {
-        // ✅ La contraseña ya viene generada automáticamente
-        window.NotificationUtils.success(
-            `Usuario creado exitosamente!\nID: ${result.user.id}\nContraseña: ${result.user.password}`,
-            8000
-        );
+    try {
+        const name = document.getElementById('userName').value.trim();
+        const email = document.getElementById('userEmail').value.trim();
         
-        showUserCredentials(result.user);
+        if (!name) {
+            alert('El nombre es requerido');
+            return;
+        }
+
+        // Generar userId basado en timestamp (más simple y seguro)
+        const timestamp = Date.now().toString().slice(-4);
+        const userId = `USR${timestamp}`;  // Ejemplo: USR1234
         
-        closeModal('userModal');
-        document.getElementById('userForm').reset();
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al crear usuario: ' + result.message);
+        // Generar contraseña temporal aleatoria
+        const tempPassword = `temp${Math.random().toString(36).substring(2, 10)}`;
+
+        const userData = {
+            userId: userId,
+            name: name,
+            email: email || `${userId.toLowerCase()}@grupoitarvic.com`,
+            password: tempPassword,
+            role: 'consultor',
+            isActive: true
+        };
+
+        console.log('📤 Creando usuario:', userData);
+
+        // Crear usuario
+        const result = await window.PortalDB.createUser(userData);
+        
+        console.log('📥 Resultado:', result);
+
+        if (result.success) {
+            alert(`✅ Usuario creado exitosamente!\n\n` +
+                  `ID: ${userId}\n` +
+                  `Nombre: ${name}\n` +
+                  `Email: ${userData.email}\n` +
+                  `Contraseña: ${tempPassword}\n\n` +
+                  `⚠️ IMPORTANTE: Guarde estas credenciales, no se mostrarán nuevamente.`);
+            
+            closeModal('userModal');
+            document.getElementById('userForm').reset();
+            await loadAllData();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo crear el usuario'));
+        }
+    } catch (error) {
+        console.error('❌ Error creando usuario:', error);
+        alert('Error al crear usuario: ' + error.message);
     }
 }
 
@@ -2374,27 +2393,47 @@ function deleteUser(userId) {
 }
 
 // === GESTIÓN DE EMPRESAS ===
-function handleCreateCompany(e) {
-    e.preventDefault();
+async function handleCreateCompany(event) {
+    event.preventDefault();
     
-    const name = document.getElementById('companyName').value.trim();
-    const description = document.getElementById('companyDescription').value.trim();
-    
-    if (!name) {
-        window.NotificationUtils.error('El nombre de la empresa es requerido');
-        return;
-    }
+    try {
+        const name = document.getElementById('companyName').value.trim();
+        const description = document.getElementById('companyDescription')?.value.trim() || '';
+        
+        if (!name) {
+            alert('El nombre de la empresa es requerido');
+            return;
+        }
 
-    const companyData = { name: name, description: description };
-    const result = window.PortalDB.createCompany(companyData);
-    
-    if (result.success) {
-        window.NotificationUtils.success(`Empresa "${name}" registrada con ID: ${result.company.id}`);
-        closeModal('companyModal');
-        document.getElementById('companyForm').reset();
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al registrar empresa: ' + result.message);
+        // Generar companyId automáticamente
+        const timestamp = Date.now().toString().slice(-4);
+        const companyId = `EMP${timestamp}`;  // Ejemplo: EMP1234
+        
+        const companyData = {
+            companyId: companyId,  // ✅ Agregar companyId
+            name: name,
+            description: description,
+            isActive: true
+        };
+
+        console.log('📤 Creando empresa:', companyData);
+
+        const result = await window.PortalDB.createCompany(companyData);  // ✅ await
+        
+        console.log('📥 Resultado:', result);
+
+        if (result.success) {
+            alert(`✅ Empresa creada exitosamente!\n\nID: ${companyId}\nNombre: ${name}`);
+            
+            closeModal('companyModal');
+            document.getElementById('companyForm').reset();
+            await loadAllData();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo crear la empresa'));
+        }
+    } catch (error) {
+        console.error('❌ Error creando empresa:', error);
+        alert('Error al crear empresa: ' + error.message);
     }
 }
 
@@ -2414,27 +2453,47 @@ function deleteCompany(companyId) {
 }
 
 // === GESTIÓN DE PROYECTOS ===
-function handleCreateProject(e) {
-    e.preventDefault();
+async function handleCreateProject(event) {
+    event.preventDefault();
     
-    const name = document.getElementById('projectName').value.trim();
-    const description = document.getElementById('projectDescription').value.trim();
-    
-    if (!name) {
-        window.NotificationUtils.error('El nombre del proyecto es requerido');
-        return;
-    }
+    try {
+        const name = document.getElementById('projectName').value.trim();
+        const description = document.getElementById('projectDescription')?.value.trim() || '';
+        
+        if (!name) {
+            alert('El nombre del proyecto es requerido');
+            return;
+        }
 
-    const projectData = { name: name, description: description};
-    const result = window.PortalDB.createProject(projectData);
-    
-    if (result.success) {
-        window.NotificationUtils.success(`Proyecto "${name}" creado con ID: ${result.project.id}`);
-        closeModal('projectModal');
-        document.getElementById('projectForm').reset();
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al crear proyecto: ' + result.message);
+        // Generar projectId automáticamente
+        const timestamp = Date.now().toString().slice(-4);
+        const projectId = `PRJ${timestamp}`;  // Ejemplo: PRJ1234
+        
+        const projectData = {
+            projectId: projectId,  // ✅ Agregar projectId
+            name: name,
+            description: description,
+            isActive: true
+        };
+
+        console.log('📤 Creando proyecto:', projectData);
+
+        const result = await window.PortalDB.createProject(projectData);  // ✅ await
+        
+        console.log('📥 Resultado:', result);
+
+        if (result.success) {
+            alert(`✅ Proyecto creado exitosamente!\n\nID: ${projectId}\nNombre: ${name}`);
+            
+            closeModal('projectModal');
+            document.getElementById('projectForm').reset();
+            await loadAllData();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo crear el proyecto'));
+        }
+    } catch (error) {
+        console.error('❌ Error creando proyecto:', error);
+        alert('Error al crear proyecto: ' + error.message);
     }
 }
 
@@ -2454,31 +2513,47 @@ function deleteProject(projectId) {
 }
 
 // === GESTIÓN DE SOPORTES ===
-function handleCreateSupport(e) {
-    e.preventDefault();
+async function handleCreateSupport(event) {  // ✅ Agrega async
+    event.preventDefault();
     
-    const name = document.getElementById('supportName').value.trim();
-    const description = document.getElementById('supportDescription').value.trim();
-    
-    if (!name) {
-        window.NotificationUtils.error('El nombre del soporte es requerido');
-        return;
-    }
+    try {
+        const name = document.getElementById('supportName').value.trim();
+        const description = document.getElementById('supportDescription')?.value.trim() || '';
+        
+        if (!name) {
+            alert('El nombre del soporte es requerido');
+            return;
+        }
 
-    const supportData = {
-        name: name,
-        description: description
-    };
+        // Generar supportId automáticamente
+        const timestamp = Date.now().toString().slice(-4);
+        const supportId = `SUP${timestamp}`;  // Ejemplo: SUP1234
+        
+        const supportData = {
+            supportId: supportId,  // ✅ Agregar supportId
+            name: name,
+            description: description,
+            isActive: true
+        };
 
-    const result = window.PortalDB.createSupport(supportData);
-    
-    if (result.success) {
-        window.NotificationUtils.success(`Soporte "${name}" creado exitosamente`);
-        closeModal('supportModal');
-        document.getElementById('supportForm').reset();
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al crear soporte: ' + result.message);
+        console.log('📤 Creando soporte:', supportData);
+
+        const result = await window.PortalDB.createSupport(supportData);  // ✅ await
+        
+        console.log('📥 Resultado:', result);
+
+        if (result.success) {
+            alert(`✅ Soporte creado exitosamente!\n\nID: ${supportId}\nNombre: ${name}`);
+            
+            closeModal('supportModal');
+            document.getElementById('supportForm').reset();
+            await loadAllData();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo crear el soporte'));
+        }
+    } catch (error) {
+        console.error('❌ Error creando soporte:', error);
+        alert('Error al crear soporte: ' + error.message);
     }
 }
 
@@ -2503,31 +2578,47 @@ function openSupportModal() {
 }
 
 // === GESTIÓN DE MÓDULOS ===
-function handleCreateModule(e) {
-    e.preventDefault();
+async function handleCreateModule(event) {  // ✅ Agrega async
+    event.preventDefault();
     
-    const name = document.getElementById('moduleName').value.trim();
-    const description = document.getElementById('moduleDescription').value.trim();
-    
-    if (!name) {
-        window.NotificationUtils.error('El nombre del módulo es requerido');
-        return;
-    }
+    try {
+        const name = document.getElementById('moduleName').value.trim();
+        const description = document.getElementById('moduleDescription')?.value.trim() || '';
+        
+        if (!name) {
+            alert('El nombre del módulo es requerido');
+            return;
+        }
 
-    const moduleData = {
-        name: name,
-        description: description
-    };
+        // Generar moduleId automáticamente
+        const timestamp = Date.now().toString().slice(-4);
+        const moduleId = `MOD${timestamp}`;  // Ejemplo: MOD1234
+        
+        const moduleData = {
+            moduleId: moduleId,  // ✅ Agregar moduleId
+            name: name,
+            description: description,
+            isActive: true
+        };
 
-    const result = window.PortalDB.createModule(moduleData);
-    
-    if (result.success) {
-        window.NotificationUtils.success(`Módulo "${name}" creado exitosamente`);
-        closeModal('moduleModal');
-        document.getElementById('moduleForm').reset();
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al crear módulo: ' + result.message);
+        console.log('📤 Creando módulo:', moduleData);
+
+        const result = await window.PortalDB.createModule(moduleData);  // ✅ await
+        
+        console.log('📥 Resultado:', result);
+
+        if (result.success) {
+            alert(`✅ Módulo creado exitosamente!\n\nID: ${moduleId}\nNombre: ${name}`);
+            
+            closeModal('moduleModal');
+            document.getElementById('moduleForm').reset();
+            await loadAllData();
+        } else {
+            alert('Error: ' + (result.message || 'No se pudo crear el módulo'));
+        }
+    } catch (error) {
+        console.error('❌ Error creando módulo:', error);
+        alert('Error al crear módulo: ' + error.message);
     }
 }
 

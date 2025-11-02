@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Project } = require('../models');
+const Project = require('../models/Project');
 
 router.get('/', async (req, res) => {
   try {
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const project = await Project.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    const project = await Project.findOneAndUpdate({ projectId: req.params.id }, req.body, { new: true });
     if (!project) return res.status(404).json({ success: false, message: 'Proyecto no encontrado' });
     res.json({ success: true, message: 'Proyecto actualizado', data: project });
   } catch (error) {

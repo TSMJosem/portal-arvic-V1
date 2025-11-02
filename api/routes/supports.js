@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Support } = require('../models');
+const Support = require('../models/Support');
 
 router.get('/', async (req, res) => {
   try {
@@ -25,7 +25,7 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const support = await Support.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
+    const support = await Support.findOneAndUpdate({ supportId: req.params.id }, req.body, { new: true });
     if (!support) return res.status(404).json({ success: false, message: 'Soporte no encontrado' });
     res.json({ success: true, message: 'Soporte actualizado', data: support });
   } catch (error) {

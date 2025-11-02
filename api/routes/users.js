@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
 // GET usuario por ID
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findOne({ id: req.params.id }).select('-password');
+    const user = await User.findOne({ userId: req.params.id }).select('-password');  // ✅ userId
     if (!user) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
     }
@@ -30,16 +30,46 @@ router.post('/', async (req, res) => {
   try {
     const userData = req.body;
     
-    // Generar ID único si no viene
-    if (!userData.id) {
-      userData.id = `user_${Date.now()}`;
+    console.log('📥 Datos recibidos para crear usuario:', userData);
+    
+    // Validar campos requeridos
+    if (!userData.userId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'El campo userId es requerido' 
+      });
     }
 
+    if (!userData.password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'El campo password es requerido' 
+      });
+    }
+
+    // Verificar que no exista el usuario
+    const existingUser = await User.findOne({ 
+      $or: [
+        { userId: userData.userId },
+        { email: userData.email }
+      ]
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'El usuario o email ya existe' 
+      });
+    }
+
+    // Crear usuario
     const user = new User(userData);
     await user.save();
 
     const userResponse = user.toObject();
     delete userResponse.password;
+
+    console.log('✅ Usuario creado:', userResponse);
 
     res.status(201).json({ 
       success: true, 
@@ -47,7 +77,11 @@ router.post('/', async (req, res) => {
       data: userResponse 
     });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error('❌ Error creando usuario:', error);
+    res.status(400).json({ 
+      success: false, 
+      message: error.message || 'Error al crear usuario' 
+    });
   }
 });
 
@@ -56,14 +90,31 @@ router.put('/:id', async (req, res) => {
   try {
     const updates = req.body;
     
+    console.log('📝 Actualizando usuario:', req.params.id, updates);
+    
     // Si se actualiza la contraseña, necesita re-hash
     if (updates.password) {
-      const user = await User.findOne({ id: req.params.id });
+      const user = await User.findOne({ userId: req.params.id });  // ✅ userId
+      
+      if (!user) {
+        return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+      }
+      
       user.password = updates.password;
+      
+      // Actualizar otros campos si vienen
+      if (updates.name) user.name = updates.name;
+      if (updates.email) user.email = updates.email;
+      if (updates.role) user.role = updates.role;
+      if (updates.isActive !== undefined) user.isActive = updates.isActive;
+      
+      user.updatedAt = new Date();
       await user.save();
       
       const userResponse = user.toObject();
       delete userResponse.password;
+      
+      console.log('✅ Usuario actualizado con nueva contraseña');
       
       return res.json({ 
         success: true, 
@@ -74,14 +125,16 @@ router.put('/:id', async (req, res) => {
 
     // Actualización normal sin contraseña
     const user = await User.findOneAndUpdate(
-      { id: req.params.id },
+      { userId: req.params.id },  // ✅ userId
       { ...updates, updatedAt: new Date() },
-      { new: true }
+      { new: true, runValidators: true }
     ).select('-password');
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
     }
+
+    console.log('✅ Usuario actualizado');
 
     res.json({ 
       success: true, 
@@ -89,35 +142,38 @@ router.put('/:id', async (req, res) => {
       data: user 
     });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error('❌ Error actualizando usuario:', error);
+    res.status(400).json({ 
+      success: false, 
+      message: error.message || 'Error al actualizar usuario' 
+    });
   }
 });
 
 // DELETE eliminar usuario
 router.delete('/:id', async (req, res) => {
   try {
-    const user = await User.findOneAndDelete({ id: req.params.id });
+    console.log('🗑️ Eliminando usuario:', req.params.id);
+    
+    const user = await User.findOneAndDelete({ userId: req.params.id });  // ✅ userId
+    
     if (!user) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
     }
-    res.json({ success: true, message: 'Usuario eliminado exitosamente' });
+    
+    console.log('✅ Usuario eliminado');
+    
+    res.json({ 
+      success: true, 
+      message: 'Usuario eliminado exitosamente' 
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('❌ Error eliminando usuario:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Error al eliminar usuario' 
+    });
   }
 });
-
-// DELETE eliminar usuario
-router.delete('/:id', async (req, res) => {
-  try {
-    const user = await User.findOneAndDelete({ id: req.params.id });
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
-    }
-    res.json({ success: true, message: 'Usuario eliminado exitosamente' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
 
 module.exports = router;

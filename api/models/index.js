@@ -1,40 +1,5 @@
 const mongoose = require('mongoose');
 
-// ========== COMPANY ==========
-const companySchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-  isActive: { type: Boolean, default: true }
-});
-
-// ========== PROJECT ==========
-const projectSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  description: String,
-  createdAt: { type: Date, default: Date.now },
-  isActive: { type: Boolean, default: true }
-});
-
-// ========== SUPPORT ==========
-const supportSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  description: String,
-  createdAt: { type: Date, default: Date.now },
-  isActive: { type: Boolean, default: true }
-});
-
-// ========== MODULE ==========
-const moduleSchema = new mongoose.Schema({
-  id: { type: String, required: true, unique: true },
-  name: { type: String, required: true },
-  description: String,
-  createdAt: { type: Date, default: Date.now },
-  isActive: { type: Boolean, default: true }
-});
-
 // ========== ASSIGNMENT ==========
 const assignmentSchema = new mongoose.Schema({
   id: { type: String, required: true, unique: true },
@@ -125,10 +90,6 @@ const tarifarioSchema = new mongoose.Schema({
 
 // Exportar todos los modelos
 module.exports = {
-  Company: mongoose.model('Company', companySchema),
-  Project: mongoose.model('Project', projectSchema),
-  Support: mongoose.model('Support', supportSchema),
-  Module: mongoose.model('Module', moduleSchema),
   Assignment: mongoose.model('Assignment', assignmentSchema),
   ProjectAssignment: mongoose.model('ProjectAssignment', projectAssignmentSchema),
   TaskAssignment: mongoose.model('TaskAssignment', taskAssignmentSchema), // ⭐ NUEVO

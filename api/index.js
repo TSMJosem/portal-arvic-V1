@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
+const User = require('./models/User');
 
 const app = express();
 
@@ -14,7 +15,9 @@ app.use(cors({
     'https://portalarvic-8fovmmmwa-josems-projects.vercel.app',
     'https://portalarvic-git-main-josems-projects.vercel.app'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  // 👈 Agrega esta línea
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
@@ -27,6 +30,46 @@ mongoose.connect(process.env.MONGODB_URI, {
 .then(() => console.log('✅ MongoDB conectado'))
 .catch(err => console.error('❌ Error de conexión MongoDB:', err));
 
+// 👇 AGREGA ESTE ENDPOINT TEMPORAL en api/index.js
+app.post('/api/setup/reset-admin-password', async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    
+    if (!newPassword) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Se requiere nueva contraseña' 
+      });
+    }
+
+    // Buscar el usuario admin
+    const adminUser = await User.findOne({ id: 'admin' });
+    
+    if (!adminUser) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Usuario admin no encontrado' 
+      });
+    }
+
+    // Actualizar contraseña (se hasheará automáticamente)
+    adminUser.password = newPassword;
+    await adminUser.save();
+
+    res.json({ 
+      success: true, 
+      message: 'Contraseña actualizada exitosamente',
+      newPassword: newPassword // Solo para referencia, eliminar en producción
+    });
+  } catch (error) {
+    console.error('Error reseteando contraseña:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error actualizando contraseña' 
+    });
+  }
+});
+
 // Importar rutas
 const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
@@ -34,7 +77,7 @@ const companiesRoutes = require('./routes/companies');
 const projectsRoutes = require('./routes/projects');
 const supportsRoutes = require('./routes/supports');
 const modulesRoutes = require('./routes/modules');
-const assignmentsRoutes = require('./routes/assignments'); // ⭐ Incluye: soportes, proyectos Y tareas
+const assignmentsRoutes = require('./routes/assignments'); 
 const reportsRoutes = require('./routes/reports');
 const tarifarioRoutes = require('./routes/tarifario');
 
@@ -68,13 +111,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Para Vercel
-if (process.env.VERCEL) {
-  module.exports = app;
-} else {
-  // Para desarrollo local
-  const PORT = process.env.PORT || 3000;
+// Iniciar servidor
+const PORT = process.env.PORT || 3000;
+
+// Solo exportar para Vercel, sino iniciar servidor local
+if (require.main === module) {
+  // Modo desarrollo local
   app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+    console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
   });
+} else {
+  // Exportar para Vercel
+  module.exports = app;
 }

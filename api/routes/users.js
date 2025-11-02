@@ -106,4 +106,18 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// DELETE eliminar usuario
+router.delete('/:id', async (req, res) => {
+  try {
+    const user = await User.findOneAndDelete({ id: req.params.id });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
+    }
+    res.json({ success: true, message: 'Usuario eliminado exitosamente' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+
 module.exports = router;

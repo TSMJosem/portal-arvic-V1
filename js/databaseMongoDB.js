@@ -7,7 +7,7 @@
 class PortalDatabase {
     constructor() {
         // URL del API - detecta automáticamente si es producción o desarrollo
-        this.API_URL = window.location.hostname === 'localhost' 
+        this.API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
             ? 'http://localhost:3000/api' 
             : 'https://portalarvic-8fovmmmwa-josems-projects.vercel.app/api'; //Corregido
         

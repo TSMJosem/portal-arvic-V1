@@ -79,7 +79,7 @@ class AuthSystem {
         }
 
         // Primero validar usuario en la base de datos
-        const validation = window.PortalDB.validateUser(userId, password);
+        const validation = await window.PortalDB.validateUser(userId, password);
         console.log('Resultado validación DB:', validation);
         
         if (!validation.success) {
@@ -95,6 +95,7 @@ class AuthSystem {
         // Detectar tipo automáticamente basado en el usuario obtenido
         let detectedUserType = user.role;
 
+        /*
         // Verificación adicional de seguridad
         if (userId === 'admin' && password !== 'hperez1402.') {
             return {
@@ -102,7 +103,7 @@ class AuthSystem {
                 message: 'Credenciales incorrectas'
             };
         }
-
+        */
         if (userId !== 'admin' && user.role === 'consultor') {
             // Verificar formato de contraseña de consultor
             if (!this.isConsultorPassword(password)) {

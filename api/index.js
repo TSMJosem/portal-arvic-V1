@@ -1,7 +1,9 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-require('dotenv').config();
+const path = require('path');
+// Configurar dotenv para buscar el .env en la raíz del proyecto
+require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const User = require('./models/User');
 
 const app = express();
@@ -11,6 +13,8 @@ app.use(cors({
   origin: [
     'http://localhost:5500',
     'http://127.0.0.1:5500',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
     'https://tsmjosem.github.io',
     'https://portalarvic-8fovmmmwa-josems-projects.vercel.app',
     'https://portalarvic-git-main-josems-projects.vercel.app'
@@ -21,6 +25,13 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// 👇 NUEVO: Servir archivos estáticos (CSS, JS, imágenes)
+app.use('/css', express.static(path.join(__dirname, '..', 'css')));
+app.use('/js', express.static(path.join(__dirname, '..', 'js')));
+app.use('/images', express.static(path.join(__dirname, '..', 'images')));
+app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
+app.use('/consultor', express.static(path.join(__dirname, '..', 'consultor')));
 
 // Conectar a MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -103,6 +114,19 @@ app.get('/api/health', (req, res) => {
     message: 'API Portal ARVIC funcionando',
     timestamp: new Date().toISOString()
   });
+});
+
+// 👇 NUEVO: Rutas para servir páginas HTML
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
+
+app.get('/admin/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'admin', 'dashboard.html'));
+});
+
+app.get('/consultor/dashboard', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'consultor', 'dashboard.html'));
 });
 
 // Manejo de errores

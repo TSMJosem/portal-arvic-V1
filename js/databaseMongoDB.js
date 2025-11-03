@@ -34,7 +34,22 @@ class PortalDatabase {
     arrayToObject(array) {
         if (!Array.isArray(array)) return {};
         return array.reduce((obj, item) => {
-            obj[item.id] = item;
+            // Detectar automáticamente qué campo usar como clave
+            const key = item.taskAssignmentId || 
+                       item.projectAssignmentId || 
+                       item.assignmentId || 
+                       item.userId || 
+                       item.companyId || 
+                       item.supportId || 
+                       item.moduleId || 
+                       item.projectId || 
+                       item.reportId || 
+                       item.tarifarioId ||
+                       item.id;
+            
+            if (key) {
+                obj[key] = item;
+            }
             return obj;
         }, {});
     }
@@ -1204,6 +1219,57 @@ class PortalDatabase {
         }
     }
 
+        // === GESTIÓN DE REPORTES EXCEL GENERADOS (STUB - NO IMPLEMENTADO EN BACKEND) ===
+    /**
+     * Obtener reportes generados (STUB)
+     * @returns {Object} Objeto vacío por ahora
+     * @note Esta funcionalidad no está implementada en el backend de MongoDB
+     */
+    getGeneratedReports() {
+        console.warn('⚠️ getGeneratedReports() es un stub. Esta funcionalidad no está migrada a MongoDB.');
+        console.warn('📝 El historial de reportes generados está vacío hasta que se implemente en el backend.');
+        return {};
+    }
+
+    /**
+     * Guardar reporte generado (STUB)
+     * @returns {Object} Success false con mensaje
+     * @note Esta funcionalidad no está implementada en el backend de MongoDB
+     */
+    async saveGeneratedReport(reportData) {
+        console.warn('⚠️ saveGeneratedReport() es un stub. Esta funcionalidad no está migrada a MongoDB.');
+        return { 
+            success: false, 
+            message: 'Funcionalidad no disponible - requiere implementación en MongoDB' 
+        };
+    }
+
+    /**
+     * Incrementar contador de descargas (STUB)
+     * @returns {Object} Success false con mensaje
+     * @note Esta funcionalidad no está implementada en el backend de MongoDB
+     */
+    async incrementDownloadCount(reportId) {
+        console.warn('⚠️ incrementDownloadCount() es un stub.');
+        return { 
+            success: false, 
+            message: 'Funcionalidad no disponible' 
+        };
+    }
+
+    /**
+     * Eliminar reporte generado (STUB)
+     * @returns {Object} Success false con mensaje
+     * @note Esta funcionalidad no está implementada en el backend de MongoDB
+     */
+    async deleteGeneratedReport(reportId) {
+        console.warn('⚠️ deleteGeneratedReport() es un stub.');
+        return { 
+            success: false, 
+            message: 'Funcionalidad no disponible' 
+        };
+    }
+
     // === GESTIÓN DE TARIFARIO ===
     async getTarifarios() {
         try {
@@ -1216,8 +1282,51 @@ class PortalDatabase {
             if (result.success) {
                 const tarifarios = {};
                 result.data.forEach(tarifario => {
-                    tarifarios[tarifario.tarifarioId] = tarifario;  // ✅ Cambiar de tarifario.id a tarifario.tarifarioId
+                    // ✅ MAPPER: Convertir campos de MongoDB al formato esperado
+                    const tarifarioMapeado = {
+                        // Campos originales
+                        id: tarifario.tarifarioId,
+                        tarifarioId: tarifario.tarifarioId,
+                        
+                        // IDs
+                        idAsignacion: tarifario.assignmentId,
+                        consultorId: tarifario.consultorId,
+                        clienteId: tarifario.companyId,
+                        
+                        // Nombres mapeados (MongoDB → Formato esperado)
+                        consultorNombre: tarifario.consultorNombre,
+                        clienteNombre: tarifario.companyName,      // ✅ companyName → clienteNombre
+                        moduloNombre: tarifario.moduleName,         // ✅ moduleName → moduloNombre
+                        
+                        // Trabajo (puede ser soporte o proyecto)
+                        trabajoNombre: tarifario.supportName || tarifario.projectName || 'N/A',  // ✅ Combinar ambos
+                        
+                        // Módulo y tipo
+                        modulo: tarifario.moduleId,
+                        tipo: tarifario.tipo === 'support' ? 'soporte' : 
+                            tarifario.tipo === 'project' ? 'proyecto' : 'tarea',  // ✅ Traducir tipo
+                        
+                        // Costos y margen
+                        costoConsultor: tarifario.costoConsultor || 0,
+                        costoCliente: tarifario.costoCliente || 0,
+                        margen: tarifario.margen || 0,
+                        
+                        // Campos adicionales
+                        descripcionTarea: tarifario.descripcionTarea || null,
+                        fechaCreacion: tarifario.fechaCreacion || tarifario.createdAt,
+                        isActive: tarifario.isActive !== false,
+                        
+                        // IDs adicionales (para referencias)
+                        supportId: tarifario.supportId,
+                        projectId: tarifario.projectId,
+                        moduleId: tarifario.moduleId
+                    };
+                    
+                    tarifarios[tarifario.tarifarioId] = tarifarioMapeado;
                 });
+                
+                console.log('✅ Tarifarios mapeados:', Object.keys(tarifarios).length, 'entradas');
+                
                 return tarifarios;
             }
             return {};
@@ -1225,6 +1334,11 @@ class PortalDatabase {
             console.error('Error obteniendo tarifarios:', error);
             return {};
         }
+    }
+
+    // ✅ NUEVA FUNCIÓN - Alias para compatibilidad
+    async getTarifario() {
+        return await this.getTarifarios();
     }
 
     async getTarifaByAssignment(assignmentId) {

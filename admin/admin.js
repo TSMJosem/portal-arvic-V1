@@ -265,25 +265,38 @@ function deleteAssignment(assignmentId) {
 }
 
 // === CARGA Y ACTUALIZACIÓN DE DATOS ===
-function loadAllData() {
+async function loadAllData() {
     console.log('🔄 Cargando todos los datos...');
     
     try {
-        currentData.users = window.PortalDB.getUsers() || {};
-        currentData.companies = window.PortalDB.getCompanies() || {};
-        currentData.projects = window.PortalDB.getProjects() || {};
-        currentData.assignments = window.PortalDB.getAssignments() || {};
-        currentData.supports = window.PortalDB.getSupports() || {};
-        currentData.modules = window.PortalDB.getModules() || {};
-        currentData.reports = window.PortalDB.getReports() || {};
-        currentData.projectAssignments = window.PortalDB.getProjectAssignments() || {};
-        currentData.taskAssignments = window.PortalDB.getTaskAssignments() || {}; // ✅ NUEVO
+        currentData.users = await window.PortalDB.getUsers() || {};
+        currentData.companies = await window.PortalDB.getCompanies() || {};
+        currentData.projects = await window.PortalDB.getProjects() || {};
+        currentData.assignments = await window.PortalDB.getAssignments() || {};
+        currentData.supports = await window.PortalDB.getSupports() || {};
+        currentData.modules = await window.PortalDB.getModules() || {};
+        currentData.reports = await window.PortalDB.getReports() || {};
+        currentData.projectAssignments = await window.PortalDB.getProjectAssignments() || {};
+        currentData.taskAssignments = await window.PortalDB.getTaskAssignments() || {};
+        
+        console.log('✅ Datos cargados:', {
+            users: Object.keys(currentData.users).length,
+            companies: Object.keys(currentData.companies).length,
+            supports: Object.keys(currentData.supports).length,
+            modules: Object.keys(currentData.modules).length
+        });
         
         updateUI();
+        
+        if (currentSection === 'crear-asignacion') {
+            console.log('🔄 Actualizando dropdowns después de cargar datos...');
+            updateDropdowns();
+        }
     } catch (error) {
         console.error('❌ Error cargando datos:', error);
     }
 }
+
 function updateUI() {
     console.log('🎨 === ACTUALIZANDO UI ===');
     
@@ -333,34 +346,37 @@ function updateSidebarCounts() {
     const projects = Object.values(currentData.projects);
     const assignments = Object.values(currentData.assignments).filter(a => a.isActive !== false);
     const projectAssignments = Object.values(currentData.projectAssignments || {}).filter(a => a.isActive !== false);
-
-    console.log("Conteo de asignaciones de proyecto:", projectAssignments.length);
-    console.log("Asignaciones de soporte:", assignments.length);
-    
-    const totalAssignments = assignments.length + projectAssignments.length;
-
-    document.getElementById('sidebarProjectAssignmentsCount').textContent = projectAssignments.length;
-
     const supports = Object.values(currentData.supports);
     const modules = Object.values(currentData.modules);
     const reports = Object.values(currentData.reports);
-
+    
     // ✅ NUEVO: Contar TAREAS activas
     const taskAssignments = Object.values(currentData.taskAssignments || {}).filter(t => t.isActive !== false);
+
+    console.log("Conteo de asignaciones de proyecto:", projectAssignments.length);
+    console.log("Asignaciones de soporte:", assignments.length);
     console.log("📊 Tareas activas:", taskAssignments.length);
+    
+    // ✅ CORREGIDO: Incluir tareas en el total
+    const totalAssignments = assignments.length + projectAssignments.length + taskAssignments.length;
+
+    document.getElementById('sidebarProjectAssignmentsCount').textContent = projectAssignments.length;
 
     // ✅ NUEVO: Contar asignaciones CON TARIFAS configuradas
-    // Incluir tanto asignaciones de soporte como de proyecto
+    // Incluir asignaciones de soporte, proyecto Y tareas
     const assignmentsConTarifas = [
         ...assignments.filter(a => a.tarifaConsultor && a.tarifaCliente),
-        ...projectAssignments.filter(a => a.tarifaConsultor && a.tarifaCliente)
+        ...projectAssignments.filter(a => a.tarifaConsultor && a.tarifaCliente),
+        ...taskAssignments.filter(t => t.tarifaConsultor && t.tarifaCliente)
     ];
     console.log("💰 Asignaciones con tarifas:", assignmentsConTarifas.length);
 
     // Calcular contadores específicos de reportes
     const pendingReports = reports.filter(r => r.status === 'Pendiente');
     const approvedReports = reports.filter(r => r.status === 'Aprobado');
-    const generatedReports = Object.values(window.PortalDB.getGeneratedReports());
+    const generatedReports = typeof window.PortalDB.getGeneratedReports === 'function' 
+    ? Object.values(window.PortalDB.getGeneratedReports() || {})
+    : [];
     
     // ✅ ACTUALIZADO: Objeto con TODOS los contadores incluyendo Tarifario y Tareas
     const sidebarElements = {
@@ -429,7 +445,7 @@ function updateSupportsList() {
         supportDiv.innerHTML = `
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${support.id}</span>
+                    <span class="item-id">${support.supportId}</span>
                     <strong>${support.name}</strong>
                 </div>
                 <small style="color: #666;">
@@ -437,7 +453,7 @@ function updateSupportsList() {
                     ${support.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(support.description, 60)}` : ''}
                 </small>
             </div>
-            <button class="delete-btn" onclick="deleteSupport('${support.id}')" title="Eliminar soporte">
+            <button class="delete-btn" onclick="deleteSupport('${support.supportId}')" title="Eliminar soporte">
                 <i class="fa-solid fa-trash"></i>
             </button>
         `;
@@ -587,12 +603,12 @@ function updateApprovedReportsList() {
         let module = null;
         
         if (assignment) {
-            assignmentId = assignment.id;
+            assignmentId = assignment.assignmentId;
             user = currentData.users[assignment.userId];
             company = currentData.companies[assignment.companyId];
             module = currentData.modules[assignment.moduleId];
         } else if (projectAssignment) {
-            assignmentId = projectAssignment.id;
+            assignmentId = projectassignment.assignmentId;
             const consultorId = projectAssignment.consultorId || projectAssignment.userId;
             user = currentData.users[consultorId];
             company = currentData.companies[projectAssignment.companyId];
@@ -610,9 +626,9 @@ function updateApprovedReportsList() {
             if (!assignmentSummary[key]) {
                 assignmentSummary[key] = {
                     assignmentId: assignmentId,
-                    consultantId: user.id,
+                    consultantId: user.userId,
                     consultantName: user.name,
-                    companyId: company.id,
+                    companyId: company.companyId,
                     companyName: company.name,
                     moduleName: module.name,
                     totalHours: 0
@@ -706,6 +722,11 @@ function updateTableHeaders() {
 function updateCompaniesList() {
     const container = document.getElementById('companiesList');
     const companies = Object.values(currentData.companies);
+
+    const validCompanies = companies.filter(company => 
+        company.companyId && 
+        company.companyId !== 'undefined'
+    );
     
     if (companies.length === 0) {
         container.innerHTML = `
@@ -725,7 +746,7 @@ function updateCompaniesList() {
         companyDiv.innerHTML = `
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${company.id}</span>
+                    <span class="item-id">${company.companyId}</span>
                     <strong>${company.name}</strong>
                 </div>
                 <small style="color: #666;">
@@ -733,7 +754,7 @@ function updateCompaniesList() {
                     ${company.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(company.description, 60)}` : ''}
                 </small>
             </div>
-            <button class="delete-btn" onclick="deleteCompany('${company.id}')" title="Eliminar empresa">
+            <button class="delete-btn" onclick="deleteCompany('${company.companyId}')" title="Eliminar empresa">
                 <i class="fa-solid fa-trash"></i>
             </button>
         `;
@@ -764,7 +785,7 @@ function updateProjectsList() {
         projectDiv.innerHTML = `
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${project.id}</span>
+                    <span class="item-id">${project.projectId}</span>
                     <strong>${project.name}</strong>
                     <!-- <i class="fa-solid fa-check"></i> Sin badge de status -->
                 </div>
@@ -773,7 +794,7 @@ function updateProjectsList() {
                     ${project.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(project.description, 60)}` : ''}
                 </small>
             </div>
-            <button class="delete-btn" onclick="deleteProject('${project.id}')" title="Eliminar proyecto">
+            <button class="delete-btn" onclick="deleteProject('${project.projectId}')" title="Eliminar proyecto">
                 <i class="fa-solid fa-trash"></i>
             </button>
         `;
@@ -817,7 +838,7 @@ function updateTasksList() {
         taskDiv.innerHTML = `
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${task.id}</span>
+                    <span class="item-id">${task.taskAssignmentId}</span>
                     <strong>${task.name}</strong>
                     <span class="custom-badge" style="background: ${statusColors[task.status]}20; color: ${statusColors[task.status]}; border: 1px solid ${statusColors[task.status]};">
                         ${task.status}
@@ -833,7 +854,7 @@ function updateTasksList() {
                     ${task.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(task.description, 60)}` : ''}
                 </small>
             </div>
-            <button class="delete-btn" onclick="deleteTask('${task.id}')" title="Eliminar tarea">
+            <button class="delete-btn" onclick="deleteTask('${task.taskAssignmentId}')" title="Eliminar tarea">
                 <i class="fa-solid fa-trash"></i>
             </button>
         `;
@@ -864,7 +885,7 @@ function updateModulesList() {
         moduleDiv.innerHTML = `
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${module.id}</span>
+                    <span class="item-id">${module.moduleId}</span>
                     <strong>${module.name}</strong>
                 </div>
                 <small style="color: #666;">
@@ -872,7 +893,7 @@ function updateModulesList() {
                     ${module.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(module.description, 60)}` : ''}
                 </small>
             </div>
-            <button class="delete-btn" onclick="deleteModule('${module.id}')" title="Eliminar módulo">
+            <button class="delete-btn" onclick="deleteModule('${module.moduleId}')" title="Eliminar módulo">
                 <i class="fa-solid fa-trash"></i>
             </button>
         `;
@@ -897,7 +918,7 @@ function updateProjectAssignmentDropdowns() {
             data: Object.values(currentData.users).filter(user => 
                 user.role === 'consultor' && user.isActive !== false
             ),
-            getLabel: (user) => `${user.name} (${user.id})`
+            getLabel: (user) => `${user.name} (${user.userId})`
         },
         {
             id: 'assignProjectProject',
@@ -909,13 +930,13 @@ function updateProjectAssignmentDropdowns() {
             id: 'assignProjectCompany',
             defaultOption: 'Seleccionar empresa cliente',
             data: Object.values(currentData.companies),
-            getLabel: (company) => `${company.name} (${company.id})`
+            getLabel: (company) => `${company.name} (${company.companyId})`
         },
         {
             id: 'assignProjectModule',
             defaultOption: 'Seleccionar módulo',
             data: Object.values(currentData.modules),
-            getLabel: (module) => `${module.name} (${module.id})`
+            getLabel: (module) => `${module.name} (${module.moduleId})`
         }
     ];
     
@@ -978,11 +999,21 @@ function updateConsultorsList() {
 }
 
 function updateProjectAssignmentsList() {
-    const container = document.getElementById('projectAssignmentsList');
-    if (!container) return;
+    console.log('🔄 Actualizando lista de proyectos asignados...');
     
+    const container = document.getElementById('projectAssignmentsList');
+    
+    if (!container) {
+        console.error('❌ Container projectAssignmentsList no encontrado');
+        return;
+    }
+    
+    // Obtener todas las asignaciones de proyecto
     const assignments = Object.values(currentData.projectAssignments || {});
     
+    console.log('📊 Proyectos asignados:', assignments.length);
+    
+    // Si no hay asignaciones
     if (assignments.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -994,43 +1025,67 @@ function updateProjectAssignmentsList() {
         return;
     }
     
+    // Limpiar contenedor
     container.innerHTML = '';
+    
+    // Renderizar cada asignación de proyecto
     assignments.forEach(assignment => {
+        // ✅ FIX: Usar projectAssignmentId (NO assignmentId)
+        const projectAssignmentId = assignment.projectAssignmentId;
+        const displayId = projectAssignmentId ? projectAssignmentId.slice(-6) : 'N/A';
+        
+        // Obtener datos relacionados
         const project = currentData.projects[assignment.projectId];
         const company = currentData.companies[assignment.companyId];
         const module = currentData.modules[assignment.moduleId];
         const consultor = currentData.users[assignment.consultorId];
         
+        // Crear tarjeta de asignación
         const assignmentDiv = document.createElement('div');
         assignmentDiv.className = 'project-assignment-card';
+        
         assignmentDiv.innerHTML = `
             <div class="assignment-header">
                 <h3><i class="fa-solid fa-bullseye"></i> ${project?.name || 'Proyecto no encontrado'}</h3>
-                <span class="assignment-id">${assignment.id.slice(-6)}</span>
+                <span class="assignment-id">${displayId}</span>
             </div>
             
             <div class="assignment-details">
+                <p><strong><i class="fa-solid fa-user"></i> Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId || 'N/A'})</p>
                 <p><strong><i class="fa-solid fa-building"></i> Cliente:</strong> ${company?.name || 'No asignado'}</p>
                 <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No asignado'}</p>
-                <p><strong><i class="fa-solid fa-user"></i> Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId})</p>
+                <p><strong><i class="fa-solid fa-dollar-sign"></i> Tarifas:</strong> 
+                    Consultor: $${assignment.tarifaConsultor || 0}/hr | 
+                    Cliente: $${assignment.tarifaCliente || 0}/hr
+                </p>
+                <p><strong><i class="fa-solid fa-calendar"></i> Fecha de Asignación:</strong> ${window.DateUtils?.formatDate(assignment.createdAt) || 'N/A'}</p>
             </div>
             
             <div class="assignment-actions">
-                <button class="btn btn-danger btn-sm" onclick="deleteProjectAssignment('${assignment.id}')">
+                <button class="btn btn-danger btn-sm" onclick="deleteProjectAssignment('${projectAssignmentId}')">
                     <i class="fa-solid fa-trash"></i> Eliminar Asignación
                 </button>
             </div>
         `;
+        
         container.appendChild(assignmentDiv);
     });
+    
+    console.log('✅ Lista de proyectos asignados actualizada');
 }
-
 function updateAssignmentsList() {
+    console.log('🔄 Actualizando lista de asignaciones...');
+    
     const container = document.getElementById('assignmentsList');
     const recentContainer = document.getElementById('recentAssignments');
     
-    // 🔄 COMBINAR asignaciones de soporte Y proyecto
-    const supportAssignments = Object.values(currentData.assignments).map(a => ({
+    if (!container) {
+        console.error('❌ Container assignmentsList no encontrado');
+        return;
+    }
+    
+    // 🔄 COMBINAR asignaciones de soporte, proyecto Y tareas
+    const supportAssignments = Object.values(currentData.assignments || {}).map(a => ({
         ...a,
         assignmentType: 'support'
     }));
@@ -1040,89 +1095,155 @@ function updateAssignmentsList() {
         assignmentType: 'project'
     }));
     
-    const allAssignments = [...supportAssignments, ...projectAssignments];
+    const taskAssignments = Object.values(currentData.taskAssignments || {}).map(a => ({
+        ...a,
+        assignmentType: 'task'
+    }));
     
-    // Actualizar lista completa de asignaciones
-    if (container) {
-        if (allAssignments.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">🔗</div>
-                    <div class="empty-state-title">No hay asignaciones</div>
-                    <div class="empty-state-desc">Las asignaciones creadas aparecerán en esta lista</div>
-                </div>
-            `;
-        } else {
-            container.innerHTML = '';
-            allAssignments.forEach(assignment => {
-                const assignmentDiv = document.createElement('div');
-                assignmentDiv.className = 'item hover-lift';
+    const allAssignments = [...supportAssignments, ...projectAssignments, ...taskAssignments];
+    
+    console.log('📊 Total asignaciones:', {
+        soporte: supportAssignments.length,
+        proyecto: projectAssignments.length,
+        tareas: taskAssignments.length,
+        total: allAssignments.length
+    });
+    
+    // ============================================================
+    // LISTA COMPLETA
+    // ============================================================
+    if (allAssignments.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">🎯</div>
+                <div class="empty-state-title">No hay asignaciones</div>
+                <div class="empty-state-desc">Las asignaciones creadas aparecerán aquí</div>
+            </div>
+        `;
+    } else {
+        container.innerHTML = '';
+        
+        allAssignments.forEach(assignment => {
+            const assignmentDiv = document.createElement('div');
+            
+            // ✅ FIX: Obtener el ID correcto según el tipo
+            let assignmentId;
+            let displayId;
+            
+            if (assignment.assignmentType === 'support') {
+                assignmentId = assignment.assignmentId;
+                displayId = assignmentId ? assignmentId.slice(-6) : 'N/A';
                 
-                if (assignment.assignmentType === 'support') {
-                    // 🟦 ASIGNACIÓN DE SOPORTE
-                    const user = currentData.users[assignment.userId];
-                    const company = currentData.companies[assignment.companyId];
-                    const support = currentData.supports[assignment.supportId];
-                    const module = currentData.modules[assignment.moduleId];
+                assignmentDiv.className = 'assignment-card';
+                
+                const user = currentData.users[assignment.userId];
+                const company = currentData.companies[assignment.companyId];
+                const support = currentData.supports[assignment.supportId];
+                const module = currentData.modules[assignment.moduleId];
+                
+                assignmentDiv.innerHTML = `
+                    <div class="assignment-header">
+                        <h3><i class="fa-solid fa-phone"></i> Soporte: ${support?.name || 'No encontrado'}</h3>
+                        <span class="assignment-id">${displayId}</span>
+                    </div>
                     
-                    if (user && company && support && module) {
-                        assignmentDiv.innerHTML = `
-                            <div>
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                                    <span class="item-id">${assignment.id.slice(-6)}</span>
-                                    <strong>${user.name}</strong>
-                                    <span class="custom-badge" style="background: #3498db20; color: #3498db; border: 1px solid #3498db;">
-                                        📞 SOPORTE
-                                    </span>
-                                </div>
-                                <small style="color: #666;">
-                                    <i class="fa-solid fa-building"></i> ${company.name} | <i class="fa-solid fa-phone"></i> ${support.name}<br>
-                                    <i class="fa-solid fa-puzzle-piece"></i> ${module.name}<br>
-                                    <i class="fa-solid fa-calendar"></i> ${window.DateUtils.formatDate(assignment.createdAt)}
-                                </small>
-                            </div>
-                            <button class="delete-btn" onclick="deleteAssignment('${assignment.id}')" title="Eliminar asignación">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        `;
-                        container.appendChild(assignmentDiv);
-                    }
+                    <div class="assignment-details">
+                        <p><strong><i class="fa-solid fa-user"></i> Consultor:</strong> ${user?.name || 'No asignado'} (${assignment.userId || 'N/A'})</p>
+                        <p><strong><i class="fa-solid fa-building"></i> Cliente:</strong> ${company?.name || 'No asignado'}</p>
+                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No asignado'}</p>
+                        <p><strong><i class="fa-solid fa-dollar-sign"></i> Tarifas:</strong> 
+                            Consultor: $${assignment.tarifaConsultor || 0}/hr | 
+                            Cliente: $${assignment.tarifaCliente || 0}/hr
+                        </p>
+                    </div>
                     
-                } else if (assignment.assignmentType === 'project') {
-                    // 🟩 ASIGNACIÓN DE PROYECTO
-                    const consultor = currentData.users[assignment.consultorId];  // ✅ consultorId
-                    const company = currentData.companies[assignment.companyId];
-                    const project = currentData.projects[assignment.projectId];
-                    const module = currentData.modules[assignment.moduleId];
+                    <div class="assignment-actions">
+                        <button class="btn btn-danger btn-sm" onclick="deleteAssignment('${assignmentId}')">
+                            <i class="fa-solid fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                `;
+                
+            } else if (assignment.assignmentType === 'project') {
+                assignmentId = assignment.projectAssignmentId;
+                displayId = assignmentId ? assignmentId.slice(-6) : 'N/A';
+                
+                assignmentDiv.className = 'project-assignment-card';
+                
+                const consultor = currentData.users[assignment.consultorId];
+                const company = currentData.companies[assignment.companyId];
+                const project = currentData.projects[assignment.projectId];
+                const module = currentData.modules[assignment.moduleId];
+                
+                assignmentDiv.innerHTML = `
+                    <div class="assignment-header">
+                        <h3><i class="fa-solid fa-bullseye"></i> Proyecto: ${project?.name || 'No encontrado'}</h3>
+                        <span class="assignment-id">${displayId}</span>
+                    </div>
                     
-                    if (consultor && company && project && module) {
-                        assignmentDiv.innerHTML = `
-                            <div>
-                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                                    <span class="item-id">${assignment.id.slice(-6)}</span>
-                                    <strong>${consultor.name}</strong>
-                                    <span class="custom-badge" style="background: #e74c3c20; color: #e74c3c; border: 1px solid #e74c3c;">
-                                        <i class="fa-solid fa-clipboard"></i> PROYECTO
-                                    </span>
-                                </div>
-                                <small style="color: #666;">
-                                    <i class="fa-solid fa-building"></i> ${company.name} | <i class="fa-solid fa-clipboard"></i> ${project.name}<br>
-                                    <i class="fa-solid fa-puzzle-piece"></i> ${module.name}<br>
-                                    <i class="fa-solid fa-calendar"></i> ${window.DateUtils.formatDate(assignment.createdAt)}
-                                </small>
-                            </div>
-                            <button class="delete-btn" onclick="deleteProjectAssignment('${assignment.id}')" title="Eliminar asignación">
-                                <i class="fa-solid fa-trash"></i>
-                            </button>
-                        `;
-                        container.appendChild(assignmentDiv);
-                    }
-                }
-            });
-        }
+                    <div class="assignment-details">
+                        <p><strong><i class="fa-solid fa-user"></i> Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId || 'N/A'})</p>
+                        <p><strong><i class="fa-solid fa-building"></i> Cliente:</strong> ${company?.name || 'No asignado'}</p>
+                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No asignado'}</p>
+                        <p><strong><i class="fa-solid fa-dollar-sign"></i> Tarifas:</strong> 
+                            Consultor: $${assignment.tarifaConsultor || 0}/hr | 
+                            Cliente: $${assignment.tarifaCliente || 0}/hr
+                        </p>
+                    </div>
+                    
+                    <div class="assignment-actions">
+                        <button class="btn btn-danger btn-sm" onclick="deleteProjectAssignment('${assignmentId}')">
+                            <i class="fa-solid fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                `;
+                
+            } else if (assignment.assignmentType === 'task') {
+                assignmentId = assignment.taskAssignmentId;
+                displayId = assignmentId ? assignmentId.slice(-6) : 'N/A';
+                
+                assignmentDiv.className = 'task-assignment-card';
+                
+                const consultor = currentData.users[assignment.consultorId];
+                const company = currentData.companies[assignment.companyId];
+                const support = currentData.supports[assignment.linkedSupportId];
+                const module = currentData.modules[assignment.moduleId];
+                
+                assignmentDiv.innerHTML = `
+                    <div class="assignment-header">
+                        <h3><i class="fa-solid fa-tasks"></i> Tarea: ${assignment.descripcion ? assignment.descripcion.substring(0, 50) + '...' : 'Sin descripción'}</h3>
+                        <span class="assignment-id">${displayId}</span>
+                    </div>
+                    
+                    <div class="assignment-details">
+                        <p><strong><i class="fa-solid fa-user"></i> Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId || 'N/A'})</p>
+                        <p><strong><i class="fa-solid fa-building"></i> Cliente:</strong> ${company?.name || 'No asignado'}</p>
+                        <p><strong><i class="fa-solid fa-headset"></i> Soporte Vinculado:</strong> ${support?.name || 'No vinculado'}</p>
+                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No asignado'}</p>
+                        <p><strong><i class="fa-solid fa-dollar-sign"></i> Tarifas:</strong> 
+                            Consultor: $${assignment.tarifaConsultor || 0}/hr | 
+                            Cliente: $${assignment.tarifaCliente || 0}/hr
+                        </p>
+                    </div>
+                    
+                    <div class="assignment-actions">
+                        <button class="btn btn-sm btn-primary" onclick="editTask('${assignmentId}')">
+                            <i class="fa-solid fa-edit"></i> Editar
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deactivateTask('${assignmentId}')">
+                            <i class="fa-solid fa-trash"></i> Desactivar
+                        </button>
+                    </div>
+                `;
+            }
+            
+            container.appendChild(assignmentDiv);
+        });
     }
     
-    // Actualizar asignaciones recientes (últimas 5)
+    // ============================================================
+    // ASIGNACIONES RECIENTES (últimas 5)
+    // ============================================================
     if (recentContainer) {
         const recentAssignments = allAssignments
             .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
@@ -1138,6 +1259,7 @@ function updateAssignmentsList() {
             `;
         } else {
             recentContainer.innerHTML = '';
+            
             recentAssignments.forEach(assignment => {
                 const assignmentDiv = document.createElement('div');
                 assignmentDiv.className = 'item hover-lift';
@@ -1157,11 +1279,13 @@ function updateAssignmentsList() {
                                         <i class="fa-solid fa-phone"></i> SOPORTE
                                     </span>
                                     <span class="custom-badge badge-success">
-                                        ${window.DateUtils.formatRelativeTime(assignment.createdAt)}
+                                        ${window.DateUtils?.formatRelativeTime(assignment.createdAt) || 'Reciente'}
                                     </span>
                                 </div>
                                 <small style="color: #666;">
-                                    <i class="fa-solid fa-building"></i> ${company.name} | <i class="fa-solid fa-phone"></i> ${support.name} | <i class="fa-solid fa-puzzle-piece"></i> ${module.name}
+                                    <i class="fa-solid fa-building"></i> ${company.name} | 
+                                    <i class="fa-solid fa-phone"></i> ${support.name} | 
+                                    <i class="fa-solid fa-puzzle-piece"></i> ${module.name}
                                 </small>
                             </div>
                         `;
@@ -1169,7 +1293,7 @@ function updateAssignmentsList() {
                     }
                     
                 } else if (assignment.assignmentType === 'project') {
-                    const consultor = currentData.users[assignment.consultorId];  // ✅ consultorId
+                    const consultor = currentData.users[assignment.consultorId];
                     const company = currentData.companies[assignment.companyId];
                     const project = currentData.projects[assignment.projectId];
                     const module = currentData.modules[assignment.moduleId];
@@ -1183,11 +1307,41 @@ function updateAssignmentsList() {
                                         <i class="fa-solid fa-clipboard"></i> PROYECTO
                                     </span>
                                     <span class="custom-badge badge-success">
-                                        ${window.DateUtils.formatRelativeTime(assignment.createdAt)}
+                                        ${window.DateUtils?.formatRelativeTime(assignment.createdAt) || 'Reciente'}
                                     </span>
                                 </div>
                                 <small style="color: #666;">
-                                    <i class="fa-solid fa-building"></i> ${company.name} | <i class="fa-solid fa-clipboard"></i> ${project.name} | <i class="fa-solid fa-puzzle-piece"></i> ${module.name}
+                                    <i class="fa-solid fa-building"></i> ${company.name} | 
+                                    <i class="fa-solid fa-clipboard"></i> ${project.name} | 
+                                    <i class="fa-solid fa-puzzle-piece"></i> ${module.name}
+                                </small>
+                            </div>
+                        `;
+                        recentContainer.appendChild(assignmentDiv);
+                    }
+                    
+                } else if (assignment.assignmentType === 'task') {
+                    const consultor = currentData.users[assignment.consultorId];
+                    const company = currentData.companies[assignment.companyId];
+                    const support = currentData.supports[assignment.linkedSupportId];
+                    const module = currentData.modules[assignment.moduleId];
+                    
+                    if (consultor && company && module) {
+                        assignmentDiv.innerHTML = `
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
+                                    <strong>${consultor.name}</strong>
+                                    <span class="custom-badge" style="background: #9b59b620; color: #9b59b6; border: 1px solid #9b59b6;">
+                                        <i class="fa-solid fa-tasks"></i> TAREA
+                                    </span>
+                                    <span class="custom-badge badge-success">
+                                        ${window.DateUtils?.formatRelativeTime(assignment.createdAt) || 'Reciente'}
+                                    </span>
+                                </div>
+                                <small style="color: #666;">
+                                    <i class="fa-solid fa-building"></i> ${company.name} | 
+                                    ${support ? `<i class="fa-solid fa-headset"></i> ${support.name} | ` : ''}
+                                    <i class="fa-solid fa-puzzle-piece"></i> ${module.name}
                                 </small>
                             </div>
                         `;
@@ -1197,6 +1351,8 @@ function updateAssignmentsList() {
             });
         }
     }
+    
+    console.log('✅ Lista de asignaciones actualizada');
 }
 
 function updateReportsList() {
@@ -1248,7 +1404,7 @@ function updateReportsList() {
             if (user) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><span class="consultant-id">${user.id}</span></td>
+                    <td><span class="consultant-id">${user.userId}</span></td>
                     <td><span class="consultant-name">${user.name}</span></td>
                     <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
                     <td><span class="project-name">${support ? support.name : 'Sin soporte'}</span></td>
@@ -1317,41 +1473,71 @@ function updateDropdowns() {
     currentData.supports = currentData.supports || {};
     currentData.modules = currentData.modules || {};
     currentData.assignments = currentData.assignments || {};
+
+    // ✅ AGREGAR ESTA FUNCIÓN HELPER AQUÍ
+    const getItemId = (item, type) => {
+        switch(type) {
+            case 'user': return item.userId;
+            case 'company': return item.companyId;
+            case 'support': return item.supportId;
+            case 'module': return item.moduleId;
+            case 'project': return item.projectId;
+            default: return item.id;
+        }
+    };
+    // ✅ FIN DE LA FUNCIÓN HELPER
     
     // Lista de elementos que vamos a actualizar
     const elementsToUpdate = [
         {
-            id: 'assignUser',
-            defaultOption: 'Seleccionar usuario',
-            getData: () => Object.values(currentData.users).filter(user => 
-                user.role === 'consultor' && user.isActive !== false
-            ),
-            getLabel: (user) => {
-                const userAssignments = Object.values(currentData.assignments).filter(a => 
-                    a.userId === user.id && a.isActive
-                );
-                return `${user.name} (${user.id})${userAssignments.length > 0 ? ` - ${userAssignments.length} asignación(es)` : ''}`;
-            }
-        },
-        {
-            id: 'assignCompany',
-            defaultOption: 'Seleccionar empresa',
-            getData: () => Object.values(currentData.companies),
-            getLabel: (company) => `${company.name} (${company.id})`
-        },
-        {
-            id: 'assignSupport',
-            defaultOption: 'Seleccionar Soporte',
-            getData: () => Object.values(currentData.supports),
-            getLabel: (support) => `${support.name} (${support.id})`
-        },
-        {
-            id: 'assignModule',
-            defaultOption: 'Seleccionar Módulo',
-            getData: () => Object.values(currentData.modules),
-            getLabel: (module) => `${module.name} (${module.id})`
+        id: 'assignUser',
+        type: 'user',
+        defaultOption: 'Seleccionar usuario',
+        getData: () => Object.values(currentData.users).filter(user => 
+            user.role === 'consultor' && 
+            user.isActive !== false &&
+            user.userId &&  // ✅ AGREGAR ESTA LÍNEA
+            user.userId !== 'undefined'  // ✅ AGREGAR ESTA LÍNEA
+        ),
+        getLabel: (user) => {
+            const userAssignments = Object.values(currentData.assignments).filter(a => 
+                a.userId === user.userId && a.isActive
+            );
+            return `${user.name} (${user.userId})${userAssignments.length > 0 ? 
+                ` - ${userAssignments.length} asignación(es)` : ''}`;
         }
-    ];
+    },
+        {
+    id: 'assignCompany',
+    type: 'company',
+    defaultOption: 'Seleccionar empresa',
+    getData: () => Object.values(currentData.companies).filter(company =>
+        company.companyId &&  // ✅ AGREGAR
+        company.companyId !== 'undefined'  // ✅ AGREGAR
+    ),
+    getLabel: (company) => `${company.name} (${company.companyId})`
+    },
+    {
+        id: 'assignSupport',
+        type: 'support',
+        defaultOption: 'Seleccionar Soporte',
+        getData: () => Object.values(currentData.supports).filter(support =>
+            support.supportId &&  // ✅ AGREGAR
+            support.supportId !== 'undefined'  // ✅ AGREGAR
+        ),
+        getLabel: (support) => `${support.name} (${support.supportId})`
+    },
+    {
+        id: 'assignModule',
+        type: 'module',
+        defaultOption: 'Seleccionar Módulo',
+        getData: () => Object.values(currentData.modules).filter(module =>
+            module.moduleId &&  // ✅ AGREGAR
+            module.moduleId !== 'undefined'  // ✅ AGREGAR
+        ),
+        getLabel: (module) => `${module.name} (${module.moduleId})`
+    }
+  ];
     
     // VERIFICACIÓN PREVIA: Verificar que TODOS los elementos existen
     console.log('🔍 === VERIFICACIÓN PREVIA DE ELEMENTOS ===');
@@ -1441,22 +1627,11 @@ function updateDropdowns() {
             console.log(`📊 Datos obtenidos para ${config.id}: ${data.length} elementos`);
             
             if (data && data.length > 0) {
-                data.forEach((item, itemIndex) => {
-                    try {
-                        // RE-VERIFICAR elemento antes de cada appendChild
-                        element = document.getElementById(config.id);
-                        if (!element) {
-                            console.error(`❌ CRÍTICO: ${config.id} desapareció durante appendChild ${itemIndex}`);
-                            return;
-                        }
-                        
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = config.getLabel(item);
-                        element.appendChild(option);
-                    } catch (appendError) {
-                        console.error(`❌ Error añadiendo opción ${itemIndex} a ${config.id}:`, appendError);
-                    }
+                data.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = getItemId(item, config.type);  // ✅ CAMBIADO: Usa la función helper
+                    option.textContent = config.getLabel(item);
+                    element.appendChild(option);
                 });
                 console.log(`✅ ${config.id} actualizado con ${data.length} opciones`);
             } else {
@@ -2051,9 +2226,9 @@ function setupEventListeners() {
     });
 
     // Auto-actualización silenciosa cada 30 segundos
-    setInterval(() => {
+    setInterval(async () => {
         if (!isAdminInteracting()) {
-            silentAdminRefresh();
+            await silentAdminRefresh();  // ← Agregar await
         }
     }, 30000);
 }
@@ -2087,25 +2262,24 @@ function isAdminInteracting() {
 }
 
 // Actualización silenciosa en segundo plano
-function silentAdminRefresh() {
+async function silentAdminRefresh() {
+    console.log('🔄 Actualización silenciosa en segundo plano...');
+    
     try {
-        console.log('🔄 Actualización silenciosa en segundo plano...');
+        // ✅ CORRECTO: Con await
+        currentData.users = await window.PortalDB.getUsers() || {};
+        currentData.companies = await window.PortalDB.getCompanies() || {};
+        currentData.projects = await window.PortalDB.getProjects() || {};
+        currentData.assignments = await window.PortalDB.getAssignments() || {};
+        currentData.supports = await window.PortalDB.getSupports() || {};
+        currentData.modules = await window.PortalDB.getModules() || {};
+        currentData.reports = await window.PortalDB.getReports() || {};
+        currentData.projectAssignments = await window.PortalDB.getProjectAssignments() || {};
+        currentData.taskAssignments = await window.PortalDB.getTaskAssignments() || {};
         
-        // Actualizar solo datos en memoria
-        currentData.users = window.PortalDB.getUsers() || {};
-        currentData.companies = window.PortalDB.getCompanies() || {};
-        currentData.projects = window.PortalDB.getProjects() || {};
-        currentData.assignments = window.PortalDB.getAssignments() || {};
-        currentData.supports = window.PortalDB.getSupports() || {};
-        currentData.modules = window.PortalDB.getModules() || {};
-        currentData.reports = window.PortalDB.getReports() || {};
-        currentData.projectAssignments = window.PortalDB.getProjectAssignments() || {};
-        
-        // Solo actualizar contadores del sidebar
         updateSidebarCounts();
         
         console.log('✅ Datos actualizados en segundo plano');
-        
     } catch (error) {
         console.error('Error en actualización silenciosa:', error);
     }
@@ -2168,6 +2342,11 @@ function showSection(sectionName) {
     // CASO ESPECIAL: Crear asignación - ESPERAR ANIMACIÓN
     if (sectionName === 'crear-asignacion') {
         console.log('📝 Preparando sección crear-asignacion - ESPERANDO ANIMACIÓN...');
+
+        setTimeout(() => {
+            console.log('🔄 Ejecutando updateDropdowns desde showSection...');
+            updateDropdowns();
+        }, 300);
         
         // Esperar a que la animación CSS termine completamente
         waitForAnimationComplete(targetSection, () => {
@@ -2363,7 +2542,7 @@ function showUserCredentials(user) {
                 </div>
                 <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 15px 0;">
                     <p><strong>Nombre:</strong> ${user.name}</p>
-                    <p><strong>ID de Usuario:</strong> <code style="background: #e9ecef; padding: 4px 8px; border-radius: 4px;">${user.id}</code></p>
+                    <p><strong>ID de Usuario:</strong> <code style="background: #e9ecef; padding: 4px 8px; border-radius: 4px;">${user.userId}</code></p>
                     <p><strong>Contraseña Única:</strong> <code style="background: #e9ecef; padding: 4px 8px; border-radius: 4px;">${user.password}</code></p>
                     ${user.email ? `<p><strong>Email:</strong> ${user.email}</p>` : ''}
                 </div>
@@ -2743,7 +2922,7 @@ function viewUserAssignments(userId) {
                             
                             // Calcular reportes y horas para esta asignación
                             const assignmentReports = Object.values(currentData.reports).filter(r => 
-                                r.assignmentId === assignment.id || (r.userId === userId && !r.assignmentId)
+                                r.assignmentId === assignment.assignmentId || (r.userId === userId && !r.assignmentId)
                             );
                             const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
                             
@@ -2751,7 +2930,7 @@ function viewUserAssignments(userId) {
                                 <div class="assignment-detail-card">
                                     <div class="assignment-detail-header">
                                         <h4>🏢 ${company?.name || 'Empresa no encontrada'}</h4>
-                                        <span class="assignment-id">ID: ${assignment.id.slice(-6)}</span>
+                                        <span class="assignment-id">ID: ${assignment.assignmentId.slice(-6)}</span>
                                     </div>
                                     <div class="assignment-detail-body">
                                         <p><strong><i class="fa-solid fa-clipboard"></i> Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
@@ -2762,7 +2941,7 @@ function viewUserAssignments(userId) {
                                         <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
                                     </div>
                                     <div class="assignment-actions">
-                                        <button class="btn btn-sm btn-danger" onclick="deleteAssignment('${assignment.id}'); this.closest('.modal').remove(); loadAllData();">
+                                        <button class="btn btn-sm btn-danger" onclick="deleteAssignment('${assignment.assignmentId}'); this.closest('.modal').remove(); loadAllData();">
                                             <i class="fa-solid fa-trash"></i> Eliminar Asignación
                                         </button>
                                     </div>
@@ -2848,131 +3027,6 @@ function diagnosticAnimationState() {
     });
 }
 
-// Modificar la función updateDropdowns para mostrar usuarios con múltiples asignaciones
-function updateDropdowns() {
-    console.log('🔄 === INICIANDO updateDropdowns SIMPLIFICADO ===');
-    
-    // Verificar datos básicos
-    if (!currentData || !currentData.users || !currentData.companies || !currentData.supports || !currentData.modules) {
-        console.error('❌ Datos no disponibles');
-        return;
-    }
-    
-    // Configuración de elementos
-    const elementsConfig = [
-        {
-            id: 'assignUser',
-            defaultOption: 'Seleccionar usuario',
-            data: Object.values(currentData.users).filter(user => 
-                user.role === 'consultor' && user.isActive !== false
-            ),
-            getLabel: (user) => `${user.name} (${user.id})`
-        },
-        {
-            id: 'assignCompany',
-            defaultOption: 'Seleccionar empresa',
-            data: Object.values(currentData.companies),
-            getLabel: (company) => `${company.name} (${company.id})`
-        },
-        {
-            id: 'assignSupport',
-            defaultOption: 'Seleccionar Soporte',
-            data: Object.values(currentData.supports),
-            getLabel: (support) => `${support.name} (${support.id})`
-        },
-        {
-            id: 'assignModule',
-            defaultOption: 'Seleccionar Módulo',
-            data: Object.values(currentData.modules),
-            getLabel: (module) => `${module.name} (${module.id})`
-        }
-    ];
-    
-    // Actualizar cada elemento de forma muy segura
-    elementsConfig.forEach(config => {
-        try {
-            console.log(`🔄 Actualizando ${config.id}...`);
-            
-            // Obtener elemento con múltiples intentos
-            let element = null;
-            let attempts = 0;
-            const maxAttempts = 3;
-            
-            while (!element && attempts < maxAttempts) {
-                element = document.getElementById(config.id);
-                if (!element) {
-                    console.warn(`⚠️ Intento ${attempts + 1}: ${config.id} no encontrado, esperando...`);
-                    attempts++;
-                    // Esperar un poco antes del siguiente intento
-                    if (attempts < maxAttempts) {
-                        // Usar una espera síncrona corta
-                        const start = Date.now();
-                        while (Date.now() - start < 100) {
-                            // Espera activa de 100ms
-                        }
-                        continue;
-                    }
-                }
-            }
-            
-            if (!element) {
-                console.error(`❌ ${config.id} no encontrado después de ${maxAttempts} intentos`);
-                return;
-            }
-            
-            // Verificar que sea un select válido
-            if (element.tagName !== 'SELECT') {
-                console.error(`❌ ${config.id} no es un elemento SELECT, es: ${element.tagName}`);
-                return;
-            }
-            
-            // Limpiar opciones de forma muy segura
-            try {
-                // Método alternativo más seguro que innerHTML
-                element.length = 0; // Esto limpia todas las opciones
-                
-                // Agregar opción por defecto
-                const defaultOption = document.createElement('option');
-                defaultOption.value = '';
-                defaultOption.textContent = config.defaultOption;
-                element.appendChild(defaultOption);
-                
-            } catch (clearError) {
-                console.error(`❌ Error limpiando ${config.id}:`, clearError);
-                // Fallback: usar innerHTML si falla el método anterior
-                try {
-                    element.innerHTML = `<option value="">${config.defaultOption}</option>`;
-                } catch (innerHTMLError) {
-                    console.error(`❌ Error con innerHTML en ${config.id}:`, innerHTMLError);
-                    return;
-                }
-            }
-            
-            // Agregar opciones de datos
-            if (config.data && config.data.length > 0) {
-                config.data.forEach(item => {
-                    try {
-                        const option = document.createElement('option');
-                        option.value = item.id;
-                        option.textContent = config.getLabel(item);
-                        element.appendChild(option);
-                    } catch (optionError) {
-                        console.warn(`⚠️ Error agregando opción a ${config.id}:`, optionError);
-                    }
-                });
-                console.log(`✅ ${config.id} actualizado con ${config.data.length} opciones`);
-            } else {
-                console.log(`⚠️ ${config.id} actualizado sin datos`);
-            }
-            
-        } catch (error) {
-            console.error(`❌ Error general actualizando ${config.id}:`, error);
-        }
-    });
-    
-    console.log('✅ === updateDropdowns COMPLETADO ===');
-}
-
 function createProjectAssignment() {
     const userId = document.getElementById('assignProjectConsultor').value;
     const projectId = document.getElementById('assignProjectProject').value;
@@ -3032,7 +3086,14 @@ function updateUsersList() {
     if (!container) return;
     
     const users = Object.values(currentData.users);
-    const consultorUsers = users.filter(user => user.role === 'consultor' && user.isActive !== false);
+    
+    // ✅ FILTRO MEJORADO - Excluye usuarios sin userId válido
+    const consultorUsers = users.filter(user => 
+        user.role === 'consultor' && 
+        user.isActive !== false &&
+        user.userId &&
+        user.userId !== 'undefined'
+    );
     
     if (consultorUsers.length === 0) {
         container.innerHTML = `
@@ -3049,7 +3110,7 @@ function updateUsersList() {
     consultorUsers.forEach(user => {
         // Obtener asignaciones del usuario
         const userAssignments = Object.values(currentData.assignments).filter(a => 
-            a.userId === user.id && a.isActive
+            a.userId === user.userId && a.isActive
         );
         
         const userDiv = document.createElement('div');
@@ -3057,7 +3118,7 @@ function updateUsersList() {
         userDiv.innerHTML = `
             <div>
                 <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${user.id}</span>
+                    <span class="item-id">${user.userId}</span>
                     <strong>${user.name}</strong>
                     ${userAssignments.length > 1 ? 
                         `<span class="custom-badge badge-info">Múltiple (${userAssignments.length})</span>` : 
@@ -3070,7 +3131,7 @@ function updateUsersList() {
                     <small style="color: #666;">
                         <i class="fa-solid fa-calendar"></i> Registrado: ${window.DateUtils.formatDate(user.createdAt)}
                         ${user.email ? `<br><i class="fa-solid fa-envelope"></i> ${user.email}` : ''}
-                        <br><i class="fa-solid fa-key"></i> Contraseña: <strong style="color: #e74c3c;">${user.password}</strong>
+                        ${user.password ? `<br><i class="fa-solid fa-key"></i> Contraseña: <strong style="color: #e74c3c;">${user.password}</strong>` : ''}
                     </small>
                     ${userAssignments.length > 0 ? `
                         <div class="user-assignment-count">
@@ -3079,13 +3140,13 @@ function updateUsersList() {
                     ` : ''}
                 </div>
                 ${userAssignments.length > 1 ? `
-                    <button class="btn-sm btn-info" onclick="viewUserAssignments('${user.id}')" style="margin-top: 5px;">
+                    <button class="btn-sm btn-info" onclick="viewUserAssignments('${user.userId}')" style="margin-top: 5px;">
                         <i class="fa-solid fa-eye"></i> Ver Asignaciones (${userAssignments.length})
                     </button>
                 ` : ''}
             </div>
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <button class="delete-btn" onclick="deleteUser('${user.id}')" title="Eliminar usuario">
+                <button class="delete-btn" onclick="deleteUser('${user.userId}')" title="Eliminar usuario">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             </div>
@@ -3144,7 +3205,7 @@ function getDateRangeText(timeFilterId, startDateId, endDateId) {
     }
 }
 
-function updateGeneratedReportsList() {
+async function updateGeneratedReportsList() {  // ✅ AGREGADO: async
     const tableBody = document.getElementById('generatedReportsTableBody');
     const timeFilter = document.getElementById('historialTimeFilter');
     const typeFilter = document.getElementById('historialTypeFilter');
@@ -3164,8 +3225,46 @@ function updateGeneratedReportsList() {
         }
     }
     
-    const allReportsUnfiltered = Object.values(window.PortalDB.getGeneratedReports());
+    // ✅ AGREGADO: await
+    const allReportsUnfiltered = Object.values(await window.PortalDB.getGeneratedReports());
     let filteredReports = allReportsUnfiltered;
+    
+    // ✅ AGREGADO: Validación cuando no hay reportes (funcionalidad no implementada)
+    if (allReportsUnfiltered.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="9" class="empty-table-message">
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fa-solid fa-info-circle"></i></div>
+                        <div class="empty-state-title">Historial de Reportes No Disponible</div>
+                        <div class="empty-state-desc">
+                            Esta funcionalidad no está implementada en el backend de MongoDB.<br>
+                            Los reportes se pueden generar y descargar normalmente,<br>
+                            pero el historial de descargas no se guarda.<br><br>
+                            <strong>📊 Funcionalidades que SÍ funcionan:</strong><br>
+                            ✅ Generar reportes Excel<br>
+                            ✅ Descargar reportes<br>
+                            ✅ Vista previa de reportes<br><br>
+                            <strong>⚠️ Funcionalidad no disponible:</strong><br>
+                            ❌ Historial de reportes descargados
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+        
+        // Actualizar estadísticas a 0
+        updateGeneratedReportsStats([]);
+        
+        // Actualizar texto informativo
+        if (filterInfo) {
+            filterInfo.textContent = 'Funcionalidad no disponible';
+        }
+        
+        return;  // ✅ Salir temprano si no hay reportes
+    }
+    
+    // === RESTO DEL CÓDIGO ORIGINAL (sin cambios) ===
     
     // Filtrar por fecha
     if (timeFilter) {
@@ -3636,8 +3735,8 @@ function populateFilterDropdowns(reportType) {
         Object.values(currentData.users).forEach(user => {
             if (user.role === 'consultor' && user.isActive !== false) {
                 const option = document.createElement('option');
-                option.value = user.id;
-                option.textContent = `${user.name} (${user.id})`;
+                option.value = user.userId;
+                option.textContent = `${user.name} (${user.userId})`;
                 consultantFilter.appendChild(option);
             }
         });
@@ -3649,8 +3748,8 @@ function populateFilterDropdowns(reportType) {
         clientFilter.innerHTML = '<option value="">Seleccionar cliente...</option>';
         Object.values(currentData.companies).forEach(company => {
             const option = document.createElement('option');
-            option.value = company.id;
-            option.textContent = `${company.name} (${company.id})`;
+            option.value = company.companyId;
+            option.textContent = `${company.name} (${company.companyId})`;
             clientFilter.appendChild(option);
         });
     }
@@ -3661,7 +3760,7 @@ function populateFilterDropdowns(reportType) {
         supportFilter.innerHTML = '<option value="all">Todos los Soportes</option>';
         Object.values(currentData.supports).forEach(support => {
             const option = document.createElement('option');
-            option.value = support.id;
+            option.value = support.supportId;
             option.textContent = support.name;
             supportFilter.appendChild(option);
         });
@@ -3673,7 +3772,7 @@ function populateFilterDropdowns(reportType) {
         projectFilter.innerHTML = '<option value="all">Todos los Proyectos</option>';
         Object.values(currentData.projects).forEach(project => {
             const option = document.createElement('option');
-            option.value = project.id;
+            option.value = project.projectId;
             option.textContent = project.name;
             projectFilter.appendChild(option);
         });
@@ -3685,7 +3784,7 @@ if (supportTypeFilter && currentData.supports) {
     supportTypeFilter.innerHTML = '<option value="">Seleccionar soporte específico...</option>';
     Object.values(currentData.supports).forEach(support => {
         const option = document.createElement('option');
-        option.value = support.id;
+        option.value = support.supportId;
         option.textContent = support.name;
         supportTypeFilter.appendChild(option);
     });
@@ -3770,7 +3869,7 @@ function updateSupportTypeFilterByClient(clientId) {
             const support = currentData.supports?.[assignment.supportId];
             if (support) {
                 uniqueSupports.add(JSON.stringify({
-                    id: support.id,
+                    id: support.supportId,
                     name: support.name
                 }));
             }
@@ -3781,7 +3880,7 @@ function updateSupportTypeFilterByClient(clientId) {
     Array.from(uniqueSupports).forEach(supportStr => {
         const support = JSON.parse(supportStr);
         const option = document.createElement('option');
-        option.value = support.id;
+        option.value = support.supportId;
         option.textContent = support.name;
         supportTypeFilter.appendChild(option);
     });
@@ -3814,7 +3913,7 @@ function updateProjectFilterByClient(clientId) {
             const project = currentData.projects?.[assignment.projectId];
             if (project) {
                 uniqueProjects.add(JSON.stringify({
-                    id: project.id,
+                    id: project.projectId,
                     name: project.name
                 }));
             }
@@ -3825,7 +3924,7 @@ function updateProjectFilterByClient(clientId) {
     Array.from(uniqueProjects).forEach(projectStr => {
         const project = JSON.parse(projectStr);
         const option = document.createElement('option');
-        option.value = project.id;
+        option.value = project.projectId;
         option.textContent = project.name;
         projectFilter.appendChild(option);
     });
@@ -4826,8 +4925,8 @@ function getRemanenteProjectData(reports, clientId, monthKey, projectSelection) 
         
         if (!project || !module) return;
         
-        const projectKey = project.id;
-        const moduleKey = module.id;
+        const projectKey = project.projectId;
+        const moduleKey = module.moduleId;
         
         // Inicializar proyecto si no existe
         if (!projectData[projectKey]) {
@@ -6796,15 +6895,15 @@ let currentTarifarioFilter = 'all';
 /**
  * Cargar datos del tarifario
  */
-function loadTarifario() {
+async function loadTarifario() {  // ✅ AGREGAR async
     console.log('💰 Cargando tarifario...');
     
-    if (!window.PortalDB) {
-        console.error('PortalDB no disponible');
+    if (!currentData || !currentData.users) {
+        console.warn('⚠️ currentData no disponible');
         return;
     }
     
-    const tarifario = window.PortalDB.getTarifario();
+    const tarifario = await window.PortalDB.getTarifario();  // ✅ AGREGAR await
     
     console.log('Tarifario cargado:', Object.keys(tarifario).length, 'entradas');
     
@@ -6823,11 +6922,11 @@ function loadTarifario() {
 /**
  * Actualizar tabla de unión (principal)
  */
-function updateTarifarioTable(filterType = 'all') {
+  async function updateTarifarioTable(filterType = 'all') {
     const tbody = document.getElementById('tarifarioTableBody');
     if (!tbody) return;
     
-    const tarifario = window.PortalDB.getTarifario();
+    const tarifario = await window.PortalDB.getTarifario();
     let tarifas = Object.values(tarifario);
     
     // Aplicar filtro
@@ -6923,12 +7022,59 @@ function createTarifaRow(tarifa) {
 /**
  * Actualizar tabla de consultores
  */
-function updateConsultoresTable() {
-    const tbody = document.getElementById('consultoresTableBody');
-    if (!tbody) return;
+ async function updateConsultoresTable() {  // ✅ Agregar async si no lo tiene
+    console.log('👥 Actualizando tabla de consultores...');
     
-    const consultoresResumen = window.PortalDB.getConsultoresResumen();
-    const consultores = Object.values(consultoresResumen);
+    const tbody = document.getElementById('consultoresTableBody');
+    if (!tbody) {
+        console.error('❌ consultoresTableBody no encontrado');
+        return;
+    }
+    
+    const tarifario = await window.PortalDB.getTarifario();  // ✅ Agregar await
+    const tarifas = Object.values(tarifario);
+    
+    // Agrupar por consultor
+    const consultoresMap = {};
+    
+    tarifas.forEach(tarifa => {
+        const consultorId = tarifa.consultorId;
+        
+        if (!consultorId || consultorId === 'undefined') {
+            console.warn('⚠️ Tarifa sin consultorId válido:', tarifa);
+            return;
+        }
+        
+        if (!consultoresMap[consultorId]) {
+            consultoresMap[consultorId] = {
+                id: consultorId,
+                nombre: tarifa.consultorNombre || 'Nombre no disponible',  // ✅ Valor por defecto
+                totalAsignaciones: 0,
+                modulos: new Set(),
+                clientes: new Set(),
+                sumaTarifas: 0
+            };
+        }
+        
+        consultoresMap[consultorId].totalAsignaciones++;
+        
+        // Agregar módulo si existe
+        if (tarifa.moduloNombre && tarifa.moduloNombre !== 'undefined') {
+            consultoresMap[consultorId].modulos.add(tarifa.moduloNombre);
+        }
+        
+        // Agregar cliente si existe
+        if (tarifa.clienteNombre && tarifa.clienteNombre !== 'undefined') {
+            consultoresMap[consultorId].clientes.add(tarifa.clienteNombre);
+        }
+        
+        // Sumar tarifa
+        consultoresMap[consultorId].sumaTarifas += (tarifa.costoConsultor || 0);
+    });
+    
+    const consultores = Object.values(consultoresMap);
+    
+    console.log('📊 Consultores procesados:', consultores.length);
     
     // Actualizar contador
     const countElement = document.getElementById('consultoresCount');
@@ -6939,15 +7085,15 @@ function updateConsultoresTable() {
     // Limpiar tabla
     tbody.innerHTML = '';
     
-    // Si no hay datos
+    // Si no hay consultores
     if (consultores.length === 0) {
         tbody.innerHTML = `
             <tr>
                 <td colspan="6" class="empty-state-cell">
                     <div class="empty-state">
-                        <div class="empty-state-icon"><i class="fa-solid fa-users"></i></div>
+                        <div class="empty-state-icon"><i class="fa-solid fa-user"></i></div>
                         <div class="empty-state-title">No hay consultores con asignaciones</div>
-                        <div class="empty-state-desc">Asigne proyectos o soportes a consultores</div>
+                        <div class="empty-state-desc">Asigne proyectos o soportes a consultores para ver el resumen</div>
                     </div>
                 </td>
             </tr>
@@ -6957,26 +7103,30 @@ function updateConsultoresTable() {
     
     // Renderizar filas
     consultores.forEach(consultor => {
+        const promedioTarifa = consultor.totalAsignaciones > 0 
+            ? (consultor.sumaTarifas / consultor.totalAsignaciones) 
+            : 0;
+        
         const row = document.createElement('tr');
-        
         row.innerHTML = `
-            <td><code>${consultor.id}</code></td>
-            <td><strong>${consultor.nombre}</strong></td>
-            <td><span class="badge">${consultor.totalAsignaciones}</span></td>
-            <td><small>${consultor.modulos || 'N/A'}</small></td>
-            <td><small>${consultor.clientes || 'N/A'}</small></td>
-            <td><strong>${formatCurrency(consultor.promedioTarifa)}</strong></td>
+            <td><strong>${consultor.id}</strong></td>
+            <td>${consultor.nombre}</td>
+            <td>${consultor.totalAsignaciones}</td>
+            <td>${consultor.modulos.size > 0 ? Array.from(consultor.modulos).join(', ') : 'N/A'}</td>
+            <td>${consultor.clientes.size > 0 ? Array.from(consultor.clientes).join(', ') : 'N/A'}</td>
+            <td><strong>$${promedioTarifa.toFixed(2)}</strong></td>
         `;
-        
         tbody.appendChild(row);
     });
+    
+    console.log('✅ Tabla de consultores actualizada');
 }
 
 /**
  * Actualizar estadísticas del tarifario
  */
-function updateTarifarioStats() {
-    const tarifario = window.PortalDB.getTarifario();
+ async function updateTarifarioStats() {
+    const tarifario = await window.PortalDB.getTarifario();
     const tarifas = Object.values(tarifario);
     
     // Total asignaciones
@@ -7025,8 +7175,8 @@ function filterTarifarioByType(type) {
 /**
  * Ver detalles de una tarifa
  */
-function viewTarifaDetails(tarifaId) {
-    const tarifario = window.PortalDB.getTarifario();
+ async function viewTarifaDetails(tarifaId) {
+    const tarifario = await window.PortalDB.getTarifario();
     const tarifa = tarifario[tarifaId];
     
     if (!tarifa) {
@@ -7072,11 +7222,11 @@ function viewTarifaDetails(tarifaId) {
 /**
  * Editar tarifa inline
  */
-function editTarifaInline(tarifaId, campo) {
+ async function editTarifaInline(tarifaId, campo) {
     const element = document.querySelector(`[data-tarifa-id="${tarifaId}"][data-field="${campo}"]`);
     if (!element) return;
     
-    const tarifario = window.PortalDB.getTarifario();
+    const tarifario = await window.PortalDB.getTarifario();
     const tarifa = tarifario[tarifaId];
     if (!tarifa) return;
     
@@ -7461,7 +7611,7 @@ async function exportTarifarioToExcel() {
             return;
         }
         
-        const tarifario = window.PortalDB.getTarifario();
+        const tarifario = await window.PortalDB.getTarifario();
         const tarifas = Object.values(tarifario);
         
         if (tarifas.length === 0) {
@@ -7533,7 +7683,7 @@ async function exportTarifarioToExcel() {
 /**
  * Cargar sección de tareas
  */
-function loadTaskAssignments() {
+async function loadTaskAssignments() {
     console.log('📋 Cargando asignaciones de tareas...');
     
     if (!window.PortalDB) {
@@ -7541,11 +7691,11 @@ function loadTaskAssignments() {
         return;
     }
     
-    // Cargar filtros
-    loadTaskFilters();
+    // Cargar filtros (ahora asíncrono)
+    await loadTaskFilters();
     
-    // Cargar tabla
-    filterTasks();
+    // Cargar tabla (ahora asíncrono)
+    await filterTasks();
     
     console.log('✅ Tareas cargadas');
 }
@@ -7553,11 +7703,11 @@ function loadTaskAssignments() {
 /**
  * Cargar filtros de tareas
  */
-function loadTaskFilters() {
+async function loadTaskFilters() {
     const currentData = {
-        companies: window.PortalDB.getCompanies(),
-        supports: window.PortalDB.getSupports(),
-        users: window.PortalDB.getUsers()
+        companies: await window.PortalDB.getCompanies(),
+        supports: await window.PortalDB.getSupports(),
+        users: await window.PortalDB.getUsers()
     };
     
     // Filtro de clientes
@@ -7566,7 +7716,7 @@ function loadTaskFilters() {
         companyFilter.innerHTML = '<option value="">Todos los clientes</option>';
         Object.values(currentData.companies).forEach(company => {
             const option = document.createElement('option');
-            option.value = company.id;
+            option.value = company.companyId;
             option.textContent = company.name;
             companyFilter.appendChild(option);
         });
@@ -7578,7 +7728,7 @@ function loadTaskFilters() {
         supportFilter.innerHTML = '<option value="">Todos los soportes</option>';
         Object.values(currentData.supports).forEach(support => {
             const option = document.createElement('option');
-            option.value = support.id;
+            option.value = support.supportId;
             option.textContent = support.name;
             supportFilter.appendChild(option);
         });
@@ -7590,7 +7740,7 @@ function loadTaskFilters() {
         consultorFilter.innerHTML = '<option value="">Todos los consultores</option>';
        Object.values(currentData.users).filter(u => u.role === 'Consultor' || u.role === 'consultor').forEach(user => {
             const option = document.createElement('option');
-            option.value = user.id;
+            option.value = user.userId;
             option.textContent = user.name;
             consultorFilter.appendChild(option);
         });
@@ -7600,13 +7750,13 @@ function loadTaskFilters() {
 /**
  * Filtrar tareas según criterios
  */
-function filterTasks() {
+async function filterTasks() {
     const companyId = document.getElementById('taskFilterCompany')?.value || '';
     const supportId = document.getElementById('taskFilterSupport')?.value || '';
     const consultorId = document.getElementById('taskFilterConsultor')?.value || '';
     const status = document.getElementById('taskFilterStatus')?.value || 'active';
     
-    const taskAssignments = window.PortalDB.getTaskAssignments();
+    const taskAssignments = await window.PortalDB.getTaskAssignments();
     let tasks = Object.values(taskAssignments);
     
     // Aplicar filtros
@@ -7628,14 +7778,14 @@ function filterTasks() {
         tasks = tasks.filter(t => !t.isActive);
     }
     
-    // Renderizar tabla
-    renderTasksTable(tasks);
+    // Renderizar tabla (ahora asíncrono)
+    await renderTasksTable(tasks);
 }
 
 /**
  * Renderizar tabla de tareas
  */
-function renderTasksTable(tasks) {
+async function renderTasksTable(tasks) {
     const tbody = document.getElementById('taskAssignmentsTableBody');
     if (!tbody) return;
     
@@ -7654,10 +7804,10 @@ function renderTasksTable(tasks) {
     }
     
     const currentData = {
-        users: window.PortalDB.getUsers(),
-        companies: window.PortalDB.getCompanies(),
-        supports: window.PortalDB.getSupports(),
-        modules: window.PortalDB.getModules()
+        users: await window.PortalDB.getUsers(),
+        companies: await window.PortalDB.getCompanies(),
+        supports: await window.PortalDB.getSupports(),
+        modules: await window.PortalDB.getModules()
     };
     
     tasks.forEach(task => {
@@ -7670,7 +7820,7 @@ function renderTasksTable(tasks) {
         row.className = task.isActive ? '' : 'inactive-row';
         
         row.innerHTML = `
-            <td><code>${task.id}</code></td>
+            <td><code>${task.taskAssignmentId || task.taskAssignmentId}</code></td>
             <td>${consultor ? consultor.name : 'N/A'}</td>
             <td>${company ? company.name : 'N/A'}</td>
             <td>${support ? support.name : 'N/A'}</td>
@@ -7685,19 +7835,19 @@ function renderTasksTable(tasks) {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn-icon" onclick="editTask('${task.id}')" title="Editar">
+                    <button class="btn-icon" onclick="editTask('${task.taskAssignmentId || task.taskAssignmentId}')" title="Editar">
                         <i class="fa-solid fa-edit"></i>
                     </button>
                     ${task.isActive ? `
-                        <button class="btn-icon btn-danger" onclick="deactivateTask('${task.id}')" title="Desactivar">
+                        <button class="btn-icon btn-danger" onclick="deactivateTask('${task.taskAssignmentId || task.taskAssignmentId}')" title="Desactivar">
                             <i class="fa-solid fa-ban"></i>
                         </button>
                     ` : `
-                        <button class="btn-icon btn-success" onclick="reactivateTask('${task.id}')" title="Reactivar">
+                        <button class="btn-icon btn-success" onclick="reactivateTask('${task.taskAssignmentId || task.taskAssignmentId}')" title="Reactivar">
                             <i class="fa-solid fa-check"></i>
                         </button>
                     `}
-                    <button class="btn-icon" onclick="viewTaskDetails('${task.id}')" title="Ver detalles">
+                    <button class="btn-icon" onclick="viewTaskDetails('${task.taskAssignmentId || task.taskAssignmentId}')" title="Ver detalles">
                         <i class="fa-solid fa-eye"></i>
                     </button>
                 </div>
@@ -7711,14 +7861,14 @@ function renderTasksTable(tasks) {
 /**
  * Abrir modal para crear tarea
  */
-function openCreateTaskModal() {
+async function openCreateTaskModal() {
     document.getElementById('taskModalTitle').innerHTML = 
         '<i class="fa-solid fa-tasks"></i> Nueva Tarea';
     document.getElementById('taskForm').reset();
     document.getElementById('taskId').value = '';
     
-    // Cargar opciones
-    loadTaskModalOptions();
+    // Cargar opciones (ahora es asíncrono)
+    await loadTaskModalOptions();
     
     // Mostrar modal
     document.getElementById('taskModal').style.display = 'flex';
@@ -7731,11 +7881,11 @@ function openCreateTaskModal() {
 /**
  * Cargar opciones del modal
  */
-function loadTaskModalOptions() {
+async function loadTaskModalOptions() {
     const currentData = {
-        companies: window.PortalDB.getCompanies(),
-        users: window.PortalDB.getUsers(),
-        modules: window.PortalDB.getModules()
+        companies: await window.PortalDB.getCompanies(),
+        users: await window.PortalDB.getUsers(),
+        modules: await window.PortalDB.getModules()
     };
     
     // Cargar clientes
@@ -7743,39 +7893,37 @@ function loadTaskModalOptions() {
     companySelect.innerHTML = '<option value="">Seleccionar cliente...</option>';
     Object.values(currentData.companies).forEach(company => {
         const option = document.createElement('option');
-        option.value = company.id;
+        option.value = company.companyId;
         option.textContent = company.name;
         companySelect.appendChild(option);
     });
     
-    // ⭐ CORREGIDO: Cargar consultores (mayúscula O minúscula)
     const consultorSelect = document.getElementById('taskConsultor');
     consultorSelect.innerHTML = '<option value="">Seleccionar consultor...</option>';
     Object.values(currentData.users)
-        .filter(u => u.role === 'Consultor' || u.role === 'consultor')  // ← FIX AQUÍ
+        .filter(u => u.role === 'Consultor' || u.role === 'consultor')
         .forEach(user => {
             const option = document.createElement('option');
-            option.value = user.id;
+            option.value = user.userId;
             option.textContent = user.name;
             consultorSelect.appendChild(option);
         });
     
-    console.log(`✅ ${consultorSelect.options.length - 1} consultores cargados`);
-    
-    // Cargar módulos
     const moduleSelect = document.getElementById('taskModule');
     moduleSelect.innerHTML = '<option value="">Seleccionar módulo...</option>';
     Object.values(currentData.modules).forEach(module => {
         const option = document.createElement('option');
-        option.value = module.id;
+        option.value = module.moduleId;
         option.textContent = module.name;
         moduleSelect.appendChild(option);
     });
 }
+
+
 /**
  * Cargar soportes por cliente
  */
-function loadSupportsByCompany(companyId) {
+async function loadSupportsByCompany(companyId) {
     const supportSelect = document.getElementById('taskSupport');
     supportSelect.innerHTML = '<option value="">Seleccionar soporte...</option>';
     
@@ -7784,9 +7932,9 @@ function loadSupportsByCompany(companyId) {
         return;
     }
     
-    // ✅ CORREGIDO: Obtener soportes a través de las asignaciones
-    const assignments = window.PortalDB.getAssignments();
-    const supports = window.PortalDB.getSupports();
+    // ✅ CORREGIDO: Obtener soportes a través de las asignaciones (ahora asíncrono)
+    const assignments = await window.PortalDB.getAssignments();
+    const supports = await window.PortalDB.getSupports();
     
     // Buscar asignaciones de este cliente
     const companyAssignments = Object.values(assignments).filter(a => 
@@ -7812,14 +7960,15 @@ function loadSupportsByCompany(companyId) {
         return;
     }
     
-    // Agregar soportes al select
-    companySupports.forEach(support => {
+   
+         // Agregar soportes al select
+        companySupports.forEach(support => {
         const option = document.createElement('option');
-        option.value = support.id;
+        option.value = support.supportId;
         option.textContent = support.name;
         supportSelect.appendChild(option);
     });
-    
+
     supportSelect.disabled = false;
     
     console.log(`✅ ${companySupports.length} soportes cargados para el cliente`);
@@ -7852,7 +8001,7 @@ function calculateTaskMargen() {
 /**
  * Guardar tarea (crear o actualizar)
  */
-function saveTask(event) {
+async function saveTask(event) {
     event.preventDefault();
     
     const taskId = document.getElementById('taskId').value;
@@ -7869,10 +8018,13 @@ function saveTask(event) {
     let result;
     if (taskId) {
         // Actualizar
-        result = window.PortalDB.updateTaskAssignment(taskId, taskData);
+        result = await window.PortalDB.updateTaskAssignment(taskId, taskData);
     } else {
-        // Crear
-        result = window.PortalDB.createTaskAssignment(taskData);
+        // Crear - Generar ID para nueva tarea
+        const timestamp = Date.now().toString().slice(-6);
+        taskData.taskAssignmentId = `TASK${timestamp}`;
+        
+        result = await window.PortalDB.createTaskAssignment(taskData);
     }
     
     if (result.success) {
@@ -7880,7 +8032,10 @@ function saveTask(event) {
             taskId ? 'Tarea actualizada correctamente' : 'Tarea creada correctamente'
         );
         closeTaskModal();
-        filterTasks();
+        
+        // Recargar datos antes de filtrar
+        await loadAllData();
+        await filterTasks();
     } else {
         window.NotificationUtils.error('Error: ' + result.message);
     }
@@ -7896,13 +8051,16 @@ function closeTaskModal() {
 /**
  * Editar tarea
  */
-function editTask(taskId) {
-    const task = window.PortalDB.getTaskAssignment(taskId);
+async function editTask(taskId) {
+    const task = await window.PortalDB.getTaskAssignment(taskId);
     
     if (!task) {
         window.NotificationUtils.error('Tarea no encontrada');
         return;
     }
+    
+    // Cargar opciones primero
+    await loadTaskModalOptions();
     
     // Llenar formulario
     document.getElementById('taskModalTitle').innerHTML = 
@@ -7911,7 +8069,7 @@ function editTask(taskId) {
     document.getElementById('taskCompany').value = task.companyId;
     
     // Cargar soportes y seleccionar
-    loadSupportsByCompany(task.companyId);
+    await loadSupportsByCompany(task.companyId);
     setTimeout(() => {
         document.getElementById('taskSupport').value = task.linkedSupportId;
     }, 100);
@@ -7932,16 +8090,19 @@ function editTask(taskId) {
 /**
  * Desactivar tarea
  */
-function deactivateTask(taskId) {
+async function deactivateTask(taskId) {
     if (!confirm('¿Estás seguro de desactivar esta tarea?')) {
         return;
     }
     
-    const result = window.PortalDB.deleteTaskAssignment(taskId);
+    const result = await window.PortalDB.deleteTaskAssignment(taskId);
     
     if (result.success) {
         window.NotificationUtils.success('Tarea desactivada correctamente');
-        filterTasks();
+        
+        // Recargar datos antes de filtrar
+        await loadAllData();
+        await filterTasks();
     } else {
         window.NotificationUtils.error('Error: ' + result.message);
     }
@@ -7992,7 +8153,7 @@ function viewTaskDetails(taskId) {
 📋 DETALLES DE TAREA
 ═══════════════════════════════════════
 
-ID: ${task.id}
+ID: ${task.taskAssignmentId || task.taskAssignmentId}
 Estado: ${task.isActive ? '✅ Activa' : '❌ Inactiva'}
 
 👤 CONSULTOR
@@ -8145,10 +8306,10 @@ function generarBadgeOrigen(origen) {
 /**
  * Generar línea de reporte con nueva estructura
  */
-function generarLineaReporteMejorada(report, tipoReporte) {
+ async function generarLineaReporteMejorada(report, tipoReporte) {
     // 1. Obtener tarifa del tarifario (fuente única de verdad)
     const tarifaId = `tarifa_${report.assignmentId}`;
-    const tarifa = window.PortalDB.getTarifario()[tarifaId];
+    const tarifa = await window.PortalDB.getTarifario()[tarifaId];
     
     if (!tarifa) {
         console.warn('⚠️ No se encontró tarifa para:', report.assignmentId);

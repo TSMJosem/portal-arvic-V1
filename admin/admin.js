@@ -2978,42 +2978,49 @@ function createProjectAssignment() {
     const projectId = document.getElementById('assignProjectProject').value;
     const companyId = document.getElementById('assignProjectCompany').value;
     const moduleId = document.getElementById('assignProjectModule').value;
-    const tarifaConsultor = parseFloat(document.getElementById('projectAssignTarifaConsultor').value) || 0;  // ← NUEVO
-    const tarifaCliente = parseFloat(document.getElementById('projectAssignTarifaCliente').value) || 0;      // ← NUEVO
+    const tarifaConsultor = parseFloat(document.getElementById('projectAssignTarifaConsultor').value) || 0;
+    const tarifaCliente = parseFloat(document.getElementById('projectAssignTarifaCliente').value) || 0;
     
     if (!userId || !projectId || !companyId || !moduleId) {
         window.NotificationUtils.error('Todos los campos son requeridos');
         return;
     }
     
-    // Validar tarifas
-    if (tarifaConsultor <= 0 || tarifaCliente <= 0) {  // ← NUEVO
+    if (tarifaConsultor <= 0 || tarifaCliente <= 0) {
         window.NotificationUtils.error('Las tarifas deben ser mayores a 0');
         return;
     }
+
+    // ✅ Generar projectAssignmentId automáticamente
+    const timestamp = Date.now().toString().slice(-4);
+    const projectAssignmentId = `PRJ_ASG${timestamp}`;
     
     const assignmentData = {
+        projectAssignmentId: projectAssignmentId,  // ✅ NUEVO
         consultorId: userId,
         projectId: projectId,
         companyId: companyId,
         moduleId: moduleId,
-        tarifaConsultor: tarifaConsultor,  // ← NUEVO
-        tarifaCliente: tarifaCliente        // ← NUEVO
+        tarifaConsultor: tarifaConsultor,
+        tarifaCliente: tarifaCliente
     };
+
+    console.log('📤 Creando asignación de proyecto:', assignmentData);
     
     const result = window.PortalDB.createProjectAssignment(assignmentData);
     
     if (result.success) {
         window.NotificationUtils.success('Proyecto asignado exitosamente con tarifas configuradas');
         loadAllData();
+        
         // Limpiar formulario
         document.getElementById('assignProjectConsultor').value = '';
         document.getElementById('assignProjectProject').value = '';
         document.getElementById('assignProjectCompany').value = '';
         document.getElementById('assignProjectModule').value = '';
-        document.getElementById('projectAssignTarifaConsultor').value = '';  // ← NUEVO
-        document.getElementById('projectAssignTarifaCliente').value = '';    // ← NUEVO
-        updateProjectAssignMargen(); // Resetear margen  // ← NUEVO
+        document.getElementById('projectAssignTarifaConsultor').value = '';
+        document.getElementById('projectAssignTarifaCliente').value = '';
+        updateProjectAssignMargen();
     } else {
         window.NotificationUtils.error('Error al asignar proyecto: ' + result.message);
     }

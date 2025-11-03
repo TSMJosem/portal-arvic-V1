@@ -74,16 +74,21 @@ class PortalDatabase {
     async getUsers() {
         try {
             const response = await fetch(`${this.API_URL}/users`, {
+                method: 'GET',
                 headers: this.getHeaders()
             });
-            const data = await response.json();
+            const result = await response.json();
             
-            if (data.success) {
-                return this.arrayToObject(data.data);
+            if (result.success) {
+                const users = {};
+                result.data.forEach(user => {
+                    users[user.userId] = user;  // ✅ Cambiar de user.id a user.userId
+                });
+                return users;
             }
             return {};
         } catch (error) {
-            console.error('❌ Error obteniendo usuarios:', error);
+            console.error('Error obteniendo usuarios:', error);
             return {};
         }
     }
@@ -207,16 +212,21 @@ class PortalDatabase {
     async getCompanies() {
         try {
             const response = await fetch(`${this.API_URL}/companies`, {
+                method: 'GET',
                 headers: this.getHeaders()
             });
-            const data = await response.json();
+            const result = await response.json();
             
-            if (data.success) {
-                return this.arrayToObject(data.data);
+            if (result.success) {
+                const companies = {};
+                result.data.forEach(company => {
+                    companies[company.companyId] = company;  // ✅ Cambiar de company.id a company.companyId
+                });
+                return companies;
             }
             return {};
         } catch (error) {
-            console.error('❌ Error obteniendo empresas:', error);
+            console.error('Error obteniendo empresas:', error);
             return {};
         }
     }
@@ -302,16 +312,21 @@ class PortalDatabase {
     async getProjects() {
         try {
             const response = await fetch(`${this.API_URL}/projects`, {
+                method: 'GET',
                 headers: this.getHeaders()
             });
-            const data = await response.json();
+            const result = await response.json();
             
-            if (data.success) {
-                return this.arrayToObject(data.data);
+            if (result.success) {
+                const projects = {};
+                result.data.forEach(project => {
+                    projects[project.projectId] = project;  // ✅ Cambiar de project.id a project.projectId
+                });
+                return projects;
             }
             return {};
         } catch (error) {
-            console.error('❌ Error obteniendo proyectos:', error);
+            console.error('Error obteniendo proyectos:', error);
             return {};
         }
     }
@@ -391,16 +406,21 @@ class PortalDatabase {
     async getSupports() {
         try {
             const response = await fetch(`${this.API_URL}/supports`, {
+                method: 'GET',
                 headers: this.getHeaders()
             });
-            const data = await response.json();
+            const result = await response.json();
             
-            if (data.success) {
-                return this.arrayToObject(data.data);
+            if (result.success) {
+                const supports = {};
+                result.data.forEach(support => {
+                    supports[support.supportId] = support;  // ✅ Cambiar de support.id a support.supportId
+                });
+                return supports;
             }
             return {};
         } catch (error) {
-            console.error('❌ Error obteniendo soportes:', error);
+            console.error('Error obteniendo soportes:', error);
             return {};
         }
     }
@@ -483,16 +503,21 @@ class PortalDatabase {
     async getModules() {
         try {
             const response = await fetch(`${this.API_URL}/modules`, {
+                method: 'GET',
                 headers: this.getHeaders()
             });
-            const data = await response.json();
+            const result = await response.json();
             
-            if (data.success) {
-                return this.arrayToObject(data.data);
+            if (result.success) {
+                const modules = {};
+                result.data.forEach(module => {
+                    modules[module.moduleId] = module;  // ✅ Cambiar de module.id a module.moduleId
+                });
+                return modules;
             }
             return {};
         } catch (error) {
-            console.error('❌ Error obteniendo módulos:', error);
+            console.error('Error obteniendo módulos:', error);
             return {};
         }
     }
@@ -602,15 +627,19 @@ class PortalDatabase {
 
     async createAssignment(assignmentData) {
         try {
+            console.log('📤 Enviando datos de asignación:', assignmentData);
+            
             const response = await fetch(`${this.API_URL}/assignments`, {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify(assignmentData)
             });
             const result = await response.json();
+
+            console.log('📥 Respuesta del servidor:', result);
             
             if (result.success) {
-                console.log('✅ Asignación creada:', result.data.id);
+                console.log('✅ Asignación creada:', result.data.assignmentId);
                 return { success: true, assignment: result.data };
             }
             
@@ -725,17 +754,22 @@ class PortalDatabase {
     // === GESTIÓN DE ASIGNACIONES DE PROYECTO ===
     async getProjectAssignments() {
         try {
-            const response = await fetch(`${this.API_URL}/assignments/projects`, {
+            const response = await fetch(`${this.API_URL}/projectAssignments`, {  // ✅ No /assignments/projects
+                method: 'GET',
                 headers: this.getHeaders()
             });
-            const data = await response.json();
+            const result = await response.json();
             
-            if (data.success) {
-                return this.arrayToObject(data.data);
+            if (result.success) {
+                const projectAssignments = {};
+                result.data.forEach(pa => {
+                    projectAssignments[pa.projectAssignmentId] = pa;  // ✅ Usar projectAssignmentId
+                });
+                return projectAssignments;
             }
             return {};
         } catch (error) {
-            console.error('❌ Error obteniendo asignaciones de proyecto:', error);
+            console.error('Error obteniendo asignaciones de proyecto:', error);
             return {};
         }
     }
@@ -752,16 +786,20 @@ class PortalDatabase {
 
     async createProjectAssignment(assignmentData) {
         try {
-            const response = await fetch(`${this.API_URL}/assignments/projects`, {
+            console.log('📤 Enviando datos de asignación de proyecto:', assignmentData);
+            
+            const response = await fetch(`${this.API_URL}/projectAssignments`, {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify(assignmentData)
             });
             const result = await response.json();
+
+            console.log('📥 Respuesta del servidor:', result);
             
             if (result.success) {
-                console.log('✅ Asignación de proyecto creada:', result.data.id);
-                return { success: true, assignment: result.data };
+                console.log('✅ Asignación de proyecto creada:', result.data.projectAssignmentId);
+                return { success: true, projectAssignment: result.data };
             }
             
             return { success: false, message: result.message };
@@ -826,7 +864,7 @@ class PortalDatabase {
     // === GESTIÓN DE ASIGNACIONES DE TAREAS ===
     async getTaskAssignments() {
         try {
-            const response = await fetch(`${this.API_URL}/assignments/tasks`, {
+            const response = await fetch(`${this.API_URL}/taskAssignments`, {
                 headers: this.getHeaders()
             });
             const data = await response.json();
@@ -891,27 +929,27 @@ class PortalDatabase {
         }
     }
 
-    async createTaskAssignment(taskData) {
+    async createTaskAssignment(assignmentData) {
         try {
-            const response = await fetch(`${this.API_URL}/assignments/tasks`, {
+            console.log('📤 Enviando datos de asignación de tarea:', assignmentData);
+            
+            const response = await fetch(`${this.API_URL}/taskAssignments`, {
                 method: 'POST',
                 headers: this.getHeaders(),
-                body: JSON.stringify(taskData)
+                body: JSON.stringify(assignmentData)
             });
             const result = await response.json();
+
+            console.log('📥 Respuesta del servidor:', result);
             
             if (result.success) {
-                console.log('✅ Task assignment creada:', result.data.id);
-                return { 
-                    success: true, 
-                    taskId: result.data.id,
-                    data: result.data 
-                };
+                console.log('✅ Asignación de tarea creada:', result.data.taskAssignmentId);
+                return { success: true, taskAssignment: result.data };
             }
             
             return { success: false, message: result.message };
         } catch (error) {
-            console.error('❌ Error creando task assignment:', error);
+            console.error('❌ Error creando asignación de tarea:', error);
             return { success: false, message: 'Error de conexión' };
         }
     }
@@ -960,16 +998,21 @@ class PortalDatabase {
     async getReports() {
         try {
             const response = await fetch(`${this.API_URL}/reports`, {
+                method: 'GET',
                 headers: this.getHeaders()
             });
-            const data = await response.json();
+            const result = await response.json();
             
-            if (data.success) {
-                return this.arrayToObject(data.data);
+            if (result.success) {
+                const reports = {};
+                result.data.forEach(report => {
+                    reports[report.reportId] = report;  // ✅ Usar reportId
+                });
+                return reports;
             }
             return {};
         } catch (error) {
-            console.error('❌ Error obteniendo reportes:', error);
+            console.error('Error obteniendo reportes:', error);
             return {};
         }
     }
@@ -1019,15 +1062,19 @@ class PortalDatabase {
 
     async createReport(reportData) {
         try {
+            console.log('📤 Enviando datos de reporte:', reportData);
+            
             const response = await fetch(`${this.API_URL}/reports`, {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify(reportData)
             });
             const result = await response.json();
+
+            console.log('📥 Respuesta del servidor:', result);
             
             if (result.success) {
-                console.log('✅ Reporte creado:', result.data.id);
+                console.log('✅ Reporte creado:', result.data.reportId);
                 return { success: true, report: result.data };
             }
             
@@ -1038,17 +1085,19 @@ class PortalDatabase {
         }
     }
 
-    async updateReport(reportId, updateData) {
+    async updateReport(reportId, updates) {
         try {
+            console.log('📝 Actualizando reporte:', reportId, updates);
+            
             const response = await fetch(`${this.API_URL}/reports/${reportId}`, {
                 method: 'PUT',
                 headers: this.getHeaders(),
-                body: JSON.stringify(updateData)
+                body: JSON.stringify(updates)
             });
             const result = await response.json();
-            
+
             if (result.success) {
-                console.log('✅ Reporte actualizado:', reportId);
+                console.log('✅ Reporte actualizado');
                 return { success: true, report: result.data };
             }
             
@@ -1077,17 +1126,20 @@ class PortalDatabase {
 
     async deleteReport(reportId) {
         try {
+            console.log('🗑️ Eliminando reporte:', reportId);
+            
             const response = await fetch(`${this.API_URL}/reports/${reportId}`, {
                 method: 'DELETE',
                 headers: this.getHeaders()
             });
             const result = await response.json();
-            
+
             if (result.success) {
-                console.log('✅ Reporte eliminado:', reportId);
+                console.log('✅ Reporte eliminado');
+                return { success: true };
             }
             
-            return result;
+            return { success: false, message: result.message };
         } catch (error) {
             console.error('❌ Error eliminando reporte:', error);
             return { success: false, message: 'Error de conexión' };
@@ -1128,19 +1180,24 @@ class PortalDatabase {
     }
 
     // === GESTIÓN DE TARIFARIO ===
-    async getTarifario() {
+    async getTarifarios() {
         try {
             const response = await fetch(`${this.API_URL}/tarifario`, {
+                method: 'GET',
                 headers: this.getHeaders()
             });
-            const data = await response.json();
+            const result = await response.json();
             
-            if (data.success) {
-                return this.arrayToObject(data.data);
+            if (result.success) {
+                const tarifarios = {};
+                result.data.forEach(tarifario => {
+                    tarifarios[tarifario.tarifarioId] = tarifario;  // ✅ Cambiar de tarifario.id a tarifario.tarifarioId
+                });
+                return tarifarios;
             }
             return {};
         } catch (error) {
-            console.error('❌ Error obteniendo tarifario:', error);
+            console.error('Error obteniendo tarifarios:', error);
             return {};
         }
     }
@@ -1393,6 +1450,76 @@ class PortalDatabase {
     async resetToDefaults() {
         console.error('⚠️ resetToDefaults() deshabilitado. Usa el backend para reiniciar datos.');
         return { success: false, message: 'Operación no permitida desde el cliente' };
+    }
+
+    async createTarifario(tarifarioData) {
+        try {
+            console.log('📤 Enviando datos de tarifario:', tarifarioData);
+            
+            const response = await fetch(`${this.API_URL}/tarifario`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(tarifarioData)
+            });
+            const result = await response.json();
+
+            console.log('📥 Respuesta del servidor:', result);
+            
+            if (result.success) {
+                console.log('✅ Tarifario creado:', result.data.tarifarioId);
+                return { success: true, tarifario: result.data };
+            }
+            
+            return { success: false, message: result.message };
+        } catch (error) {
+            console.error('❌ Error creando tarifario:', error);
+            return { success: false, message: 'Error de conexión' };
+        }
+    }
+
+    async updateTarifario(tarifarioId, updates) {
+        try {
+            console.log('📝 Actualizando tarifario:', tarifarioId, updates);
+            
+            const response = await fetch(`${this.API_URL}/tarifario/${tarifarioId}`, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify(updates)
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                console.log('✅ Tarifario actualizado');
+                return { success: true, tarifario: result.data };
+            }
+            
+            return { success: false, message: result.message };
+        } catch (error) {
+            console.error('❌ Error actualizando tarifario:', error);
+            return { success: false, message: 'Error de conexión' };
+        }
+    }
+
+    async deleteTarifario(tarifarioId) {
+        try {
+            console.log('🗑️ Eliminando tarifario:', tarifarioId);
+            
+            const response = await fetch(`${this.API_URL}/tarifario/${tarifarioId}`, {
+                method: 'DELETE',
+                headers: this.getHeaders()
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                console.log('✅ Tarifario eliminado');
+                return { success: true };
+            }
+            
+            return { success: false, message: result.message };
+        } catch (error) {
+            console.error('❌ Error eliminando tarifario:', error);
+            return { success: false, message: 'Error de conexión' };
+        }
     }
 }
 

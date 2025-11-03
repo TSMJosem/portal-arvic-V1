@@ -1,0 +1,1 @@
+//Aquí se prueban las funciones de JavaScript

@@ -1,135 +1,135 @@
 const express = require('express');
 const router = express.Router();
-const { TaskAssignment } = require('../models');
+const TaskAssignment = require('../models/TaskAssignment');
 
-// ============================================================================
-// OBTENER TODAS LAS TAREAS
-// ============================================================================
+// GET todas las asignaciones de tarea
 router.get('/', async (req, res) => {
   try {
-    const tasks = await TaskAssignment.find();
-    res.json({ success: true, data: tasks });
+    const taskAssignments = await TaskAssignment.find();
+    res.json({ success: true, data: taskAssignments });
   } catch (error) {
+    console.error('❌ Error obteniendo asignaciones de tarea:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// ============================================================================
-// OBTENER TAREAS POR SOPORTE
-// ============================================================================
-router.get('/by-support/:supportId', async (req, res) => {
-  try {
-    const tasks = await TaskAssignment.find({ 
-      linkedSupportId: req.params.supportId,
-      isActive: true 
-    });
-    res.json({ success: true, data: tasks });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ============================================================================
-// OBTENER TAREAS INDEPENDIENTES (sin soporte vinculado)
-// ============================================================================
-router.get('/independent', async (req, res) => {
-  try {
-    const tasks = await TaskAssignment.find({
-      $or: [
-        { linkedSupportId: null },
-        { linkedSupportId: { $exists: false } },
-        { linkedSupportId: '' }
-      ],
-      isActive: true
-    });
-    res.json({ success: true, data: tasks });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-});
-
-// ============================================================================
-// OBTENER UNA TAREA POR ID
-// ============================================================================
+// GET asignación de tarea por ID
 router.get('/:id', async (req, res) => {
   try {
-    const task = await TaskAssignment.findOne({ id: req.params.id });
-    if (!task) {
-      return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
+    const taskAssignment = await TaskAssignment.findOne({ taskAssignmentId: req.params.id });
+    if (!taskAssignment) {
+      return res.status(404).json({ success: false, message: 'Asignación de tarea no encontrada' });
     }
-    res.json({ success: true, data: task });
+    res.json({ success: true, data: taskAssignment });
   } catch (error) {
+    console.error('❌ Error obteniendo asignación de tarea:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
 
-// ============================================================================
-// CREAR NUEVA TAREA
-// ============================================================================
+// POST crear asignación de tarea
 router.post('/', async (req, res) => {
   try {
-    const data = req.body;
-    if (!data.id) data.id = `task_${Date.now()}`;
+    const taskAssignmentData = req.body;
     
-    const task = new TaskAssignment(data);
-    await task.save();
+    console.log('📥 Datos recibidos para crear asignación de tarea:', taskAssignmentData);
     
+    if (!taskAssignmentData.taskAssignmentId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'El campo taskAssignmentId es requerido' 
+      });
+    }
+
+    const existingTaskAssignment = await TaskAssignment.findOne({ 
+      taskAssignmentId: taskAssignmentData.taskAssignmentId 
+    });
+    
+    if (existingTaskAssignment) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Ya existe una asignación de tarea con ese ID' 
+      });
+    }
+
+    const taskAssignment = new TaskAssignment(taskAssignmentData);
+    await taskAssignment.save();
+
+    console.log('✅ Asignación de tarea creada:', taskAssignment.taskAssignmentId);
+
     res.status(201).json({ 
       success: true, 
-      message: 'Tarea creada exitosamente', 
-      data: task 
+      message: 'Asignación de tarea creada exitosamente',
+      data: taskAssignment 
     });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error('❌ Error creando asignación de tarea:', error);
+    res.status(400).json({ 
+      success: false, 
+      message: error.message || 'Error al crear asignación de tarea' 
+    });
   }
 });
 
-// ============================================================================
-// ACTUALIZAR TAREA
-// ============================================================================
+// PUT actualizar asignación de tarea
 router.put('/:id', async (req, res) => {
   try {
-    const task = await TaskAssignment.findOneAndUpdate(
-      { id: req.params.id }, 
-      { ...req.body, updatedAt: Date.now() }, 
-      { new: true }
+    const updates = req.body;
+    updates.updatedAt = new Date();
+    
+    console.log('📝 Actualizando asignación de tarea:', req.params.id, updates);
+    
+    const taskAssignment = await TaskAssignment.findOneAndUpdate(
+      { taskAssignmentId: req.params.id },
+      updates,
+      { new: true, runValidators: true }
     );
-    
-    if (!task) {
-      return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
+
+    if (!taskAssignment) {
+      return res.status(404).json({ success: false, message: 'Asignación de tarea no encontrada' });
     }
-    
+
+    console.log('✅ Asignación de tarea actualizada');
+
     res.json({ 
       success: true, 
-      message: 'Tarea actualizada exitosamente', 
-      data: task 
+      message: 'Asignación de tarea actualizada exitosamente',
+      data: taskAssignment 
     });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    console.error('❌ Error actualizando asignación de tarea:', error);
+    res.status(400).json({ 
+      success: false, 
+      message: error.message || 'Error al actualizar asignación de tarea' 
+    });
   }
 });
 
-// ============================================================================
-// DESACTIVAR TAREA (soft delete)
-// ============================================================================
+// DELETE eliminar asignación de tarea
 router.delete('/:id', async (req, res) => {
   try {
-    const task = await TaskAssignment.findOneAndUpdate(
-      { id: req.params.id },
-      { isActive: false, updatedAt: Date.now() },
-      { new: true }
-    );
+    console.log('🗑️ Eliminando asignación de tarea:', req.params.id);
     
-    if (!task) {
-      return res.status(404).json({ success: false, message: 'Tarea no encontrada' });
+    const taskAssignment = await TaskAssignment.findOneAndDelete({ 
+      taskAssignmentId: req.params.id 
+    });
+    
+    if (!taskAssignment) {
+      return res.status(404).json({ success: false, message: 'Asignación de tarea no encontrada' });
     }
+    
+    console.log('✅ Asignación de tarea eliminada');
     
     res.json({ 
       success: true, 
-      message: 'Tarea desactivada exitosamente' 
+      message: 'Asignación de tarea eliminada exitosamente' 
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.error('❌ Error eliminando asignación de tarea:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message || 'Error al eliminar asignación de tarea' 
+    });
   }
 });
 

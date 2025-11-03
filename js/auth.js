@@ -104,6 +104,7 @@ class AuthSystem {
             };
         }
         */
+
         if (userId !== 'admin' && user.role === 'consultor') {
             // Verificar formato de contraseña de consultor
             if (!this.isConsultorPassword(password)) {
@@ -113,7 +114,6 @@ class AuthSystem {
                 };
             }
         }
-
         // Guardar sesión
         const sessionSaved = this.saveCurrentSession(user);
         

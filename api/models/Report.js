@@ -50,6 +50,9 @@ const reportSchema = new mongoose.Schema({
     type: Date,
     required: true
   },
+  title: { 
+    type: String 
+  },
   status: {
     type: String,
     enum: ['Pendiente', 'Aprobado', 'Rechazado', 'Resubmitted'],

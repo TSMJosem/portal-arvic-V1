@@ -158,7 +158,7 @@ function setupConsultorPanel() {
             userNameDisplay.textContent = currentUser.name;
         }
         if (userIdDisplay) {
-            userIdDisplay.textContent = currentUser.id;
+            userIdDisplay.textContent = currentUser.userId;
         }
         
         // Configurar fecha actual en el modal
@@ -225,32 +225,52 @@ function isUserInteracting() {
 }
 
 // Actualización silenciosa en segundo plano
-function silentDataRefresh() {
+async function silentDataRefresh() {
     try {
-        // Guardar datos antiguos
         const oldAssignmentsCount = userAssignments.length;
         
-        // Actualizar datos en memoria sin tocar el DOM
-        const supportAssignments = window.PortalDB.getUserAssignments(currentUser.id);
+        // Support
+        const supportAssignmentsData = await window.PortalDB.getUserAssignments(currentUser.userId);
+        const supportAssignments = Array.isArray(supportAssignmentsData)
+            ? supportAssignmentsData
+            : Object.values(supportAssignmentsData || {});
+        
+        // Projects
         const allProjectAssignments = window.PortalDB.getProjectAssignments ? 
-            window.PortalDB.getProjectAssignments() : {};
-        const userProjectAssignments = Object.values(allProjectAssignments).filter(pa => {
-            const assignmentUserId = pa.consultorId || pa.userId;  // ✅ ACEPTA AMBOS
-            return assignmentUserId === currentUser.id && (pa.isActive !== false);  // ✅ TAMBIÉN ACEPTA SI NO TIENE isActive
+            await window.PortalDB.getProjectAssignments() : {};
+        
+        const projectAssignmentsArray = Array.isArray(allProjectAssignments)
+            ? allProjectAssignments
+            : Object.values(allProjectAssignments || {});
+            
+        const userProjectAssignments = projectAssignmentsArray.filter(pa => {
+            const assignmentUserId = pa.consultorId || pa.userId;
+            return assignmentUserId === currentUser.userId && (pa.isActive !== false);
         });
         
-        // Combinar asignaciones
+        // ✅ Tasks (NUEVO)
+        const allTaskAssignments = window.PortalDB.getTaskAssignments ? 
+            await window.PortalDB.getTaskAssignments() : {};
+        
+        const taskAssignmentsArray = Array.isArray(allTaskAssignments)
+            ? allTaskAssignments
+            : Object.values(allTaskAssignments || {});
+            
+        const userTaskAssignments = taskAssignmentsArray.filter(ta => {
+            const assignmentUserId = ta.consultorId || ta.userId;
+            return assignmentUserId === currentUser.userId && (ta.isActive !== false);
+        });
+        
         const combinedAssignments = [
             ...supportAssignments.map(a => ({...a, assignmentType: 'support'})),
-            ...userProjectAssignments.map(a => ({...a, assignmentType: 'project'}))
+            ...userProjectAssignments.map(a => ({...a, assignmentType: 'project'})),
+            ...userTaskAssignments.map(a => ({...a, assignmentType: 'task'}))  // ✅ NUEVO
         ];
         
         userAssignments = combinedAssignments;
         
-        // Solo actualizar badges/contadores (no regenerar listas)
         updateCountersOnly();
         
-        // Si hay nuevas asignaciones, mostrar notificación discreta
         if (combinedAssignments.length > oldAssignmentsCount) {
             if (window.NotificationUtils) {
                 window.NotificationUtils.info('Tienes nuevas asignaciones disponibles', 3000);
@@ -263,27 +283,27 @@ function silentDataRefresh() {
 }
 
 // Actualizar solo contadores sin regenerar HTML
-function updateCountersOnly() {
+async function updateCountersOnly() {
     try {
-        // Actualizar contador principal
+        // Actualizar contador de asignaciones
         const assignmentsCount = document.getElementById('assignmentsCount');
         if (assignmentsCount) {
             assignmentsCount.textContent = userAssignments.length;
         }
         
-        // Actualizar contadores de reportes rechazados si existe la función
-        if (typeof updateRejectedReportsSection === 'function') {
-            const rejectedReports = Object.values(window.PortalDB.getReports()).filter(
-                r => r.userId === currentUser.id && r.status === 'Rechazado'
-            );
-            // Solo actualizar el contador, no regenerar la sección
-            const rejectedSection = document.getElementById('rejectedReportsSection');
-            if (rejectedSection) {
-                const countElement = rejectedSection.querySelector('.section-subtitle');
-                if (countElement) {
-                    countElement.textContent = `${rejectedReports.length} reportes requieren tu atención`;
-                }
-            }
+        // ✅ CORRECCIÓN: Convertir a array si viene como objeto
+        const allReportsData = await window.PortalDB.getReports();
+        const allReports = Array.isArray(allReportsData)
+            ? allReportsData
+            : Object.values(allReportsData || {});
+        
+        const rejectedReports = allReports.filter(
+            r => r.userId === currentUser.userId && r.status === 'Rechazado'
+        );
+        
+        const rejectedCount = document.getElementById('rejectedReportsCount');
+        if (rejectedCount) {
+            rejectedCount.textContent = rejectedReports.length;
         }
         
     } catch (error) {
@@ -292,200 +312,233 @@ function updateCountersOnly() {
 }
 
 // === GESTIÓN DE ASIGNACIONES ===
-function loadUserAssignments() {
+async function loadUserAssignments() {
     try {
-        if (!currentUser || !window.PortalDB) {
-            return;
-        }
+        console.log('🔄 Cargando asignaciones para usuario:', currentUser.userId);
         
-        console.log('🔄 Cargando asignaciones para usuario:', currentUser.id);
+        // ✅ 1. Support Assignments
+        const supportAssignmentsData = await window.PortalDB.getUserAssignments(currentUser.userId);
+        console.log('📦 Support assignments data:', supportAssignmentsData); // ✅ DEBUG
+        const supportAssignments = Array.isArray(supportAssignmentsData) 
+            ? supportAssignmentsData 
+            : Object.values(supportAssignmentsData || {});
         
-        // 🟦 OBTENER ASIGNACIONES DE SOPORTE
-        const supportAssignments = window.PortalDB.getUserAssignments(currentUser.id);
-        
-        // 🟩 OBTENER ASIGNACIONES DE PROYECTO
+        console.log('📦 Support assignments array:', supportAssignments); // ✅ DEBUG
+        console.log('📦 Support assignments length:', supportAssignments.length); // ✅ DEBUG
+
+        // ✅ 2. Project Assignments
         const allProjectAssignments = window.PortalDB.getProjectAssignments ? 
-            Object.values(window.PortalDB.getProjectAssignments()) : [];
-        const projectAssignments = allProjectAssignments.filter(assignment => {
-            const assignmentUserId = assignment.consultorId || assignment.userId;
-            return assignmentUserId === currentUser.id && (assignment.isActive !== false);
+            await window.PortalDB.getProjectAssignments() : {};
+        
+        const projectAssignmentsArray = Array.isArray(allProjectAssignments)
+            ? allProjectAssignments
+            : Object.values(allProjectAssignments || {});
+            
+        const userProjectAssignments = projectAssignmentsArray.filter(pa => {
+            const assignmentUserId = pa.consultorId || pa.userId;
+            return assignmentUserId === currentUser.userId && (pa.isActive !== false);
         });
         
-        // 🟨 OBTENER ASIGNACIONES DE TAREA
+        // ✅ 3. Task Assignments (NUEVO - ESTO FALTABA)
         const allTaskAssignments = window.PortalDB.getTaskAssignments ? 
-            Object.values(window.PortalDB.getTaskAssignments()) : [];
-        const taskAssignments = allTaskAssignments.filter(assignment => {
-            return assignment.consultorId === currentUser.id && (assignment.isActive !== false);
+            await window.PortalDB.getTaskAssignments() : {};
+        
+        const taskAssignmentsArray = Array.isArray(allTaskAssignments)
+            ? allTaskAssignments
+            : Object.values(allTaskAssignments || {});
+            
+        const userTaskAssignments = taskAssignmentsArray.filter(ta => {
+            const assignmentUserId = ta.consultorId || ta.userId;
+            return assignmentUserId === currentUser.userId && (ta.isActive !== false);
         });
         
-        // Combinar los tres tipos en el array global
-        userAssignments = [
+        // Combinar TODAS las asignaciones
+        const combinedAssignments = [
             ...supportAssignments.map(a => ({...a, assignmentType: 'support'})),
-            ...projectAssignments.map(a => ({...a, assignmentType: 'project'})),
-            ...taskAssignments.map(a => ({...a, assignmentType: 'task'}))
+            ...userProjectAssignments.map(a => ({...a, assignmentType: 'project'})),
+            ...userTaskAssignments.map(a => ({...a, assignmentType: 'task'}))  // ✅ NUEVO
         ];
         
-        // ✅ CORRECCIÓN: Paréntesis correctos en console.log
-        console.log(`📊 Encontradas: ${supportAssignments.length} soportes, ${projectAssignments.length} proyectos, ${taskAssignments.length} tareas`);
+        userAssignments = combinedAssignments;
+        
+        console.log('📊 Asignaciones cargadas:', {
+            support: supportAssignments.length,
+            projects: userProjectAssignments.length,
+            tasks: userTaskAssignments.length,  // ✅ NUEVO
+            total: combinedAssignments.length
+        });
         
         updateAssignmentsList();
-        updateAssignmentsCount();
+        updateCountersOnly();
+        
+        setTimeout(() => {
+            updateRejectedReportsSection();
+        }, 100);
         
     } catch (error) {
         console.error('Error en loadUserAssignments:', error);
         showError('Error al cargar asignaciones: ' + error.message);
     }
-    
-    setTimeout(() => {
-        updateRejectedReportsSection();
-    }, 500);
 }
 
 function updateAssignmentsList() {
     try {
         const container = document.getElementById('assignmentsList');
         if (!container) return;
-        
-        if (userAssignments.length === 0) {
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon"><i class="fa-solid fa-bullseye"></i></div>
-                    <div class="empty-state-title">No hay asignaciones</div>
-                    <div class="empty-state-desc">Las asignaciones del administrador aparecerán aquí</div>
-                </div>
-            `;
-            return;
-        }
-        
-        container.innerHTML = '';
-        
-        userAssignments.forEach(assignment => {
-            const assignmentDiv = document.createElement('div');
-            assignmentDiv.className = `assignment-card ${assignment.assignmentType}-assignment`;
-            
-        // Diferenciar entre soporte, proyecto y tarea
-        if (assignment.assignmentType === 'support') {
-            // 🟦 ASIGNACIÓN DE SOPORTE
-            const company = window.PortalDB.getCompany(assignment.companyId);
-            const support = window.PortalDB.getSupport(assignment.supportId);
-            const module = window.PortalDB.getModule(assignment.moduleId);
-            
-            const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
-            const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
-            
-            assignmentDiv.innerHTML = `
-                <div class="assignment-header">
-                    <h3 style="margin: 0; color: #2c3e50;">
-                        <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
-                        <span class="assignment-type-badge support-badge"><i class="fa-solid fa-headset"></i> SOPORTE</span>
-                    </h3>
-                    <span class="assignment-id">${assignment.id.slice(-6)}</span>
-                </div>
-                
-                <div class="assignment-details">
-                    <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
-                    <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                    <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
-                    <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
-                </div>
-                
-                <div class="assignment-actions">
-                    <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.id}')">
-                        <i class="fa-solid fa-file-alt"></i> Crear Ticket
-                    </button>
-                    <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
-                        <i class="fa-solid fa-chart-line"></i> Ver Ticket (${assignmentReports.length})
-                    </button>
-                </div>
-            `;
-            
-        } else if (assignment.assignmentType === 'task') {
-            // 🟨 ⭐ NUEVO: ASIGNACIÓN DE TAREA
-            const company = window.PortalDB.getCompany(assignment.companyId);
-            const support = window.PortalDB.getSupport(assignment.linkedSupportId);  // Nota: linkedSupportId
-            const module = window.PortalDB.getModule(assignment.moduleId);
-            
-            const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
-            const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
-            
-            assignmentDiv.innerHTML = `
-                <div class="assignment-header">
-                    <h3 style="margin: 0; color: #2c3e50;">
-                        <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
-                        <span class="assignment-type-badge task-badge"><i class="fa-solid fa-tasks"></i> TAREA</span>
-                    </h3>
-                    <span class="assignment-id">${assignment.id.slice(-6)}</span>
-                </div>
-                
-                <div class="assignment-details">
-                    <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
-                    <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                    <p><strong><i class="fa-solid fa-info-circle"></i> Descripción:</strong> ${assignment.descripcion || 'Sin descripción'}</p>
-                    <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
-                    <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
-                </div>
-                
-                <div class="assignment-actions">
-                    <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.id}')">
-                        <i class="fa-solid fa-file-alt"></i> Crear Ticket
-                    </button>
-                    <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
-                        <i class="fa-solid fa-chart-line"></i> Ver Tickets (${assignmentReports.length})
-                    </button>
-                </div>
-            `;
-            
-        } else {
-            // 🟩 ASIGNACIÓN DE PROYECTO
-            const company = window.PortalDB.getCompany(assignment.companyId);
-            const project = window.PortalDB.getProject(assignment.projectId);
-            const module = window.PortalDB.getModule(assignment.moduleId);
-            
-            const assignmentReports = window.PortalDB.getReportsByAssignment(assignment.id);
-            const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
-            
-            assignmentDiv.innerHTML = `
-                <div class="assignment-header">
-                    <h3 style="margin: 0; color: #2c3e50;">
-                        <i class="fa-solid fa-building"></i> ${company?.name || 'Empresa no encontrada'}
-                        <span class="assignment-type-badge project-badge"><i class="fa-solid fa-bullseye"></i> PROYECTO</span>
-                    </h3>
-                    <span class="assignment-id">${assignment.id.slice(-8)}</span>
-                </div>
-                
-                <div class="assignment-details">
-                    <p><strong><i class="fa-solid fa-bullseye"></i> Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
-                    <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                    <p><strong><i class="fa-solid fa-chart-pie"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
-                    <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
-                </div>
-                
-                <div class="assignment-actions">
-                    <button class="btn btn-success" onclick="openProjectReportModal('${assignment.id}')">
-                        <i class="fa-solid fa-file-alt"></i> Crear Ticket
-                    </button>
-                    <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.id}')">
-                        <i class="fa-solid fa-chart-line"></i> Ver Tickets (${assignmentReports.length})
-                    </button>
-                    <button class="btn btn-info" onclick="viewProjectDetails('${assignment.id}')">
-                        <i class="fa-solid fa-info-circle"></i> Detalles del Proyecto
-                    </button>
-                </div>
-            `;
-        }
-            
-            container.appendChild(assignmentDiv);
-        });
-        
+
+        const supportAssignments = userAssignments.filter(a => a.assignmentType === 'support');
+        const taskAssignments = userAssignments.filter(a => a.assignmentType === 'task');
+        const projectAssignments = userAssignments.filter(a => a.assignmentType === 'project');
+
+        // ✅ CAMBIO 1: Hacer la función async
+        const renderAssignments = async () => {
+            let html = '';
+
+            // === SUPPORT ASSIGNMENTS ===
+            // ✅ CAMBIO 2: Usar for...of en lugar de forEach
+            for (const assignment of supportAssignments) {
+                const assignmentReportsData = await window.PortalDB.getReportsByAssignment(assignment.assignmentId);
+                const assignmentReports = normalizeReports(assignmentReportsData);
+                const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+
+                // ✅ CAMBIO 3: Usar await
+                const company = await window.PortalDB.getCompany(assignment.companyId);
+                const support = await window.PortalDB.getSupport(assignment.supportId);
+                const module = await window.PortalDB.getModule(assignment.moduleId);
+
+                html += `
+                    <div class="assignment-card support-card">
+                        <div class="assignment-header">
+                            <div class="assignment-title">
+                                <i class="fa-solid fa-headset"></i>
+                                <h3>${company?.name || 'Empresa no encontrada'}</h3>
+                                <span class="badge badge-support">SOPORTE</span>
+                                <span class="assignment-id">${assignment.assignmentId.slice(-6)}</span>
+                            </div>
+                        </div>
+                        <div class="assignment-body">
+                            <div class="assignment-info">
+                                <p><strong><i class="fa-solid fa-tools"></i> Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
+                                <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                                <p><strong><i class="fa-solid fa-file-alt"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
+                                <p><strong><i class="fa-solid fa-calendar"></i> Asignado:</strong> ${window.DateUtils.formatDate(assignment.createdAt)}</p>
+                            </div>
+                            <div class="assignment-actions">
+                                <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.assignmentId}')">
+                                    <i class="fa-solid fa-file-alt"></i> Crear Ticket
+                                </button>
+                                <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.assignmentId}')">
+                                    <i class="fa-solid fa-chart-line"></i> Ver Tickets (${assignmentReports.length})
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // === TASK ASSIGNMENTS ===
+            for (const assignment of taskAssignments) {
+                const assignmentReportsData = await window.PortalDB.getReportsByAssignment(assignment.taskAssignmentId);
+                const assignmentReports = normalizeReports(assignmentReportsData);
+                const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+
+                const company = await window.PortalDB.getCompany(assignment.companyId);
+                const support = await window.PortalDB.getSupport(assignment.linkedSupportId);
+                const module = await window.PortalDB.getModule(assignment.moduleId);
+
+                html += `
+                    <div class="assignment-card task-card">
+                        <div class="assignment-header">
+                            <div class="assignment-title">
+                                <i class="fa-solid fa-tasks"></i>
+                                <h3>${company?.name || 'Empresa no encontrada'}</h3>
+                                <span class="badge badge-task">TAREA</span>
+                                <span class="assignment-id">${assignment.taskAssignmentId.slice(-6)}</span>
+                            </div>
+                        </div>
+                        <div class="assignment-body">
+                            <div class="assignment-info">
+                                <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
+                                <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                                <p><strong><i class="fa-solid fa-clipboard-list"></i> Descripción:</strong> ${assignment.descripcion || 'Sin descripción'}</p>
+                                <p><strong><i class="fa-solid fa-file-alt"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
+                                <p><strong><i class="fa-solid fa-calendar"></i> Asignado:</strong> ${window.DateUtils.formatDate(assignment.createdAt)}</p>
+                            </div>
+                            <div class="assignment-actions">
+                                <button class="btn btn-primary" onclick="openCreateReportModal('${assignment.taskAssignmentId}')">
+                                    <i class="fa-solid fa-file-alt"></i> Crear Ticket
+                                </button>
+                                <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.taskAssignmentId}')">
+                                    <i class="fa-solid fa-chart-line"></i> Ver Tickets (${assignmentReports.length})
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // === PROJECT ASSIGNMENTS ===
+            for (const assignment of projectAssignments) {
+                const assignmentReportsData = await window.PortalDB.getReportsByAssignment(assignment.projectAssignmentId);
+                const assignmentReports = normalizeReports(assignmentReportsData);
+                const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
+
+                const company = await window.PortalDB.getCompany(assignment.companyId);
+                const project = await window.PortalDB.getProject(assignment.projectId);
+                const module = await window.PortalDB.getModule(assignment.moduleId);
+
+                html += `
+                    <div class="assignment-card project-card">
+                        <div class="assignment-header">
+                            <div class="assignment-title">
+                                <i class="fa-solid fa-diagram-project"></i>
+                                <h3>${company?.name || 'Empresa no encontrada'}</h3>
+                                <span class="badge badge-project">PROYECTO</span>
+                                <span class="assignment-id">${assignment.projectAssignmentId.slice(-8)}</span>
+                            </div>
+                        </div>
+                        <div class="assignment-body">
+                            <div class="assignment-info">
+                                <p><strong><i class="fa-solid fa-diagram-project"></i> Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
+                                <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+                                <p><strong><i class="fa-solid fa-file-alt"></i> Reportes:</strong> ${assignmentReports.length} reportes | <strong><i class="fa-solid fa-clock"></i> Total:</strong> ${totalHours.toFixed(1)} hrs</p>
+                                <p><strong><i class="fa-solid fa-calendar"></i> Asignado:</strong> ${window.DateUtils.formatDate(assignment.createdAt)}</p>
+                            </div>
+                            <div class="assignment-actions">
+                                <button class="btn btn-success" onclick="openProjectReportModal('${assignment.projectAssignmentId}')">
+                                    <i class="fa-solid fa-file-alt"></i> Crear Ticket
+                                </button>
+                                <button class="btn btn-secondary" onclick="viewAssignmentReports('${assignment.projectAssignmentId}')">
+                                    <i class="fa-solid fa-chart-line"></i> Ver Tickets (${assignmentReports.length})
+                                </button>
+                                <button class="btn btn-info" onclick="viewProjectDetails('${assignment.projectAssignmentId}')">
+                                    <i class="fa-solid fa-info-circle"></i> Ver Detalles
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Si no hay asignaciones
+            if (html === '') {
+                html = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="fa-solid fa-bullseye"></i></div>
+                        <div class="empty-state-title">No hay asignaciones</div>
+                        <div class="empty-state-desc">Las asignaciones del administrador aparecerán aquí</div>
+                    </div>
+                `;
+            }
+
+            container.innerHTML = html;
+        };
+
+        // ✅ CAMBIO 4: Llamar la función async
+        renderAssignments();
+
     } catch (error) {
         console.error('Error en updateAssignmentsList:', error);
-        container.innerHTML = `
-            <div class="error-state">
-                <div class="error-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div class="error-title">Error al cargar asignaciones</div>
-                <div class="error-desc">Por favor, recarga la página</div>
-            </div>
-        `;
     }
 }
 
@@ -501,37 +554,45 @@ function updateAssignmentsCount() {
 }
 
 // === GESTIÓN DE REPORTES ===
-function openCreateReportModal(assignmentId) {
+async function openCreateReportModal(assignmentId) {  // ✅ Agregar async
     try {
         currentAssignmentId = assignmentId;
-        const assignment = userAssignments.find(a => a.id === assignmentId);
+        
+        const assignment = userAssignments.find(a => {
+            if (a.assignmentType === 'support') {
+                return a.assignmentId === assignmentId;
+            } else if (a.assignmentType === 'project') {
+                return a.projectAssignmentId === assignmentId;
+            } else if (a.assignmentType === 'task') {
+                return a.taskAssignmentId === assignmentId;
+            }
+            return false;
+        });
         
         if (!assignment) {
             showError('Asignación no encontrada');
-            console.error('❌ No se encontró asignación:', assignmentId);
-            console.log('userAssignments disponibles:', userAssignments.map(a => a.id));
             return;
         }
         
         console.log('✅ Asignación encontrada:', assignment);
         
-        const company = window.PortalDB.getCompany(assignment.companyId);
-        const module = window.PortalDB.getModule(assignment.moduleId);
+        // ✅ Agregar await
+        const company = await window.PortalDB.getCompany(assignment.companyId);
+        const module = await window.PortalDB.getModule(assignment.moduleId);
         
         // NUEVO: Llenar información del empleado
         const employeeDisplay = document.getElementById('employeeDisplay');
         if (employeeDisplay) {
-            employeeDisplay.innerHTML = `${currentUser.name} (ID: ${currentUser.id})`;
+            employeeDisplay.innerHTML = `${currentUser.name} (ID: ${currentUser.userId})`;
         }
         
-        // ✅ CORRECCIÓN: Mostrar información según tipo de asignación
         const assignmentInfoElement = document.getElementById('selectedAssignmentInfo');
         if (assignmentInfoElement) {
             let assignmentDetails = '';
             
-            // 🟩 PROYECTO
             if (assignment.assignmentType === 'project') {
-                const project = window.PortalDB.getProject(assignment.projectId);
+                // ✅ Agregar await
+                const project = await window.PortalDB.getProject(assignment.projectId);
                 assignmentDetails = `
                     <h4><i class="fa-solid fa-bullseye"></i> Proyecto</h4>
                     <p><strong>Empresa:</strong> ${company?.name || 'No encontrada'}</p>
@@ -539,17 +600,9 @@ function openCreateReportModal(assignmentId) {
                     <p><strong>Módulo:</strong> ${module?.name || 'No encontrado'}</p>
                 `;
             } 
-            // 🟨 TAREA (NUEVO - ESTE ES EL CAMBIO IMPORTANTE)
             else if (assignment.assignmentType === 'task') {
-                // ⚠️ IMPORTANTE: Las tareas usan 'linkedSupportId' NO 'supportId'
-                const support = window.PortalDB.getSupport(assignment.linkedSupportId);
-                
-                console.log('🔍 Buscando soporte para tarea:', {
-                    taskId: assignment.id,
-                    linkedSupportId: assignment.linkedSupportId,
-                    supportFound: !!support,
-                    supportName: support?.name
-                });
+                // ✅ Agregar await
+                const support = await window.PortalDB.getSupport(assignment.linkedSupportId);
                 
                 assignmentDetails = `
                     <h4><i class="fa-solid fa-tasks"></i> Tarea</h4>
@@ -558,9 +611,9 @@ function openCreateReportModal(assignmentId) {
                     <p><strong>Módulo:</strong> ${module?.name || 'No encontrado'}</p>
                 `;
             }
-            // 🟦 SOPORTE (DEFAULT)
             else {
-                const support = window.PortalDB.getSupport(assignment.supportId);
+                // ✅ Agregar await
+                const support = await window.PortalDB.getSupport(assignment.supportId);
                 assignmentDetails = `
                     <h4><i class="fa-solid fa-headset"></i> Soporte</h4>
                     <p><strong>Empresa:</strong> ${company?.name || 'No encontrada'}</p>
@@ -572,12 +625,10 @@ function openCreateReportModal(assignmentId) {
             assignmentInfoElement.innerHTML = assignmentDetails;
         }
         
-        // Limpiar formulario y configurar fecha
         document.getElementById('reportForm').reset();
         const today = new Date().toISOString().split('T')[0];
         document.getElementById('reportDate').value = today;
         
-        // Abrir modal
         openModal('createReportModal');
         
     } catch (error) {
@@ -643,7 +694,7 @@ function getAssignmentDisplayInfo(assignmentId) {
     return assignmentInfo;
 }
 
-function handleCreateReport(event) {
+async function handleCreateReport(event) {
     event.preventDefault();
     
     try {
@@ -676,7 +727,7 @@ function handleCreateReport(event) {
             // ============================================================================
             console.log('Guardando cambios en reporte rechazado:', editingReportId);
             
-            const result = editRejectedReport(editingReportId, {
+            const result = await editRejectedReport(editingReportId, {
                 title: formData.title,
                 description: formData.description,
                 hours: formData.hours,
@@ -684,18 +735,13 @@ function handleCreateReport(event) {
             });
             
             if (result.success) {
-                // Limpiar modo edición
                 cleanupEditingMode(modal);
-                
-                // Cerrar modal
                 closeModal('createReportModal');
                 
-                // Mostrar mensaje específico para edición
                 if (window.NotificationUtils) {
                     window.NotificationUtils.success('<i class="fa-solid fa-pencil-alt"></i> Cambios guardados. Puedes reenviar el ticket cuando estés listo.');
                 }
                 
-                // Actualizar vistas
                 setTimeout(() => {
                     loadUserAssignments();
                     if (typeof updateRejectedReportsSection === 'function') {
@@ -714,18 +760,45 @@ function handleCreateReport(event) {
                 return;
             }
             
+            const assignment = userAssignments.find(a => {
+                if (a.assignmentType === 'support') return a.assignmentId === currentAssignmentId;
+                if (a.assignmentType === 'project') return a.projectAssignmentId === currentAssignmentId;
+                if (a.assignmentType === 'task') return a.taskAssignmentId === currentAssignmentId;
+                return false;
+            });
+
+            if (!assignment) {
+                showError('No se encontró la asignación');
+                return;
+            }
+
+            // ✅ GENERAR reportId único
+            const reportId = 'REP' + Math.random().toString(36).substring(2, 6).toUpperCase() + Date.now().toString().slice(-4);
+            
             const reportData = {
-                userId: currentUser.id,
+                reportId: reportId, 
+                userId: currentUser.userId,
                 assignmentId: currentAssignmentId,
+                assignmentType: assignment.assignmentType,  
+                companyId: assignment.companyId,            
+                moduleId: assignment.moduleId,            
                 title: formData.title,
                 description: formData.description,
                 hours: formData.hours,
-                reportDate: formData.reportDate
+                date: formData.reportDate
             };
+
+            if (assignment.assignmentType === 'support') {
+                reportData.supportId = assignment.supportId;
+            } else if (assignment.assignmentType === 'project') {
+                reportData.projectId = assignment.projectId;
+            } else if (assignment.assignmentType === 'task') {
+                reportData.linkedSupportId = assignment.linkedSupportId;
+            }
             
             console.log('Creando reporte nuevo:', reportData);
             
-            const result = window.PortalDB.createReport(reportData);
+            const result = await window.PortalDB.createReport(reportData);
             
             if (result.success) {
                 if (window.NotificationUtils) {
@@ -733,11 +806,13 @@ function handleCreateReport(event) {
                 }
                 
                 closeModal('createReportModal');
-                loadUserAssignments();
                 
-                if (typeof updateRejectedReportsSection === 'function') {
-                    updateRejectedReportsSection();
-                }
+                setTimeout(() => {
+                    loadUserAssignments();
+                    if (typeof updateRejectedReportsSection === 'function') {
+                        updateRejectedReportsSection();
+                    }
+                }, 500);
             } else {
                 showError('Error al crear ticket: ' + result.message);
             }
@@ -788,28 +863,34 @@ function cleanupEditingMode(modal) {
     }
 }
 
-function viewAssignmentReports(assignmentId) {
+async function viewAssignmentReports(assignmentId) {  
     try {
-        const assignment = userAssignments.find(a => a.id === assignmentId);
+        const assignment = userAssignments.find(a => {
+            if (a.assignmentType === 'support') return a.assignmentId === assignmentId;
+            if (a.assignmentType === 'project') return a.projectAssignmentId === assignmentId;
+            if (a.assignmentType === 'task') return a.taskAssignmentId === assignmentId;
+            return false;
+        });
+        
         if (!assignment) {
             showError('Asignación no encontrada');
             return;
         }
         
-        const company = window.PortalDB.getCompany(assignment.companyId);
-        const module = window.PortalDB.getModule(assignment.moduleId);
+        // ✅ Agregar await
+        const company = await window.PortalDB.getCompany(assignment.companyId);
+        const module = await window.PortalDB.getModule(assignment.moduleId);
         
-        const reports = window.PortalDB.getReportsByAssignment(assignmentId);
+        const reportsData = await window.PortalDB.getReportsByAssignment(assignmentId);
+        const reports = normalizeReports(reportsData);
         
-        // Mostrar información de la asignación
         const assignmentInfoElement = document.getElementById('assignmentReportsInfo');
         if (assignmentInfoElement) {
             let assignmentDetails = '';
             
-            // 🔄 DETECTAR TIPO DE ASIGNACIÓN Y MOSTRAR INFORMACIÓN CORRECTA
             if (assignment.assignmentType === 'project') {
-                // 🟩 ASIGNACIÓN DE PROYECTO
-                const project = window.PortalDB.getProject(assignment.projectId);
+                // ✅ Agregar await
+                const project = await window.PortalDB.getProject(assignment.projectId);
                 assignmentDetails = `
                     <div class="assignment-info-display">
                         <h4><i class="fa-solid fa-file-alt"></i> Información de la Asignación</h4>
@@ -819,9 +900,21 @@ function viewAssignmentReports(assignmentId) {
                         <p><strong><i class="fa-solid fa-file-alt"></i> Descripción:</strong> ${project?.description || 'Sin descripción'}</p>
                     </div>
                 `;
+            } else if (assignment.assignmentType === 'task') {
+                // ✅ Agregar await
+                const support = await window.PortalDB.getSupport(assignment.linkedSupportId);
+                assignmentDetails = `
+                    <div class="assignment-info-display">
+                        <h4><i class="fa-solid fa-file-alt"></i> Información de la Asignación</h4>
+                        <p><strong><i class="fa-solid fa-building"></i> Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                        <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'No encontrado'}</p>
+                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                        <p><strong><i class="fa-solid fa-clipboard-list"></i> Descripción:</strong> ${assignment.descripcion || 'Sin descripción'}</p>
+                    </div>
+                `;
             } else {
-                // 🟦 ASIGNACIÓN DE SOPORTE
-                const support = window.PortalDB.getSupport(assignment.supportId);
+                // ✅ Agregar await
+                const support = await window.PortalDB.getSupport(assignment.supportId);
                 assignmentDetails = `
                     <div class="assignment-info-display">
                         <h4><i class="fa-solid fa-file-alt"></i> Información de la Asignación</h4>
@@ -835,7 +928,7 @@ function viewAssignmentReports(assignmentId) {
             assignmentInfoElement.innerHTML = assignmentDetails;
         }
         
-        // Mostrar lista de reportes
+        // Mostrar lista de reportes...
         const reportsListElement = document.getElementById('reportsList');
         if (reportsListElement) {
             if (reports.length === 0) {
@@ -849,10 +942,9 @@ function viewAssignmentReports(assignmentId) {
             } else {
                 reportsListElement.innerHTML = '<h4><i class="fa-solid fa-chart-line"></i> Tickets Enviados</h4>';
                 
-                // Ordenar reportes por fecha (más recientes primero)
-                const sortedReports = reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                reports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 
-                sortedReports.forEach(report => {
+                reports.forEach(report => {
                     const reportDiv = document.createElement('div');
                     reportDiv.className = 'report-item';
                     reportDiv.innerHTML = `
@@ -887,6 +979,7 @@ function viewAssignmentReports(assignmentId) {
     } catch (error) {
         console.error('Error en viewAssignmentReports:', error);
         showError('Error al ver reportes: ' + error.message);
+        showError('Error al guardar cambios: ' + result.message);
     }
 }
 
@@ -964,16 +1057,18 @@ function openProjectReportModal(projectAssignmentId) {
     openCreateReportModal(projectAssignmentId);
 }
 
-function viewProjectDetails(projectAssignmentId) {
-    const assignment = userAssignments.find(a => a.id === projectAssignmentId);
+async function viewProjectDetails(projectAssignmentId) {  // ✅ Agregar async
+    const assignment = userAssignments.find(a => a.projectAssignmentId === projectAssignmentId);
+    
     if (!assignment) {
         window.NotificationUtils.error('No se encontró la asignación del proyecto');
         return;
     }
     
-    const project = window.PortalDB.getProject(assignment.projectId);
-    const company = window.PortalDB.getCompany(assignment.companyId);
-    const module = window.PortalDB.getModule(assignment.moduleId);
+    // ✅ Agregar await
+    const project = await window.PortalDB.getProject(assignment.projectId);
+    const company = await window.PortalDB.getCompany(assignment.companyId);
+    const module = await window.PortalDB.getModule(assignment.moduleId);
     
     const details = `
    DETALLES DEL PROYECTO
@@ -983,10 +1078,9 @@ function viewProjectDetails(projectAssignmentId) {
    Módulo: ${module?.name || 'No encontrado'}
    Descripción: ${project?.description || 'Sin descripción'}
    Fecha de asignación: ${window.DateUtils.formatDate(assignment.createdAt)}
-   ID de asignación: ${assignment.id}
+   ID de asignación: ${assignment.projectAssignmentId}
     `;
     
-    // Crear un modal personalizado o usar notificación
     if (window.ModalUtils && window.ModalUtils.showInfo) {
         window.ModalUtils.showInfo('Detalles del Proyecto', details);
     } else {
@@ -1009,25 +1103,19 @@ function updateAssignmentsCount() {
 /**
  * Cargar reportes rechazados del usuario actual
  */
-function loadRejectedReports() {
+async function loadRejectedReports() {
     try {
-        if (!currentUser || !window.PortalDB) {
-            console.error('Usuario no autenticado o PortalDB no disponible');
-            return [];
-        }
+        // ✅ CORRECCIÓN: Convertir a array si viene como objeto
+        const allReportsData = await window.PortalDB.getReports();
+        const allReports = normalizeReports(allReportsData);
         
-        // Obtener todos los reportes del usuario
-        const allReports = window.PortalDB.getReportsByUser ? 
-                          window.PortalDB.getReportsByUser(currentUser.id) : 
-                          Object.values(window.PortalDB.getReports()).filter(r => r.userId === currentUser.id);
+        const rejectedReports = allReports.filter(r => 
+            r.userId === currentUser.userId && r.status === 'Rechazado'
+        );
         
-        // Filtrar solo los rechazados
-        const rejectedReports = allReports.filter(report => report.status === 'Rechazado');
-        
-        console.log(`📄 Reportes rechazados encontrados: ${rejectedReports.length}`);
-        console.log('📋 Reportes rechazados:', rejectedReports);
-        
+        console.log('📋 Reportes rechazados encontrados:', rejectedReports.length);
         return rejectedReports;
+        
     } catch (error) {
         console.error('Error cargando reportes rechazados:', error);
         return [];
@@ -1037,20 +1125,25 @@ function loadRejectedReports() {
 /**
  * Editar un reporte rechazado
  */
-function editRejectedReport(reportId, updateData) {
+// Línea ~1120-1180
+
+async function editRejectedReport(reportId, updateData) {  // ✅ Agregar async
     try {
         if (!currentUser || !window.PortalDB) {
             throw new Error('Usuario no autenticado o PortalDB no disponible');
         }
         
-        const reports = window.PortalDB.getReports();
-        const report = reports[reportId];
+        // ✅ Buscar el reporte correctamente en MongoDB
+        const allReportsData = await window.PortalDB.getReports();
+        const allReports = normalizeReports(allReportsData);
+        
+        const report = allReports.find(r => r.reportId === reportId);
         
         if (!report) {
             throw new Error('Reporte no encontrado');
         }
         
-        if (report.userId !== currentUser.id) {
+        if (report.userId !== currentUser.userId) {
             throw new Error('No tienes permisos para editar este reporte');
         }
         
@@ -1067,22 +1160,25 @@ function editRejectedReport(reportId, updateData) {
             throw new Error('Las horas deben estar entre 0.5 y 24');
         }
         
-        // IMPORTANTE: Solo actualizar datos, mantener status "Rechazado"
-        const result = window.PortalDB.updateReport(reportId, {
-            ...updateData,
+        // ✅ Actualizar el reporte en MongoDB
+        const result = await window.PortalDB.updateReport(reportId, {
+            title: updateData.title,
+            description: updateData.description,
+            hours: updateData.hours,
+            date: updateData.date,
             // NO cambiar el status aquí, eso lo hace resubmitReport
             updatedAt: new Date().toISOString()
         });
         
         if (result.success) {
-            console.log('Cambios guardados en reporte rechazado:', reportId);
+            console.log('✅ Cambios guardados en reporte rechazado:', reportId);
             return result;
         } else {
             throw new Error(result.message);
         }
         
     } catch (error) {
-        console.error('Error editando reporte:', error);
+        console.error('❌ Error editando reporte:', error);
         return { success: false, message: error.message };
     }
 }
@@ -1090,36 +1186,51 @@ function editRejectedReport(reportId, updateData) {
 /**
  * Reenviar un reporte rechazado
  */
-function resubmitRejectedReport(reportId, updateData = {}) {
+// Línea ~1195-1240
+
+async function resubmitRejectedReport(reportId) {  // ✅ Agregar async
     try {
         if (!currentUser || !window.PortalDB) {
             throw new Error('Usuario no autenticado o PortalDB no disponible');
         }
         
-        // Validar que el reporte pertenece al usuario actual
-        const reports = window.PortalDB.getReports();
-        const report = reports[reportId];
+        // ✅ Buscar el reporte correctamente en MongoDB
+        const allReportsData = await window.PortalDB.getReports();
+        const allReports = normalizeReports(allReportsData);
+        
+        const report = allReports.find(r => r.reportId === reportId);
         
         if (!report) {
             throw new Error('Ticket no encontrado');
         }
         
-        if (report.userId !== currentUser.id) {
+        if (report.userId !== currentUser.userId) {
             throw new Error('No tienes permisos para reenviar este ticket');
         }
         
-        // Reenviar reporte
-        const result = window.PortalDB.resubmitReport(reportId, updateData);
+        if (report.status !== 'Rechazado') {
+            throw new Error('Solo se pueden reenviar reportes rechazados');
+        }
+        
+        // ✅ Reenviar el reporte (cambiar status a "Pendiente" o "Resubmitted")
+        const result = await window.PortalDB.updateReport(reportId, {
+            status: 'Pendiente',  // O "Resubmitted" si prefieres
+            resubmittedAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        });
         
         if (result.success) {
+            console.log('✅ Reporte reenviado:', reportId);
+            
             if (window.NotificationUtils) {
                 window.NotificationUtils.success('Ticket reenviado al administrador para revisión');
             }
             
-            // Actualizar la vista si existe
-            if (typeof loadUserAssignments === 'function') {
+            // Actualizar la vista
+            setTimeout(() => {
                 loadUserAssignments();
-            }
+                updateRejectedReportsSection();
+            }, 500);
             
             return result;
         } else {
@@ -1127,7 +1238,7 @@ function resubmitRejectedReport(reportId, updateData = {}) {
         }
         
     } catch (error) {
-        console.error('Error reenviando reporte:', error);
+        console.error('❌ Error reenviando reporte:', error);
         if (window.NotificationUtils) {
             window.NotificationUtils.error('Error: ' + error.message);
         }
@@ -1138,117 +1249,153 @@ function resubmitRejectedReport(reportId, updateData = {}) {
 /**
  * Abrir modal para editar reporte rechazado
  */
-function openEditRejectedReportModal(reportId) {
+// Línea ~1230-1320
+
+async function openEditRejectedReportModal(reportId) {
     try {
-        const reports = window.PortalDB.getReports();
-        const report = reports[reportId];
+        console.log('🔍 Buscando ticket rechazado:', reportId);
+        
+        // Buscar en MongoDB
+        const allReportsData = await window.PortalDB.getReports();
+        const allReports = normalizeReports(allReportsData);
+        
+        const report = allReports.find(r => r.reportId === reportId);
         
         if (!report) {
-            if (window.NotificationUtils) {
-                window.NotificationUtils.error('Ticket no encontrado');
-            } else {
-                showError('Ticket no encontrado');
-            }
+            console.error('❌ Ticket no encontrado:', reportId);
+            showError('Ticket no encontrado');
             return;
         }
         
-        // Pre-llenar formulario
-        document.getElementById('reportTitle').value = report.title;
-        document.getElementById('reportDescription').value = report.description;
-        document.getElementById('reportHours').value = report.hours;
-        document.getElementById('reportDate').value = report.reportDate || report.date;
+        console.log('✅ Ticket encontrado:', report);
         
-        // NUEVO: Llenar información del empleado
+        // Buscar la asignación completa
+        const assignment = userAssignments.find(a => {
+            if (report.assignmentType === 'support') return a.assignmentId === report.assignmentId;
+            if (report.assignmentType === 'project') return a.projectAssignmentId === report.assignmentId;
+            if (report.assignmentType === 'task') return a.taskAssignmentId === report.assignmentId;
+            return false;
+        });
+        
+        if (!assignment) {
+            console.error('❌ Asignación no encontrada para el reporte');
+            showError('No se encontró la asignación asociada al ticket');
+            return;
+        }
+        
+        console.log('✅ Asignación encontrada:', assignment);
+        
+        // Configurar el modal
+        currentAssignmentId = report.assignmentId;
+        const modal = document.getElementById('createReportModal');
+        
+        // ✅ CARGAR INFORMACIÓN DE LA ASIGNACIÓN EN EL MODAL (en lugar de loadAssignmentInfoInModal)
+        const company = await window.PortalDB.getCompany(assignment.companyId);
+        const module = await window.PortalDB.getModule(assignment.moduleId);
+        
+        // Llenar información del empleado
         const employeeDisplay = document.getElementById('employeeDisplay');
         if (employeeDisplay) {
-            employeeDisplay.innerHTML = `${currentUser.name} (ID: ${currentUser.id})`;
+            employeeDisplay.innerHTML = `${currentUser.name} (ID: ${currentUser.userId})`;
         }
         
-        // NUEVO: Mostrar información de asignación para reportes rechazados
-        const assignmentInfo = getAssignmentDisplayInfo(report.assignmentId);
+        // Llenar información de la asignación
         const assignmentInfoElement = document.getElementById('selectedAssignmentInfo');
-        
-        if (assignmentInfoElement && assignmentInfo.displayData) {
-            const displayData = assignmentInfo.displayData;
-            assignmentInfoElement.innerHTML = `
-                <h4>${assignmentInfo.assignmentType === 'support' ? '<i class="fa-solid fa-headset"></i> Soporte' : '<i class="fa-solid fa-bullseye"></i> Proyecto'}</h4>
-                <p><strong>Empresa:</strong> ${displayData.companyName}</p>
-                <p><strong>${assignmentInfo.assignmentType === 'support' ? 'Soporte:' : 'Proyecto:'}</strong> ${displayData.mainTitle}</p>
-                <p><strong>Módulo:</strong> ${displayData.moduleName}</p>
-            `;
+        if (assignmentInfoElement) {
+            let assignmentDetails = '';
+            
+            if (assignment.assignmentType === 'project') {
+                const project = await window.PortalDB.getProject(assignment.projectId);
+                assignmentDetails = `
+                    <h4><i class="fa-solid fa-bullseye"></i> Proyecto</h4>
+                    <p><strong>Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                    <p><strong>Proyecto:</strong> ${project?.name || 'No encontrado'}</p>
+                    <p><strong>Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                `;
+            } else if (assignment.assignmentType === 'task') {
+                const support = await window.PortalDB.getSupport(assignment.linkedSupportId);
+                assignmentDetails = `
+                    <h4><i class="fa-solid fa-tasks"></i> Tarea</h4>
+                    <p><strong>Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                    <p><strong>Soporte:</strong> ${support?.name || 'No encontrado'}</p>
+                    <p><strong>Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                `;
+            } else {
+                const support = await window.PortalDB.getSupport(assignment.supportId);
+                assignmentDetails = `
+                    <h4><i class="fa-solid fa-headset"></i> Soporte</h4>
+                    <p><strong>Empresa:</strong> ${company?.name || 'No encontrada'}</p>
+                    <p><strong>Soporte:</strong> ${support?.name || 'No encontrado'}</p>
+                    <p><strong>Módulo:</strong> ${module?.name || 'No encontrado'}</p>
+                `;
+            }
+            
+            assignmentInfoElement.innerHTML = assignmentDetails;
         }
         
-        // Marcar como edición
-        const modal = document.getElementById('createReportModal');
-        if (modal) {
-            modal.dataset.editingReportId = reportId;
-            modal.dataset.isEditing = 'true';
-            
-            // Cambiar título del modal
-            const modalTitle = modal.querySelector('.modal-title');
-            if (modalTitle) {
-                modalTitle.textContent = '<i class="fa-solid fa-pencil-alt"></i> Editar Ticket Rechazado';
-            }
-            
-            // Modificar botón de submit
-            const submitButton = modal.querySelector('.btn-submit');
-            if (submitButton) {
-                submitButton.innerHTML = '<i class="fa-solid fa-save"></i> Guardar Cambios';
-                submitButton.style.background = '#ffa502';
-            }
-            
-            // Agregar información de edición
-            let infoContainer = modal.querySelector('.editing-info');
-            if (!infoContainer) {
-                infoContainer = document.createElement('div');
-                infoContainer.className = 'editing-info';
-                const modalBody = modal.querySelector('.modal-body');
-                if (modalBody) {
-                    modalBody.insertBefore(infoContainer, modalBody.firstChild);
-                }
-            }
-            
-            infoContainer.innerHTML = `
-                <h4><i class="fa-solid fa-info-circle"></i> Modo de Edición</h4>
-                <p>Puedes modificar los datos del reporte. Al guardar los cambios, el reporte seguirá en estado "Rechazado". Después podrás usar el botón "<i class="fa-solid fa-redo"></i> Reenviar" para enviarlo al administrador.</p>
-            `;
-            
-            // Mostrar feedback de rechazo
-            let feedbackContainer = modal.querySelector('.rejection-feedback');
-            if (!feedbackContainer) {
-                feedbackContainer = document.createElement('div');
-                feedbackContainer.className = 'rejection-feedback';
-                const modalBody = modal.querySelector('.modal-body');
-                if (modalBody && infoContainer.nextSibling) {
-                    modalBody.insertBefore(feedbackContainer, infoContainer.nextSibling);
-                }
-            }
-            
-            feedbackContainer.innerHTML = `
-                <strong><i class="fa-solid fa-comments"></i> Comentarios del Administrador:</strong><br>
-                <span>${report.feedback || 'Sin comentarios'}</span>
-            `;
-            
-            // Abrir modal
-            openModal('createReportModal');
+        // Pre-cargar datos del reporte
+        document.getElementById('reportTitle').value = report.title || '';
+        document.getElementById('reportDescription').value = report.description || '';
+        document.getElementById('reportHours').value = report.hours || '';
+        document.getElementById('reportDate').value = report.date ? report.date.split('T')[0] : '';
+        
+        // Marcar el modal como modo edición
+        modal.dataset.isEditing = 'true';
+        modal.dataset.editingReportId = reportId;
+        
+        // Cambiar el título del modal
+        const modalTitle = modal.querySelector('.modal-title');
+        if (modalTitle) {
+            modalTitle.innerHTML = '<i class="fa-solid fa-edit"></i> Editar Ticket Rechazado';
         }
+        
+        // Cambiar el texto del botón submit
+        const submitBtn = modal.querySelector('.btn-submit');
+        if (submitBtn) {
+            submitBtn.innerHTML = '<i class="fa-solid fa-save"></i> Guardar Cambios';
+        }
+        
+        // Agregar feedback del admin si existe
+        if (report.feedback) {
+            const feedbackHtml = `
+                <div class="form-section feedback-section" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px;">
+                    <div class="section-title" style="color: #856404;">
+                        <i class="fa-solid fa-comment-dots"></i> Comentarios del Administrador
+                    </div>
+                    <p style="margin: 10px 0 0 0; color: #856404;">${report.feedback}</p>
+                </div>
+            `;
+            
+            // Insertar antes del primer form-section
+            const firstSection = modal.querySelector('.form-section');
+            if (firstSection) {
+                firstSection.insertAdjacentHTML('beforebegin', feedbackHtml);
+            }
+        }
+        
+        // Mostrar el modal
+        modal.style.display = 'flex';
+        
+        console.log('✅ Modal abierto en modo edición');
         
     } catch (error) {
-        console.error('Error abriendo modal de edición:', error);
-        showError('Error al abrir editor de ticket: ' + error.message);
+        console.error('❌ Error abriendo modal de edición:', error);
+        showError('Error al abrir ticket: ' + error.message);
     }
 }
 
 /**
  * Reenvío rápido de reporte sin edición
  */
-function quickResubmitReport(reportId) {
+// Línea ~1345-1370
+
+async function quickResubmitReport(reportId) {  // ✅ Agregar async
     // Confirmación más clara
     if (!confirm('¿Estás seguro de que quieres reenviar este ticket al administrador para nueva revisión?\n\nEl reporte cambiará de estado "Rechazado" a "Pendiente".')) {
         return;
     }
     
-    const result = resubmitRejectedReport(reportId);
+    const result = await resubmitRejectedReport(reportId);  // ✅ Agregar await
     
     if (result.success) {
         // Mensaje más claro
@@ -1271,136 +1418,174 @@ function quickResubmitReport(reportId) {
 /**
  * Actualizar la sección de reportes rechazados en la vista
  */
-function updateRejectedReportsSection() {
+// Línea ~1148
+
+// Línea ~1148
+
+async function updateRejectedReportsSection() {
     try {
+        console.log('🔄 Iniciando updateRejectedReportsSection...');
+        
+        const rejectedReports = await loadRejectedReports();
+        console.log('📋 Reportes rechazados cargados:', rejectedReports);
+        console.log('📊 Cantidad:', rejectedReports.length);
+        
         const container = document.getElementById('rejectedReportsSection');
+        console.log('📦 Contenedor encontrado:', container);
+        
         if (!container) {
-            console.log('Container rejectedReportsSection no encontrado');
+            console.log('⚠️ Contenedor de reportes rechazados no encontrado');
             return;
         }
-        
-        const rejectedReports = loadRejectedReports();
         
         if (rejectedReports.length === 0) {
-            container.innerHTML = `
-                <div class="section-header" style="margin-bottom: 20px; text-align: center;">
-                    <h3 style="color: #2ed573; margin-bottom: 10px;">
-                        <i class="fa-solid fa-trophy"></i> ¡Excelente trabajo!
-                    </h3>
-                    <p style="color: #666;">
-                        No tienes tickets rechazados actualmente.
-                    </p>
-                </div>
-            `;
+            console.log('⚠️ No hay reportes rechazados, ocultando sección');
+            container.style.display = 'none';
             return;
         }
         
-        container.innerHTML = `
-            <div class="section-header" style="margin-bottom: 20px;">
-                <h3 style="color: #ff4757; margin-bottom: 10px;">
-                    <i class="fa-solid fa-ban"></i> Tickets Rechazados (${rejectedReports.length})
-                </h3>
-                <p style="color: #666; margin-bottom: 20px;">
-                    Estos tickets fueron rechazados por el administrador. Tienen el mismo formato que tus asignaciones normales, solo que aparecen marcados como rechazados.
-                </p>
-            </div>
-            
-            <div class="rejected-reports-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px;">
-                ${rejectedReports.map(report => renderRejectedReportCard(report)).join('')}
-            </div>
-        `;
+        console.log('✅ Mostrando sección de reportes rechazados');
+        container.style.display = 'block';
         
-        console.log('✅ Sección de reportes rechazados actualizada');
+        const rejectedContainer = document.getElementById('rejectedReportsContainer');
+        console.log('📦 Contenedor de cards:', rejectedContainer);
+        
+        if (!rejectedContainer) {
+            console.log('❌ No se encontró rejectedReportsContainer');
+            return;
+        }
+        
+        rejectedContainer.innerHTML = '';
+        
+        console.log('🔄 Renderizando', rejectedReports.length, 'tarjetas...');
+        
+        for (const report of rejectedReports) {
+            console.log('🎨 Renderizando tarjeta para:', report.reportId);
+            const card = await renderRejectedReportCard(report);
+            console.log('✅ Tarjeta creada:', card);
+            rejectedContainer.appendChild(card);
+        }
+        
+        console.log('✅ Todas las tarjetas renderizadas');
+        
+        const badge = document.getElementById('rejectedCount');
+        if (badge) {
+            badge.textContent = rejectedReports.length;
+            console.log('✅ Badge actualizado:', rejectedReports.length);
+        }
         
     } catch (error) {
-        console.error('Error en updateRejectedReportsSection:', error);
+        console.error('❌ Error en updateRejectedReportsSection:', error);
+        console.error('Stack:', error.stack);
     }
 }
 
 /**
  * Renderizar tarjeta de reporte rechazado
  */
-function renderRejectedReportCard(report) {
-    // Obtener información completa de la asignación
-    const assignmentInfo = getAssignmentDisplayInfo(report.assignmentId);
-    const displayData = assignmentInfo.displayData;
+// Línea ~1402
+
+async function renderRejectedReportCard(report) {
+    console.log('🎨 Iniciando renderizado de tarjeta para:', report.reportId);
     
-    // Si no se encuentra la asignación, mostrar datos básicos
-    if (!displayData) {
-        return `
-            <div class="report-card rejected-report" style="
-                background: white; 
-                border: 1px solid #e1e8ed; 
-                border-left: 4px solid #ff4757;
-                border-radius: 8px; 
-                padding: 20px; 
-                box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            ">
-                <div class="report-header" style="margin-bottom: 15px;">
-                    <h4 style="color: #2c3e50; margin-bottom: 8px;">${report.title || 'Título no disponible'}</h4>
-                    <div style="display: flex; gap: 15px; font-size: 0.9em; color: #7f8c8d;">
-                        <span><i class="fa-solid fa-calendar"></i> ${formatReportDate(report)}</span>
-                        <span style="background: #ff4757; color: white; padding: 2px 8px; border-radius: 12px;"><i class="fa-solid fa-clock"></i> ${report.hours || 0}h</span>
-                    </div>
-                </div>
-                
-                <div class="assignment-info" style="background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                    <strong><i class="fa-solid fa-exclamation-triangle"></i> Asignación:</strong> No encontrada<br>
-                    <strong><i class="fa-solid fa-file"></i> ID:</strong> ${report.assignmentId}
-                </div>
-                
-                ${renderRejectionFeedback(report)}
-                ${renderReportActions(report.id)}
-            </div>
+    const card = document.createElement('div');
+    card.className = 'rejected-report-card';
+    
+    console.log('📋 Buscando asignación para:', report.assignmentId, 'tipo:', report.assignmentType);
+    
+    const assignment = userAssignments.find(a => {
+        if (report.assignmentType === 'support') return a.assignmentId === report.assignmentId;
+        if (report.assignmentType === 'project') return a.projectAssignmentId === report.assignmentId;
+        if (report.assignmentType === 'task') return a.taskAssignmentId === report.assignmentId;
+        return false;
+    });
+    
+    console.log('✅ Asignación encontrada:', assignment);
+    
+    if (!assignment) {
+        console.log('⚠️ No se encontró asignación para el reporte rechazado');
+    }
+    
+    const company = assignment ? await window.PortalDB.getCompany(assignment.companyId) : null;
+    console.log('🏢 Company:', company);
+    
+    const module = assignment ? await window.PortalDB.getModule(assignment.moduleId) : null;
+    console.log('🧩 Module:', module);
+    
+    let typeInfo = '';
+    
+    if (report.assignmentType === 'support' && assignment) {
+        console.log('🔧 Cargando info de soporte...');
+        const support = await window.PortalDB.getSupport(assignment.supportId);
+        console.log('🛠️ Support:', support);
+        
+        typeInfo = `
+            <p><strong><i class="fa-solid fa-headset"></i> Soporte:</strong> ${support?.name || 'Soporte no encontrado'}</p>
+            <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+        `;
+    } else if (report.assignmentType === 'project' && assignment) {
+        console.log('📂 Cargando info de proyecto...');
+        const project = await window.PortalDB.getProject(assignment.projectId);
+        console.log('📊 Project:', project);
+        
+        typeInfo = `
+            <p><strong><i class="fa-solid fa-diagram-project"></i> Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
+            <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
+        `;
+    } else if (report.assignmentType === 'task' && assignment) {
+        console.log('📋 Cargando info de tarea...');
+        const support = await window.PortalDB.getSupport(assignment.linkedSupportId);
+        console.log('🛠️ Linked Support:', support);
+        
+        typeInfo = `
+            <p><strong><i class="fa-solid fa-tasks"></i> Tarea vinculada a:</strong> ${support?.name || 'Soporte no encontrado'}</p>
+            <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
         `;
     }
     
-    // Renderizar tarjeta con EXACTAMENTE el mismo formato que el dashboard
-    return `
-        <div class="report-card rejected-report assignment-card ${assignmentInfo.assignmentType}-assignment" style="
-            background: white; 
-            border: 1px solid #e1e8ed; 
-            border-left: 4px solid #ff4757;
-            border-radius: 8px; 
-            padding: 20px; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            position: relative;
-        ">
-            <!-- Status de Rechazado -->
-            <div style="position: absolute; top: 10px; right: 15px; background: #ff4757; color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold;">
-                <i class="fa-solid fa-ban"></i> RECHAZADO
+    const typeLabel = report.assignmentType === 'support' ? 'SOPORTE' : 
+                     report.assignmentType === 'project' ? 'PROYECTO' : 'TAREA';
+    const typeClass = report.assignmentType === 'support' ? 'badge-support' : 
+                     report.assignmentType === 'project' ? 'badge-project' : 'badge-task';
+    
+    console.log('🎨 Generando HTML de la tarjeta...');
+    
+    card.innerHTML = `
+        <div class="rejected-report-header">
+            <div class="rejected-report-title">
+                <i class="fa-solid fa-ban"></i>
+                <h3>${company?.name || 'Empresa no encontrada'}</h3>
+                <span class="badge ${typeClass}">${typeLabel}</span>
+                <span class="badge badge-rejected">RECHAZADO</span>
             </div>
-            
-            <!-- Header igual que en dashboard -->
-            <div class="assignment-header" style="margin-bottom: 15px; margin-top: 20px;">
-                <h3 style="margin: 0; color: #2c3e50; display: flex; align-items: center; gap: 10px;">
-                    <i class="fa-solid fa-building"></i> ${displayData.companyName}
-                    <span class="assignment-type-badge ${displayData.typeClass}" style="
-                        display: inline-block; padding: 4px 8px; border-radius: 12px; 
-                        font-size: 0.75em; font-weight: bold; text-transform: uppercase;
-                        background: ${assignmentInfo.assignmentType === 'support' ? '#3498db' : '#e74c3c'};
-                        color: white;
-                    ">
-                        ${displayData.typeIcon} ${displayData.typeName}
-                    </span>
-                </h3>
+        </div>
+        <div class="rejected-report-body">
+            <div class="rejected-report-info">
+                ${typeInfo}
+                <p><strong><i class="fa-solid fa-file-alt"></i> Ticket:</strong> ${report.title || report.description?.substring(0, 50) || 'Sin título'}</p>
+                <p><strong><i class="fa-solid fa-clock"></i> Horas:</strong> ${report.hours} hrs | <strong><i class="fa-solid fa-calendar"></i> Fecha:</strong> ${window.DateUtils.formatDate(report.reportDate)}</p>
             </div>
-            
-            <!-- Detalles de la asignación (igual que dashboard) -->
-            <div class="assignment-details" style="margin-bottom: 15px;">
-                <p><strong>${assignmentInfo.assignmentType === 'support' ? '<i class="fa-solid fa-headset"></i> Soporte:' : '<i class="fa-solid fa-bullseye"></i> Proyecto:'}</strong> ${displayData.mainTitle}</p>
-                <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${displayData.moduleName}</p>
-                <p><strong><i class="fa-solid fa-file"></i> Ticket:</strong> ${report.title}</p>
-                <p><strong><i class="fa-solid fa-clock"></i> Horas:</strong> ${report.hours || 0} hrs | <strong><i class="fa-solid fa-calendar"></i> Fecha:</strong> ${formatReportDate(report)}</p>
+            <div class="rejected-feedback">
+                <h4><i class="fa-solid fa-comment-dots"></i> Comentarios del Administrador:</h4>
+                <div class="feedback-content">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p>${report.feedback || 'Sin comentarios'}</p>
+                </div>
             </div>
-            
-            <!-- Feedback de rechazo -->
-            ${renderRejectionFeedback(report)}
-            
-            <!-- Acciones -->
-            ${renderReportActions(report.id)}
+            <div class="rejected-report-actions">
+                <button class="btn btn-warning" onclick="openEditRejectedReportModal('${report.reportId}')">
+                    <i class="fa-solid fa-edit"></i> EDITAR
+                </button>
+                <button class="btn btn-success" onclick="resubmitRejectedReport('${report.reportId}')">
+                    <i class="fa-solid fa-paper-plane"></i> REENVIAR
+                </button>
+            </div>
         </div>
     `;
+    
+    console.log('✅ Tarjeta HTML generada');
+    
+    return card;
 }
 
 function formatReportDate(report) {
@@ -1464,6 +1649,38 @@ function renderReportActions(reportId) {
     `;
 }
 
+/**
+ * Normalizar campos de reporte para compatibilidad
+ * MongoDB puede usar "date" o "reportDate", "title" puede estar vacío
+ */
+function normalizeReport(report) {
+    return {
+        ...report,
+        // ✅ Asegurar que siempre haya "title"
+        title: report.title || report.description?.substring(0, 50) || 'Sin título',
+        
+        // ✅ Unificar fecha: priorizar reportDate, luego date
+        reportDate: report.reportDate || report.date || report.createdAt,
+        
+        // ✅ También agregar "date" para compatibilidad inversa
+        date: report.date || report.reportDate || report.createdAt,
+        
+        // ✅ Asegurar que hours sea número
+        hours: parseFloat(report.hours) || 0
+    };
+}
+
+/**
+ * Normalizar array de reportes
+ */
+function normalizeReports(reports) {
+    const reportsArray = Array.isArray(reports) 
+        ? reports 
+        : Object.values(reports || {});
+    
+    return reportsArray.map(normalizeReport);
+}
+
 // Exportar nuevas funciones
 window.getAssignmentDisplayInfo = getAssignmentDisplayInfo;
 window.renderRejectedReportCard = renderRejectedReportCard;
@@ -1490,5 +1707,8 @@ window.viewProjectDetails = viewProjectDetails;
 
 window.silentDataRefresh = silentDataRefresh;
 window.updateCountersOnly = updateCountersOnly;
+
+window.normalizeReport = normalizeReport;
+window.normalizeReports = normalizeReports;
 
 console.log('✅ Funciones del consultor exportadas globalmente');

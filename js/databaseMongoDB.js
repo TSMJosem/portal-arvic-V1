@@ -220,7 +220,7 @@ class PortalDatabase {
             if (result.success) {
                 const companies = {};
                 result.data.forEach(company => {
-                    companies[company.companyId] = company;  // ✅ Cambiar de company.id a company.companyId
+                    companies[company.companyId] = company;  // ✅ YA CORRECTO
                 });
                 return companies;
             }
@@ -233,11 +233,8 @@ class PortalDatabase {
 
     async getCompany(companyId) {
         try {
-            const response = await fetch(`${this.API_URL}/companies/${companyId}`, {
-                headers: this.getHeaders()
-            });
-            const data = await response.json();
-            return data.success ? data.data : null;
+            const companies = await this.getCompanies();
+            return companies[companyId] || null;
         } catch (error) {
             console.error('❌ Error obteniendo empresa:', error);
             return null;
@@ -320,7 +317,7 @@ class PortalDatabase {
             if (result.success) {
                 const projects = {};
                 result.data.forEach(project => {
-                    projects[project.projectId] = project;  // ✅ Cambiar de project.id a project.projectId
+                    projects[project.projectId] = project;  // ✅ YA CORRECTO
                 });
                 return projects;
             }
@@ -414,7 +411,7 @@ class PortalDatabase {
             if (result.success) {
                 const supports = {};
                 result.data.forEach(support => {
-                    supports[support.supportId] = support;  // ✅ Cambiar de support.id a support.supportId
+                    supports[support.supportId] = support;  // ✅ YA CORRECTO
                 });
                 return supports;
             }
@@ -511,7 +508,7 @@ class PortalDatabase {
             if (result.success) {
                 const modules = {};
                 result.data.forEach(module => {
-                    modules[module.moduleId] = module;  // ✅ Cambiar de module.id a module.moduleId
+                    modules[module.moduleId] = module;  // ✅ YA CORRECTO
                 });
                 return modules;
             }
@@ -606,7 +603,12 @@ class PortalDatabase {
             const data = await response.json();
             
             if (data.success) {
-                return this.arrayToObject(data.data);
+                // ✅ CORRECCIÓN: Usar assignmentId en lugar de id
+                const assignments = {};
+                data.data.forEach(assignment => {
+                    assignments[assignment.assignmentId] = assignment;  // ✅ CAMBIO AQUÍ
+                });
+                return assignments;
             }
             return {};
         } catch (error) {
@@ -693,10 +695,33 @@ class PortalDatabase {
     // Métodos auxiliares para asignaciones
     async getUserAssignments(userId) {
         try {
+            console.log('🔍 getUserAssignments llamado con userId:', userId);
+            
             const assignments = await this.getAssignments();
-            return Object.values(assignments).filter(a => 
-                a.consultorId === userId && a.isActive
-            );
+            console.log('📦 getAssignments() retornó:', assignments);
+            console.log('📦 Tipo de assignments:', Array.isArray(assignments) ? 'Array' : 'Objeto');
+            
+            const assignmentsArray = Array.isArray(assignments) 
+                ? assignments 
+                : Object.values(assignments || {});
+            
+            console.log('📦 assignmentsArray length:', assignmentsArray.length);
+            console.log('📦 Primeras 3 asignaciones:', assignmentsArray.slice(0, 3));
+            
+            const filtered = assignmentsArray.filter(a => {
+                const assignmentUserId = a.consultorId || a.userId;
+                const matches = assignmentUserId === userId && a.isActive !== false;
+                
+                if (matches) {
+                    console.log('✅ Match encontrado:', a);
+                }
+                
+                return matches;
+            });
+            
+            console.log('📊 Asignaciones filtradas para', userId, ':', filtered.length);
+            
+            return filtered;
         } catch (error) {
             console.error('❌ Error obteniendo asignaciones del usuario:', error);
             return [];

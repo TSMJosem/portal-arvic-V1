@@ -117,9 +117,16 @@ app.use('/api/tarifario', tarifarioRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {
+  const dbStatus = mongoose.connection.readyState === 1 ? 'connected' : 'disconnected';
+  const dbName = mongoose.connection.name || 'N/A';
+  
   res.json({ 
     status: 'OK', 
     message: 'API Portal ARVIC funcionando',
+    mongodb: {
+      status: dbStatus,
+      database: dbName
+    },
     timestamp: new Date().toISOString()
   });
 });

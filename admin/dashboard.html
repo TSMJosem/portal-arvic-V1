@@ -559,8 +559,9 @@
                                         <th>ID Consultor</th>
                                         <th>Nombre Consultor</th>
                                         <th>Cliente (Empresa)</th>
-                                        <th>Soporte</th>
+                                        <th>Soporte/Proyecto</th>
                                         <th>Módulo</th>
+                                        <th>Descripción</th>
                                         <th>Horas Reportadas</th>
                                         <th>Fecha Reporte</th>
                                         <th>Estado</th>
@@ -812,18 +813,20 @@
                         </div>
 
                         <!-- Filtros de tipo -->
-                        <div class="tarifario-filters">
-                            <button class="filter-btn active" data-type="all" onclick="filterTarifarioByType('all')">
-                                <i class="fa-solid fa-chart-pie"></i> Todos
+                        <div class="filter-buttons">
+                            <button class="filter-btn active" data-filter="all" onclick="filterTarifarioByType('all')">
+                                <i class="fa-solid fa-list"></i> Todos
                             </button>
-                            <button class="filter-btn" data-type="soporte" onclick="filterTarifarioByType('soporte')">
+                            <button class="filter-btn" data-filter="support" onclick="filterTarifarioByType('support')">
                                 <i class="fa-solid fa-headset"></i> Soportes
                             </button>
-                            <button class="filter-btn" data-type="proyecto" onclick="filterTarifarioByType('proyecto')">
+                            <button class="filter-btn" data-filter="project" onclick="filterTarifarioByType('project')">
                                 <i class="fa-solid fa-folder-open"></i> Proyectos
                             </button>
+                            <button class="filter-btn" data-filter="task" onclick="filterTarifarioByType('task')">
+                                <i class="fa-solid fa-tasks"></i> Tareas
+                            </button>
                         </div>
-
                         <!-- Estadísticas rápidas -->
                         <div class="tarifario-stats">
                             <div class="stat-card">

@@ -1,0 +1,15 @@
+# No desplegar archivos de desarrollo
+node_modules
+.env
+.env.local
+.DS_Store
+
+# No desplegar scripts de desarrollo
+scripts/
+
+# No desplegar documentación de desarrollo
+DEPLOYMENT.md
+README.md
+GUIA-DESPLIEGUE-VERCEL.md
+FAQ-VERCEL.md
+COMANDOS-UTILES.md

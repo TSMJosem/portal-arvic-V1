@@ -10,17 +10,25 @@ const app = express();
 
 // Middlewares
 app.use(cors({
-  origin: [
-    'http://localhost:5500',
-    'http://127.0.0.1:5500',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    'https://tsmjosem.github.io',
-    'https://portalarvic-8fovmmmwa-josems-projects.vercel.app',
-    'https://portalarvic-git-main-josems-projects.vercel.app'
-  ],
+  origin: function (origin, callback) {
+    // Permitir requests sin origin (como Postman) y todos los dominios de Vercel
+    const allowedOrigins = [
+      'http://localhost:5500',
+      'http://127.0.0.1:5500',
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'https://tsmjosem.github.io'
+    ];
+    
+    // Permitir cualquier dominio .vercel.app
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],  // 👈 Agrega esta línea
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json({ limit: '50mb' }));

@@ -6,15 +6,20 @@
 
 class PortalDatabase {
     constructor() {
-        // URL del API - detecta automáticamente si es producción o desarrollo
-        this.API_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-            ? 'http://localhost:3000/api' 
-            : 'https://portalarvic-8fovmmmwa-josems-projects.vercel.app/api'; //Corregido
+        // Configuración del API - Detección automática de entorno
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                             window.location.hostname === '127.0.0.1';
+        
+        // URL del API según el entorno
+        this.API_URL = isDevelopment 
+            ? 'http://localhost:3000/api'
+            : `${window.location.origin}/api`; // Producción: usa el mismo dominio
         
         this.token = localStorage.getItem('arvic_token') || null;
         this.prefix = 'arvic_';
         
         console.log('✅ Sistema de Base de Datos Portal ARVIC inicializado con MongoDB');
+        console.log(`📡 Entorno: ${isDevelopment ? 'DESARROLLO' : 'PRODUCCIÓN'}`);
         console.log('📡 API URL:', this.API_URL);
     }
 
@@ -1034,25 +1039,32 @@ class PortalDatabase {
         }
     }
 
-    // === GESTIÓN DE REPORTES ===
-    async getReports() {
+        // === GESTIÓN DE REPORTES ===
+        async getReports() {
         try {
             const response = await fetch(`${this.API_URL}/reports`, {
-                method: 'GET',
+                method: 'GET', 
                 headers: this.getHeaders()
             });
             const result = await response.json();
             
             if (result.success) {
-                const reports = {};
+                const reportsObj = {};
                 result.data.forEach(report => {
-                    reports[report.reportId] = report;  // ✅ Usar reportId
+                    // ⭐ MAPPER: Agregar campo "id" que apunte a reportId
+                    const mappedReport = {
+                        ...report,
+                        id: report.reportId || report._id,  // ✅ AGREGAR ESTA LÍNEA
+                        status: report.status || report.estado
+                    };
+                    reportsObj[report.reportId] = mappedReport;
                 });
-                return reports;
+                return reportsObj;
             }
+            
             return {};
         } catch (error) {
-            console.error('Error obteniendo reportes:', error);
+            console.error('❌ Error obteniendo reportes:', error);
             return {};
         }
     }
@@ -1271,75 +1283,78 @@ class PortalDatabase {
     }
 
     // === GESTIÓN DE TARIFARIO ===
-    async getTarifarios() {
-        try {
-            const response = await fetch(`${this.API_URL}/tarifario`, {
-                method: 'GET',
-                headers: this.getHeaders()
-            });
-            const result = await response.json();
-            
-            if (result.success) {
-                const tarifarios = {};
-                result.data.forEach(tarifario => {
-                    // ✅ MAPPER: Convertir campos de MongoDB al formato esperado
-                    const tarifarioMapeado = {
-                        // Campos originales
-                        id: tarifario.tarifarioId,
-                        tarifarioId: tarifario.tarifarioId,
-                        
-                        // IDs
-                        idAsignacion: tarifario.assignmentId,
-                        consultorId: tarifario.consultorId,
-                        clienteId: tarifario.companyId,
-                        
-                        // Nombres mapeados (MongoDB → Formato esperado)
-                        consultorNombre: tarifario.consultorNombre,
-                        clienteNombre: tarifario.companyName,      // ✅ companyName → clienteNombre
-                        moduloNombre: tarifario.moduleName,         // ✅ moduleName → moduloNombre
-                        
-                        // Trabajo (puede ser soporte o proyecto)
-                        trabajoNombre: tarifario.supportName || tarifario.projectName || 'N/A',  // ✅ Combinar ambos
-                        
-                        // Módulo y tipo
-                        modulo: tarifario.moduleId,
-                        tipo: tarifario.tipo === 'support' ? 'soporte' : 
-                            tarifario.tipo === 'project' ? 'proyecto' : 'tarea',  // ✅ Traducir tipo
-                        
-                        // Costos y margen
-                        costoConsultor: tarifario.costoConsultor || 0,
-                        costoCliente: tarifario.costoCliente || 0,
-                        margen: tarifario.margen || 0,
-                        
-                        // Campos adicionales
-                        descripcionTarea: tarifario.descripcionTarea || null,
-                        fechaCreacion: tarifario.fechaCreacion || tarifario.createdAt,
-                        isActive: tarifario.isActive !== false,
-                        
-                        // IDs adicionales (para referencias)
-                        supportId: tarifario.supportId,
-                        projectId: tarifario.projectId,
-                        moduleId: tarifario.moduleId
-                    };
+async getTarifarios() {
+    try {
+        const response = await fetch(`${this.API_URL}/tarifario`, {
+            method: 'GET',
+            headers: this.getHeaders()
+        });
+        const result = await response.json();
+        
+        if (result.success) {
+            const tarifarios = {};
+            result.data.forEach(tarifario => {
+                // ✅ MAPPER CORREGIDO: MongoDB → Formato frontend
+                const tarifarioMapeado = {
+                    // IDs principales
+                    id: tarifario.tarifarioId,
+                    tarifarioId: tarifario.tarifarioId,
+                    assignmentId: tarifario.assignmentId,  // ✅ MANTENER assignmentId
+                    idAsignacion: tarifario.assignmentId,  // ✅ Alias para compatibilidad
                     
-                    tarifarios[tarifario.tarifarioId] = tarifarioMapeado;
-                });
+                    // ✅ CRÍTICO: Mapear assignmentType
+                    assignmentType: tarifario.tipo,  // 'support', 'project', 'task'
+                    tipo: tarifario.tipo === 'support' ? 'soporte' : 
+                          tarifario.tipo === 'project' ? 'proyecto' : 'tarea',
+                    
+                    // IDs de entidades relacionadas
+                    consultorId: tarifario.consultorId,
+                    clienteId: tarifario.companyId,
+                    moduleId: tarifario.moduleId,
+                    supportId: tarifario.supportId,
+                    projectId: tarifario.projectId,
+                    
+                    // ✅ Nombres mapeados correctamente
+                    consultorNombre: tarifario.consultorNombre,
+                    empresaNombre: tarifario.companyName,       // ✅ companyName → empresaNombre
+                    clienteNombre: tarifario.companyName,       // ✅ Alias
+                    moduloNombre: tarifario.moduleName || 'Sin módulo',  // ✅ moduleName → moduloNombre
+                    
+                    // ✅ Trabajo: Combinar soporte o proyecto
+                    trabajoNombre: tarifario.supportName || tarifario.projectName || 'Sin trabajo',
+                    trabajoId: tarifario.supportId || tarifario.projectId,
+                    
+                    // Costos y margen
+                    costoConsultor: parseFloat(tarifario.costoConsultor || 0),
+                    costoCliente: parseFloat(tarifario.costoCliente || 0),
+                    margen: parseFloat(tarifario.margen || 0),
+                    margenPorcentaje: parseFloat(tarifario.margenPorcentaje || 0),
+                    
+                    // Campos adicionales
+                    descripcionTarea: tarifario.descripcionTarea || null,
+                    fechaCreacion: tarifario.fechaCreacion || tarifario.createdAt,
+                    isActive: tarifario.isActive !== false,
+                    updatedAt: tarifario.updatedAt
+                };
                 
-                console.log('✅ Tarifarios mapeados:', Object.keys(tarifarios).length, 'entradas');
-                
-                return tarifarios;
-            }
-            return {};
-        } catch (error) {
-            console.error('Error obteniendo tarifarios:', error);
-            return {};
+                tarifarios[tarifario.tarifarioId] = tarifarioMapeado;
+            });
+            
+            console.log('✅ Tarifarios mapeados:', Object.keys(tarifarios).length, 'entradas');
+            
+            return tarifarios;
         }
+        return {};
+    } catch (error) {
+        console.error('Error obteniendo tarifarios:', error);
+        return {};
     }
+}
 
-    // ✅ NUEVA FUNCIÓN - Alias para compatibilidad
-    async getTarifario() {
-        return await this.getTarifarios();
-    }
+// ✅ Alias para compatibilidad
+async getTarifario() {
+    return await this.getTarifarios();
+}
 
     async getTarifaByAssignment(assignmentId) {
         try {

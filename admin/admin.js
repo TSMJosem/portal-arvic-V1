@@ -2644,8 +2644,11 @@ async function handleCreateUser(event) {
         const timestamp = Date.now().toString().slice(-4);
         const userId = `USR${timestamp}`;  // Ejemplo: USR1234
         
-        // Generar contraseña temporal aleatoria
-        const tempPassword = `temp${Math.random().toString(36).substring(2, 10)}`;
+        // Generar contraseña temporal que cumpla con formato requerido
+        // Formato: cons + 4 dígitos + . + 4 dígitos = 13 caracteres
+        const firstPart = Math.floor(1000 + Math.random() * 9000); // 4 dígitos aleatorios (1000-9999)
+        const secondPart = Math.floor(1000 + Math.random() * 9000); // 4 dígitos aleatorios (1000-9999)
+        const tempPassword = `cons${firstPart}.${secondPart}`; // Ejemplo: cons1234.5678
 
         const userData = {
             userId: userId,

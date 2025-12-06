@@ -165,7 +165,7 @@ function debugDropdowns() {
 }
 
 /// === GESTIÓN DE ASIGNACIONES ===
-function createAssignment() {
+async function createAssignment() {
     // Capturar valores básicos
     const userId = document.getElementById('assignUser').value;
     const companyId = document.getElementById('assignCompany').value;
@@ -198,12 +198,16 @@ function createAssignment() {
         return;
     }
     
+    const timestamp = Date.now().toString().slice(-4);
+    const assignmentId = `ASG${timestamp}`;
+
     // Crear objeto de datos
     const assignmentData = {
+        assignmentId: assignmentId,
         userId: userId,
         companyId: companyId,
         supportId: supportId,
-        moduleId: moduleId,
+        moduleId: moduleId, 
         tarifaConsultor: tarifaConsultor,
         tarifaCliente: tarifaCliente
     };
@@ -211,12 +215,12 @@ function createAssignment() {
     console.log('ENVIANDO A DATABASE:', assignmentData);
     
     // Crear asignación
-    const result = window.PortalDB.createAssignment(assignmentData);
+    const result = await window.PortalDB.createAssignment(assignmentData);
     
     if (result.success) {
         window.NotificationUtils.success('Asignación creada exitosamente');
-        loadAllData();
-        
+        await loadAllData();
+
         // Limpiar formulario
         document.getElementById('assignUser').value = '';
         document.getElementById('assignCompany').value = '';
@@ -934,43 +938,48 @@ async function updateModulesList() {
 async function updateProjectAssignmentDropdowns() {
     console.log('🔄 Actualizando dropdowns de asignación de proyectos...');
     await loadCurrentData();
+    
     // Verificar datos básicos
     if (!currentData || !currentData.users || !currentData.companies || !currentData.projects || !currentData.modules) {
         console.error('❌ Datos no disponibles para asignación de proyectos');
         return;
     }
     
-    // Configuración IGUAL que la asignación normal, pero con proyectos
+    // Configuración con los campos ID correctos
     const elementsConfig = [
         {
-            id: 'assignProjectConsultor',        // CAMBIO: ahora es consultor individual
+            id: 'assignProjectConsultor',
             defaultOption: 'Seleccionar consultor',
             data: Object.values(currentData.users).filter(user => 
                 user.role === 'consultor' && user.isActive !== false
             ),
-            getLabel: (user) => `${user.name} (${user.userId})`
+            getLabel: (user) => `${user.name} (${user.userId})`,
+            valueField: 'userId'  // ✅ ESPECIFICAR EL CAMPO ID
         },
         {
             id: 'assignProjectProject',
             defaultOption: 'Seleccionar proyecto',
             data: Object.values(currentData.projects),
-            getLabel: (project) => `${project.name}`
+            getLabel: (project) => `${project.name}`,
+            valueField: 'projectId'  // ✅ ESPECIFICAR EL CAMPO ID
         },
         {
             id: 'assignProjectCompany',
             defaultOption: 'Seleccionar empresa cliente',
             data: Object.values(currentData.companies),
-            getLabel: (company) => `${company.name} (${company.companyId})`
+            getLabel: (company) => `${company.name} (${company.companyId})`,
+            valueField: 'companyId'  // ✅ ESPECIFICAR EL CAMPO ID
         },
         {
             id: 'assignProjectModule',
             defaultOption: 'Seleccionar módulo',
             data: Object.values(currentData.modules),
-            getLabel: (module) => `${module.name} (${module.moduleId})`
+            getLabel: (module) => `${module.name} (${module.moduleId})`,
+            valueField: 'moduleId'  // ✅ ESPECIFICAR EL CAMPO ID
         }
     ];
     
-    // Actualizar cada dropdown (IGUAL que updateDropdowns())
+    // Actualizar cada dropdown
     elementsConfig.forEach(config => {
         try {
             const element = document.getElementById(config.id);
@@ -986,7 +995,7 @@ async function updateProjectAssignmentDropdowns() {
             if (config.data && config.data.length > 0) {
                 config.data.forEach(item => {
                     const option = document.createElement('option');
-                    option.value = item.id;
+                    option.value = item[config.valueField];  // ✅ USAR EL CAMPO CORRECTO
                     option.textContent = config.getLabel(item);
                     element.appendChild(option);
                 });
@@ -3198,7 +3207,7 @@ function diagnosticAnimationState() {
     });
 }
 
-function createProjectAssignment() {
+async function createProjectAssignment() {
     const userId = document.getElementById('assignProjectConsultor').value;
     const projectId = document.getElementById('assignProjectProject').value;
     const companyId = document.getElementById('assignProjectCompany').value;
@@ -3221,7 +3230,7 @@ function createProjectAssignment() {
     const projectAssignmentId = `PRJ_ASG${timestamp}`;
     
     const assignmentData = {
-        projectAssignmentId: projectAssignmentId,  // ✅ NUEVO
+        projectAssignmentId: projectAssignmentId,  
         consultorId: userId,
         projectId: projectId,
         companyId: companyId,
@@ -3231,13 +3240,13 @@ function createProjectAssignment() {
     };
 
     console.log('📤 Creando asignación de proyecto:', assignmentData);
-    
-    const result = window.PortalDB.createProjectAssignment(assignmentData);
-    
+
+    const result = await window.PortalDB.createProjectAssignment(assignmentData);
+
     if (result.success) {
         window.NotificationUtils.success('Proyecto asignado exitosamente con tarifas configuradas');
-        loadAllData();
-        
+        await loadAllData();
+
         // Limpiar formulario
         document.getElementById('assignProjectConsultor').value = '';
         document.getElementById('assignProjectProject').value = '';

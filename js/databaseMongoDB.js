@@ -149,6 +149,26 @@ class PortalDatabase {
         }
     }
 
+    async getPasswordsForValidation() {
+        try {
+            const response = await fetch(`${this.API_URL}/users/passwords`, {
+                method: 'GET',
+                headers: this.getHeaders()
+            });
+            const result = await response.json();
+            
+            if (result.success) {
+                // Devolver array de { userId, password }
+                return result.data;
+            }
+            
+            return [];
+        } catch (error) {
+            console.error('❌ Error obteniendo contraseñas:', error);
+            return [];
+        }
+    }
+
     async createUser(userData) {
         try {
             console.log('📤 Enviando datos de usuario:', userData);

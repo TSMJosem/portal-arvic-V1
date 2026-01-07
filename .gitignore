@@ -67,3 +67,5 @@ coverage/
 
 # Archivos de Vercel
 .vercel
+api/scripts/cleanIndexes.js
+api/scripts/ScriptsDePrueba.js

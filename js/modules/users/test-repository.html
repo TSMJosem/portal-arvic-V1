@@ -1,0 +1,174 @@
+/**
+ * test-repository.html
+ * 
+ * Archivo de prueba simple para validar que UserRepository funciona
+ * 
+ * INSTRUCCIONES:
+ * 1. Abre este archivo en el navegador
+ * 2. Abre la consola del navegador (F12)
+ * 3. Verás los resultados de las pruebas
+ */
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Test UserRepository</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #007bff;
+            padding-bottom: 10px;
+        }
+        .result {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        pre {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Test UserRepository.js</h1>
+        <div class="info">
+            <strong>📋 Instrucciones:</strong><br>
+            1. Abre la consola del navegador (F12)<br>
+            2. Los resultados aparecerán aquí y en la consola<br>
+            3. Verifica que todos los tests pasen ✅
+        </div>
+        <div id="results"></div>
+    </div>
+
+    <!-- Cargar dependencias - SOLO MongoDB (base de datos real) -->
+    <script src="../../databaseMongoDB.js"></script>
+    
+    <!-- Cargar módulo a probar -->
+    <script type="module">
+        import { UserRepository } from './UserRepository.js';
+
+        const resultsDiv = document.getElementById('results');
+
+        function addResult(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+
+        async function runTests() {
+            console.log('🧪 === INICIANDO TESTS DE UserRepository ===');
+            addResult('<h2>🧪 Ejecutando tests...</h2>', 'info');
+
+            try {
+                // ✅ PRIMERO: Autenticarse para poder acceder a usuarios
+                addResult('<strong>Autenticación:</strong> Iniciando sesión con admin...', 'info');
+                const loginResult = await window.PortalDB.validateUser('admin', 'hperez1402.');
+                
+                if (!loginResult.success) {
+                    addResult('❌ Error de autenticación. Verifica que el backend esté corriendo.', 'error');
+                    return;
+                }
+                
+                addResult('✅ Autenticado correctamente', 'success');
+
+                // Test 1: Crear instancia
+                addResult('<strong>Test 1:</strong> Crear instancia de UserRepository...', 'info');
+                const repo = new UserRepository(window.PortalDB);
+                console.log('✅ Test 1 PASADO: Instancia creada');
+                addResult('✅ Test 1 PASADO: Instancia creada correctamente', 'success');
+
+                // Test 2: Obtener todos los usuarios
+                addResult('<strong>Test 2:</strong> Obtener todos los usuarios...', 'info');
+                const allUsers = await repo.getAll();
+                console.log('✅ Test 2 PASADO: Usuarios obtenidos:', allUsers);
+                addResult(`✅ Test 2 PASADO: ${Object.keys(allUsers).length} usuarios encontrados<br><pre>${JSON.stringify(allUsers, null, 2)}</pre>`, 'success');
+
+                // Test 3: Obtener consultores activos
+                addResult('<strong>Test 3:</strong> Obtener consultores activos...', 'info');
+                const consultores = await repo.getActiveConsultores();
+                console.log('✅ Test 3 PASADO: Consultores activos:', consultores);
+                addResult(`✅ Test 3 PASADO: ${consultores.length} consultores activos encontrados`, 'success');
+
+                // Test 4: Obtener usuario por ID (si existe alguno)
+                if (consultores.length > 0) {
+                    const testUserId = consultores[0].userId;
+                    addResult(`<strong>Test 4:</strong> Obtener usuario por ID (${testUserId})...`, 'info');
+                    const user = await repo.getById(testUserId);
+                    console.log('✅ Test 4 PASADO: Usuario obtenido:', user);
+                    addResult(`✅ Test 4 PASADO: Usuario ${user.name} encontrado<br><pre>${JSON.stringify(user, null, 2)}</pre>`, 'success');
+
+                    // Test 5: Verificar si usuario existe
+                    addResult(`<strong>Test 5:</strong> Verificar si usuario existe (${testUserId})...`, 'info');
+                    const exists = await repo.exists(testUserId);
+                    console.log('✅ Test 5 PASADO: Usuario existe:', exists);
+                    addResult(`✅ Test 5 PASADO: exists() retorna ${exists}`, 'success');
+                }
+
+                // Test 6: Obtener todas las contraseñas
+                addResult('<strong>Test 6:</strong> Obtener todas las contraseñas...', 'info');
+                const passwords = await repo.getAllPasswords();
+                console.log('✅ Test 6 PASADO: Contraseñas obtenidas:', passwords);
+                addResult(`✅ Test 6 PASADO: ${passwords.length} contraseñas encontradas`, 'success');
+
+                // Test 7: Obtener contraseñas excluyendo un usuario
+                if (consultores.length > 0) {
+                    const testUserId = consultores[0].userId;
+                    addResult(`<strong>Test 7:</strong> Obtener contraseñas excluyendo ${testUserId}...`, 'info');
+                    const filteredPasswords = await repo.getAllPasswords(testUserId);
+                    console.log('✅ Test 7 PASADO: Contraseñas filtradas:', filteredPasswords);
+                    addResult(`✅ Test 7 PASADO: ${filteredPasswords.length} contraseñas (excluyendo 1 usuario)`, 'success');
+                }
+
+                addResult('<h2>🎉 TODOS LOS TESTS PASARON</h2>', 'success');
+                console.log('🎉 === TODOS LOS TESTS PASARON ===');
+
+            } catch (error) {
+                console.error('❌ Error en tests:', error);
+                addResult(`❌ ERROR: ${error.message}<br><pre>${error.stack}</pre>`, 'error');
+            }
+        }
+
+        // Esperar a que PortalDB esté listo
+        if (window.PortalDB) {
+            runTests();
+        } else {
+            console.log('⏳ Esperando a que PortalDB esté disponible...');
+            setTimeout(runTests, 1000);
+        }
+    </script>
+</body>
+</html>

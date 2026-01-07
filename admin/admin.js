@@ -2695,6 +2695,162 @@ async function handleCreateUser(event) {
     }
 }
 
+/**
+ * Función para editar un usuario existente (con arquitectura limpia)
+ */
+function editUser(userId) {
+    window.userModule.editUser(userId);
+}
+
+/**
+ * Procesar la edición del usuario
+ */
+async function handleEditUser() {
+    try {
+        const userId = document.getElementById('editUserId').value;
+        const name = document.getElementById('editUserName').value.trim();
+        const email = document.getElementById('editUserEmail').value.trim();
+        const newPassword = document.getElementById('editUserPassword').value.trim();
+        
+        // ✅ Obtener contraseña actual del modal
+        const modal = document.getElementById('editUserModal');
+        const currentPassword = modal ? modal.dataset.currentPassword : '';
+        
+        // Validaciones básicas
+        if (!name) {
+            window.NotificationUtils.error('El nombre es requerido');
+            return;
+        }
+        
+        if (name.length < 3) {
+            window.NotificationUtils.error('El nombre debe tener al menos 3 caracteres');
+            return;
+        }
+        
+        // Validar contraseña si se proporcionó una nueva
+        if (newPassword) {
+            // ✅ VALIDACIÓN 1: Verificar si es la misma contraseña actual
+            if (newPassword === currentPassword) {
+                window.NotificationUtils.error(
+                    'La contraseña ingresada es la misma que la actual.\n\n' +
+                    'Por favor ingrese una contraseña diferente o deje el campo vacío para mantener la actual.'
+                );
+                return;
+            }
+            
+            // ✅ VALIDACIÓN 2: Verificar formato
+            if (!validateConsultorPassword(newPassword)) {
+                window.NotificationUtils.error(
+                    'La contraseña debe seguir el formato: cons####.####\n\n' +
+                    'Ejemplo: cons1234.5678\n\n' +
+                    'Use el botón "Generar" para crear una automáticamente.'
+                );
+                return;
+            }
+            
+            // ✅ VALIDACIÓN 3: Verificar que no esté repetida por otro usuario
+            const existingPasswords = Object.values(currentData.users)
+                .filter(u => u.userId !== userId) // Excluir al usuario actual
+                .map(u => u.password);
+            
+            if (existingPasswords.includes(newPassword)) {
+                window.NotificationUtils.error(
+                    'Esta contraseña ya está en uso por otro consultor.\n\n' +
+                    'Por seguridad y trazabilidad, cada consultor debe tener una contraseña única.\n\n' +
+                    'Use el botón "Generar" para crear una nueva contraseña automáticamente.'
+                );
+                return;
+            }
+        }
+        
+        // Preparar datos de actualización
+        const updateData = {
+            name: name,
+            email: email || `${userId.toLowerCase()}@grupoitarvic.com`,
+            updatedAt: new Date().toISOString()
+        };
+        
+        // Solo actualizar contraseña si se proporcionó una nueva
+        if (newPassword) {
+            updateData.password = newPassword;
+        }
+        
+        console.log('📤 Actualizando usuario:', userId, updateData);
+        
+        const result = await window.PortalDB.updateUser(userId, updateData);
+        
+        console.log('📥 Resultado:', result);
+        
+        if (result.success) {
+            // Mensaje diferente si se cambió contraseña
+            if (newPassword) {
+                window.NotificationUtils.success(
+                    `Usuario actualizado exitosamente.\n\n` +
+                    `Nueva contraseña: ${newPassword}\n\n` +
+                    `IMPORTANTE: Comparta esta contraseña de forma segura con el consultor.`
+                );
+            } else {
+                window.NotificationUtils.success('Usuario actualizado correctamente');
+            }
+            
+            // ✅ Cerrar modal específicamente
+            closeEditUserModal();
+            
+            // Recargar datos
+            await loadAllData();
+        } else {
+            window.NotificationUtils.error('Error: ' + (result.message || 'No se pudo actualizar el usuario'));
+        }
+        
+    } catch (error) {
+        console.error('❌ Error actualizando usuario:', error);
+        window.NotificationUtils.error('Error al actualizar usuario: ' + error.message);
+    }
+}
+
+function generateRandomPasswordForEdit() {
+    // Obtener todas las contraseñas existentes
+    const existingPasswords = Object.values(currentData.users)
+        .map(u => u.password)
+        .filter(p => p); // Filtrar undefined/null
+    
+    let newPassword;
+    let attempts = 0;
+    const maxAttempts = 100;
+    
+    // Generar hasta encontrar una única
+    do {
+        const firstPart = Math.floor(1000 + Math.random() * 9000);
+        const secondPart = Math.floor(1000 + Math.random() * 9000);
+        newPassword = `cons${firstPart}.${secondPart}`;
+        attempts++;
+        
+        if (attempts >= maxAttempts) {
+            window.NotificationUtils.error('No se pudo generar una contraseña única. Intente nuevamente.');
+            return;
+        }
+    } while (existingPasswords.includes(newPassword));
+    
+    // Establecer en el input
+    document.getElementById('editUserPassword').value = newPassword;
+    
+    // Feedback visual
+    window.NotificationUtils.success(`✅ Contraseña generada: ${newPassword}`);
+}
+
+function validateConsultorPassword(password) {
+    // Patrón: cons + 4 dígitos + punto + 4 dígitos
+    const pattern = /^cons\d{4}\.\d{4}$/;
+    return pattern.test(password);
+}
+
+function closeEditUserModal() {
+    const modal = document.getElementById('editUserModal');
+    if (modal) {
+        modal.remove();
+    }
+}
+
 function showUserCredentials(user) {
     const modal = document.createElement('div');
     modal.className = 'modal';
@@ -2725,19 +2881,9 @@ function showUserCredentials(user) {
     document.body.appendChild(modal);
 }
 
-function deleteUser(userId) {
-    if (!confirm('¿Está seguro de eliminar este usuario? Esta acción eliminará también todas sus asignaciones.')) {
-        return;
-    }
-
-    const result = window.PortalDB.deleteUser(userId);
-    
-    if (result.success) {
-        window.NotificationUtils.success('Usuario eliminado correctamente');
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al eliminar usuario: ' + result.message);
-    }
+// ✅ Función deleteUser (con arquitectura limpia)
+async function deleteUser(userId) {
+    await window.userModule.deleteUser(userId);
 }
 
 // === GESTIÓN DE EMPRESAS ===
@@ -2785,18 +2931,23 @@ async function handleCreateCompany(event) {
     }
 }
 
-function deleteCompany(companyId) {
+async function deleteCompany(companyId) { 
     if (!confirm('¿Está seguro de eliminar esta empresa? Se eliminarán también todas las asignaciones relacionadas.')) {
         return;
     }
 
-    const result = window.PortalDB.deleteCompany(companyId);
-    
-    if (result.success) {
-        window.NotificationUtils.success('Empresa eliminada correctamente');
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al eliminar empresa: ' + result.message);
+    try {
+        const result = await window.PortalDB.deleteCompany(companyId); 
+        
+        if (result.success) {
+            window.NotificationUtils.success('Empresa eliminada correctamente');
+            await loadAllData();
+        } else {
+            window.NotificationUtils.error('Error: ' + result.message);
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        window.NotificationUtils.error('Error al eliminar empresa');
     }
 }
 
@@ -3268,7 +3419,6 @@ async function updateUsersList() {
     
     const users = Object.values(currentData.users);
     
-    // ✅ FILTRO MEJORADO - Excluye usuarios sin userId válido
     const consultorUsers = users.filter(user => 
         user.role === 'consultor' && 
         user.isActive !== false &&
@@ -3289,49 +3439,105 @@ async function updateUsersList() {
     
     container.innerHTML = '';
     consultorUsers.forEach(user => {
-        // Obtener asignaciones del usuario
-        const userAssignments = Object.values(currentData.assignments).filter(a => 
+        // Contar los TRES tipos de asignaciones
+        const supportAssignments = Object.values(currentData.assignments || {}).filter(a => 
             a.userId === user.userId && a.isActive
         );
         
+        const projectAssignments = Object.values(currentData.projectAssignments || {}).filter(a => 
+            a.consultorId === user.userId && a.isActive !== false
+        );
+        
+        const taskAssignments = Object.values(currentData.taskAssignments || {}).filter(a => 
+            a.consultorId === user.userId && a.isActive !== false
+        );
+        
+        // Total de asignaciones
+        const totalAssignments = supportAssignments.length + projectAssignments.length + taskAssignments.length;
+        
         const userDiv = document.createElement('div');
         userDiv.className = 'item hover-lift';
+        
         userDiv.innerHTML = `
-            <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${user.userId}</span>
-                    <strong>${user.name}</strong>
-                    ${userAssignments.length > 1 ? 
-                        `<span class="custom-badge badge-info">Múltiple (${userAssignments.length})</span>` : 
-                        userAssignments.length === 1 ? 
-                        `<span class="custom-badge badge-success">Asignado</span>` : 
-                        `<span class="custom-badge badge-warning">Sin asignar</span>`
-                    }
+            <!-- CONTENEDOR PRINCIPAL -->
+            <div style="display: flex; flex-direction: column; gap: 0; width: 100%;">
+                
+                <!-- PARTE SUPERIOR: ID, Nombre, Badges y Botones -->
+                <div style="display: flex; justify-content: space-between; align-items: center; 
+                            padding-bottom: 16px; margin-bottom: 12px;">
+                    <!-- Lado izquierdo -->
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="item-id">${user.userId}</span>
+                        <strong style="font-size: 1rem;">${user.name}</strong>
+                        ${totalAssignments > 1 ? 
+                            `<span class="custom-badge badge-info">MÚLTIPLE</span>
+                             <span class="custom-badge badge-primary">${totalAssignments}</span>` : 
+                            totalAssignments === 1 ? 
+                            `<span class="custom-badge badge-success">ASIGNADO</span>
+                             <span class="custom-badge badge-primary">1</span>` : 
+                            `<span class="custom-badge badge-warning">SIN ASIGNAR</span>`
+                        }
+                    </div>
+                    
+                    <!-- Lado derecho: Botones -->
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-primary" onclick="editUser('${user.userId}')" 
+                                style="padding: 6px 12px; font-size: 0.875rem;" title="Editar usuario">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteUser('${user.userId}')" 
+                                style="padding: 6px 12px; font-size: 0.875rem;" title="Eliminar usuario">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                        ${totalAssignments > 0 ? 
+                            `<button class="btn btn-sm btn-info" onclick="viewUserAssignments('${user.userId}')" 
+                                     style="padding: 6px 12px; font-size: 0.875rem;" title="Ver asignaciones">
+                                <i class="fa-solid fa-eye"></i>
+                            </button>` : ''
+                        }
+                    </div>
                 </div>
-                <div class="user-assignment-info">
-                    <small style="color: #666;">
-                        <i class="fa-solid fa-calendar"></i> Registrado: ${window.DateUtils.formatDate(user.createdAt)}
-                        ${user.email ? `<br><i class="fa-solid fa-envelope"></i> ${user.email}` : ''}
-                        ${user.password ? `<br><i class="fa-solid fa-key"></i> Contraseña: <strong style="color: #e74c3c;">${user.password}</strong>` : ''}
-                    </small>
-                    ${userAssignments.length > 0 ? `
-                        <div class="user-assignment-count">
-                            <i class="fa-solid fa-chart-bar"></i> ${userAssignments.length} asignación(es) activa(s)
-                        </div>
-                    ` : ''}
-                </div>
-                ${userAssignments.length > 1 ? `
-                    <button class="btn-sm btn-info" onclick="viewUserAssignments('${user.userId}')" style="margin-top: 5px;">
-                        <i class="fa-solid fa-eye"></i> Ver Asignaciones (${userAssignments.length})
-                    </button>
+                
+                <!-- FILA 1: Contadores de asignaciones (solo si tiene) -->
+                ${totalAssignments > 0 ? `
+                    <div style="display: flex; justify-content: space-between; align-items: center;
+                                padding: 12px 20px; margin: 0 -20px 0 -20px;
+                                border-top: 1px solid #e5e7eb;
+                                background: #f9fafb;">
+                        <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                            Soporte: <strong>${supportAssignments.length}</strong>
+                        </small>
+                        <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                            Proyectos: <strong>${projectAssignments.length}</strong>
+                        </small>
+                        <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                            Tareas: <strong>${taskAssignments.length}</strong>
+                        </small>
+                    </div>
                 ` : ''}
-            </div>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-                <button class="delete-btn" onclick="deleteUser('${user.userId}')" title="Eliminar usuario">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
+                
+                <!-- FILA 2: Información del usuario (SIEMPRE visible) -->
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 20px; margin: 0 -20px -20px -20px;
+                            border-top: 1px solid #e5e7eb;
+                            background: #ffffff;">
+                    <small style="color: #666; font-weight: 500; font-size: 0.75rem;">
+                        <i class="fa-solid fa-calendar" style="color: #10b981;"></i> 
+                        ${window.DateUtils.formatDate(user.createdAt)}
+                    </small>
+                    
+                    <small style="color: #666; font-weight: 500; font-size: 0.75rem;">
+                        <i class="fa-solid fa-envelope" style="color: #3b82f6;"></i> 
+                        ${user.email || 'Sin correo'}
+                    </small>
+                    
+                    <small style="color: transparent; font-size: 0.75rem;">
+                        Reservado
+                    </small>
+                </div>
             </div>
         `;
+        
         container.appendChild(userDiv);
     });
 }
@@ -8660,6 +8866,11 @@ window.rejectReport = rejectReport;
 window.logout = logout;
 window.exportData = exportData;
 window.importData = importData;
+window.editUser = editUser;
+window.handleEditUser = handleEditUser;
+window.closeEditUserModal = closeEditUserModal;
+window.generateRandomPasswordForEdit = generateRandomPasswordForEdit;
+window.validateConsultorPassword = validateConsultorPassword;
 //window.generateAdminReport = generateAdminReport;
 window.viewReport = viewReport;
 window.updateApprovedReportsList = updateApprovedReportsList;

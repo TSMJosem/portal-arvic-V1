@@ -382,9 +382,10 @@ body {
     max-height: 600px;
     overflow-y: auto;
     border-radius: var(--border-radius-lg);
-    border: 1px solid var(--gray-200);
-    background: white;
-    box-shadow: var(--shadow-md);
+    border: none; /* ✅ QUITAR el borde */
+    background: transparent; /* ✅ CAMBIAR de white a transparent */
+    box-shadow: none; /* ✅ QUITAR la sombra */
+    padding: 0; /* ✅ OPCIONAL: Quitar padding si lo tiene */
 }
 
 .items-list::-webkit-scrollbar {
@@ -413,6 +414,10 @@ body {
     border-bottom: 1px solid var(--gray-200);
     transition: var(--transition-normal);
     background: white;
+    margin-bottom: var(--spacing-lg); /* ✅ AGREGAR ESTO */
+    border-radius: var(--border-radius-lg); /* ✅ AGREGAR ESTO */
+    box-shadow: var(--shadow-sm); /* ✅ AGREGAR ESTO */
+    min-height: 180px;
 }
 
 .item:hover {

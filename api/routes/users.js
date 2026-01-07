@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const jwt = require('jsonwebtoken'); 
 
 // GET todos los usuarios
 router.get('/', async (req, res) => {
@@ -12,13 +13,46 @@ router.get('/', async (req, res) => {
   }
 });
 
-// GET usuario por ID
+// ✅ Endpoint DEDICADO para obtener contraseñas (solo validación)
+router.get('/passwords', async (req, res) => {
+  try {
+    // Solo admin puede acceder
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ success: false, message: 'No autorizado' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    if (decoded.role !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Solo administradores pueden validar contraseñas' 
+      });
+    }
+
+    // Solo devolver userId y password (mínimo necesario)
+    const users = await User.find({}, 'userId password');
+    const passwords = users
+      .filter(u => u.password)
+      .map(u => ({ userId: u.userId, password: u.password }));
+
+    res.json({ success: true, data: passwords });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+// ✅ GET individual SIN password de nuevo (más seguro)
 router.get('/:id', async (req, res) => {
   try {
-    const user = await User.findOne({ userId: req.params.id }).select('-password');  // ✅ userId
+    const user = await User.findOne({ userId: req.params.id })
+      .select('-password');  // ← Volver a excluir password
+    
     if (!user) {
       return res.status(404).json({ success: false, message: 'Usuario no encontrado' });
     }
+    
     res.json({ success: true, data: user });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

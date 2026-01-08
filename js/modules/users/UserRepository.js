@@ -55,6 +55,42 @@ export class UserRepository {
     }
 
     /**
+     * ⭐ NUEVO: Obtener contraseña del usuario para validación
+     * Solo debe usarse internamente para validar contraseñas
+     * 
+     * @param {string} userId - ID del usuario
+     * @returns {Promise<string|null>} Password del usuario o null
+     */
+    async getPasswordForValidation(userId) {
+        try {
+            if (!userId) {
+                console.error('❌ getPasswordForValidation: userId es requerido');
+                return null;
+            }
+
+            console.log(`🔐 getPasswordForValidation: ${userId}`);
+            
+            // Usar el endpoint especial /passwords que SÍ devuelve contraseñas
+            const passwordData = await this.db.getPasswordsForValidation();
+            
+            // Buscar la contraseña del usuario específico
+            const userPasswordData = passwordData.find(item => item.userId === userId);
+            
+            if (userPasswordData && userPasswordData.password) {
+                console.log(`✅ Contraseña encontrada para ${userId}`);
+                return userPasswordData.password;
+            }
+            
+            console.log(`❌ Contraseña no encontrada para ${userId}`);
+            return null;
+            
+        } catch (error) {
+            console.error(`❌ Error en getPasswordForValidation:`, error);
+            return null;
+        }
+    }
+
+    /**
      * Crear nuevo usuario
      * @param {Object} userData - Datos del usuario
      * @returns {Promise<Object>} Resultado de la operación

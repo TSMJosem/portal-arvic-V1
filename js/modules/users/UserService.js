@@ -156,6 +156,11 @@ export class UserService {
 
             console.log('📋 Usuario actual obtenido:', currentUser.userId);
 
+            if (updateData.password && updateData.password.trim() !== '') {
+                currentUser.password = await this.repository.getPasswordForValidation(userId);
+                console.log('🔐 Contraseña actual obtenida para validación');
+            }
+
             // 2. ✅ Validar actualización (AQUÍ se valida que no sea la misma contraseña)
             const validation = await this.validator.validateUpdate(
                 userId, 

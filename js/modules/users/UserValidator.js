@@ -135,6 +135,10 @@ export class UserValidator {
      * @returns {Object} { valid: boolean, message: string }
      */
     validatePasswordNotSameAsCurrent(newPassword, currentPassword) {
+        console.log('🔍 validatePasswordNotSameAsCurrent:');  
+        console.log('  Nueva:', newPassword); 
+        console.log('  Actual:', currentPassword);  
+
         if (!newPassword) {
             // Si no hay nueva contraseña, es válido (mantiene la actual)
             return { valid: true, message: '' };
@@ -142,6 +146,7 @@ export class UserValidator {
 
         if (!currentPassword) {
             // Si no hay contraseña actual (nuevo usuario), es válido
+            console.log('  ⚠️ No hay contraseña actual - se permite');
             return { valid: true, message: '' };
         }
 
@@ -177,6 +182,7 @@ export class UserValidator {
             console.log('  Nueva contraseña:', password);
             console.log('  Usuario excluido:', excludeUserId);
             console.log('  Contraseñas existentes:', existingPasswords.length);
+            console.log('  📋 ARRAY COMPLETO:', existingPasswords);
 
             if (existingPasswords.includes(password.trim())) {
                 return {

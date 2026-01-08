@@ -46,7 +46,7 @@ router.post('/login', async (req, res) => {
 
     // Verificar contraseña
     console.log('🔍 Verificando contraseña...');
-    const isPasswordValid = await user.comparePassword(password);
+    const isPasswordValid = password === user.password;
     
     console.log('Contraseña válida:', isPasswordValid ? 'SÍ' : 'NO');
 

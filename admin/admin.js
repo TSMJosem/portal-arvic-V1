@@ -3224,71 +3224,217 @@ async function viewReport(reportId) {
 // Copiar y pegar estas funciones al final del archivo admin.js
 
 // Nueva función para ver todas las asignaciones de un usuario
+/**
+ * Ver todas las asignaciones de un usuario (SOPORTES + PROYECTOS + TAREAS)
+ * @param {string} userId - ID del usuario
+ */
 function viewUserAssignments(userId) {
-    const user = currentData.users[userId];
-    const userAssignments = Object.values(currentData.assignments).filter(a => 
-        a.userId === userId && a.isActive
-    );
-    
-    if (!user) return;
-    
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title"><i class="fa-solid fa-bullseye"></i> Asignaciones de ${user.name}</h2>
-                <button class="close" onclick="this.closest('.modal').remove()">&times;</button>
-            </div>
-            <div class="p-3">
-                ${userAssignments.length === 0 ? 
-                    '<p>No hay asignaciones activas para este usuario</p>' : 
-                    `<div class="assignments-list">
-                        ${userAssignments.map(assignment => {
-                            const company = currentData.companies[assignment.companyId];
-                            const project = currentData.projects[assignment.projectId];
-                            const task = currentData.tasks[assignment.taskId];
-                            const module = currentData.modules[assignment.moduleId];
-                            
-                            // Calcular reportes y horas para esta asignación
-                            const assignmentReports = Object.values(currentData.reports).filter(r => 
-                                r.assignmentId === assignment.assignmentId || (r.userId === userId && !r.assignmentId)
-                            );
-                            const totalHours = assignmentReports.reduce((sum, r) => sum + (parseFloat(r.hours) || 0), 0);
-                            
-                            return `
-                                <div class="assignment-detail-card">
-                                    <div class="assignment-detail-header">
-                                        <h4>🏢 ${company?.name || 'Empresa no encontrada'}</h4>
-                                        <span class="assignment-id">ID: ${assignment.assignmentId.slice(-6)}</span>
-                                    </div>
-                                    <div class="assignment-detail-body">
-                                        <p><strong><i class="fa-solid fa-clipboard"></i> Proyecto:</strong> ${project?.name || 'Proyecto no encontrado'}</p>
-                                        <p><strong><i class="fa-solid fa-check"></i> Tarea:</strong> ${task?.name || 'Tarea no encontrada'}</p>
-                                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'Módulo no encontrado'}</p>
-                                        <p><strong><i class="fa-solid fa-chart-bar"></i> Reportes:</strong> ${assignmentReports.length} reportes</p>
-                                        <p><strong><i class="fa-solid fa-clock"></i> Horas Total:</strong> <span class="total-hours-highlight">${totalHours.toFixed(1)} hrs</span></p>
-                                        <p><small><i class="fa-solid fa-calendar"></i> Asignado: ${window.DateUtils.formatDate(assignment.createdAt)}</small></p>
-                                    </div>
-                                    <div class="assignment-actions">
-                                        <button class="btn btn-sm btn-danger" onclick="deleteAssignment('${assignment.assignmentId}'); this.closest('.modal').remove(); loadAllData();">
-                                            <i class="fa-solid fa-trash"></i> Eliminar Asignación
-                                        </button>
-                                    </div>
-                                </div>
-                            `;
-                        }).join('')}
-                    </div>`
-                }
-                <div style="text-align: center; margin-top: 20px;">
-                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">Cerrar</button>
+    try {
+        const user = currentData.users[userId];
+        
+        if (!user) {
+            console.error('❌ Usuario no encontrado:', userId);
+            return;
+        }
+
+        console.log('👁️ Viendo asignaciones de:', user.name);
+
+        // ✅ BUSCAR EN LAS TRES COLECCIONES
+        
+        // 1. Asignaciones de SOPORTE (usa 'userId')
+        const supportAssignments = Object.values(currentData.assignments || {}).filter(a => 
+            a.userId === userId && a.isActive !== false
+        );
+
+        // 2. Asignaciones de PROYECTO (usa 'consultorId' ⚠️)
+        const projectAssignments = Object.values(currentData.projectAssignments || {}).filter(a => 
+            a.consultorId === userId && a.isActive !== false
+        );
+
+        // 3. Asignaciones de TAREAS (usa 'consultorId' ⚠️)
+        const taskAssignments = Object.values(currentData.taskAssignments || {}).filter(a => 
+            a.consultorId === userId && a.isActive !== false
+        );
+
+        // Total de asignaciones
+        const totalAssignments = supportAssignments.length + projectAssignments.length + taskAssignments.length;
+
+        console.log('📊 Resumen de asignaciones:');
+        console.log('  - Soportes:', supportAssignments.length);
+        console.log('  - Proyectos:', projectAssignments.length);
+        console.log('  - Tareas:', taskAssignments.length);
+        console.log('  - TOTAL:', totalAssignments);
+
+        // ✅ CREAR MODAL CON TODAS LAS ASIGNACIONES
+        const modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.style.display = 'block';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 900px;">
+                <div class="modal-header">
+                    <h2 class="modal-title">
+                        <i class="fa-solid fa-bullseye"></i> Asignaciones de ${user.name}
+                    </h2>
+                    <button class="close" onclick="this.closest('.modal').remove()">&times;</button>
+                </div>
+                <div class="p-3">
+                    ${totalAssignments === 0 ? `
+                        <div class="empty-state">
+                            <div class="empty-state-icon"><i class="fa-solid fa-inbox"></i></div>
+                            <div class="empty-state-title">No hay asignaciones activas</div>
+                            <div class="empty-state-desc">Este usuario no tiene asignaciones activas</div>
+                        </div>
+                    ` : `
+                        <!-- Resumen de contadores -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 25px;">
+                            <div style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                                <div style="font-size: 28px; font-weight: bold;">${supportAssignments.length}</div>
+                                <div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">SOPORTES</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                                <div style="font-size: 28px; font-weight: bold;">${projectAssignments.length}</div>
+                                <div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">PROYECTOS</div>
+                            </div>
+                            <div style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 15px; border-radius: 10px; color: white; text-align: center;">
+                                <div style="font-size: 28px; font-weight: bold;">${taskAssignments.length}</div>
+                                <div style="font-size: 12px; opacity: 0.9; margin-top: 5px;">TAREAS</div>
+                            </div>
+                        </div>
+
+                        <!-- SOPORTES -->
+                        ${supportAssignments.length > 0 ? `
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="color: #3b82f6; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; margin-bottom: 15px;">
+                                    <i class="fa-solid fa-headset"></i> Asignaciones de Soporte (${supportAssignments.length})
+                                </h3>
+                                ${supportAssignments.map(assignment => {
+                                    const company = currentData.companies[assignment.companyId];
+                                    const support = currentData.supports[assignment.supportId];
+                                    const module = currentData.modules[assignment.moduleId];
+                                    
+                                    return `
+                                        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #3b82f6;">
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                                <div>
+                                                    <strong style="color: #374151;">Cliente:</strong> ${company ? company.name : 'No encontrado'}
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #374151;">Soporte:</strong> ${support ? support.name : 'No encontrado'}
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #374151;">Módulo:</strong> ${module ? module.name : 'No encontrado'}
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #374151;">Tarifa Consultor:</strong> $${assignment.tarifaConsultor || 0}/hr
+                                                </div>
+                                                <div style="grid-column: span 2;">
+                                                    <strong style="color: #374151;">ID:</strong> <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${assignment.assignmentId}</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+
+                        <!-- PROYECTOS -->
+                        ${projectAssignments.length > 0 ? `
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="color: #10b981; border-bottom: 2px solid #10b981; padding-bottom: 10px; margin-bottom: 15px;">
+                                    <i class="fa-solid fa-folder-open"></i> Asignaciones de Proyecto (${projectAssignments.length})
+                                </h3>
+                                ${projectAssignments.map(assignment => {
+                                    const company = currentData.companies[assignment.companyId];
+                                    const project = currentData.projects[assignment.projectId];
+                                    const module = currentData.modules[assignment.moduleId];
+                                    
+                                    return `
+                                        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #10b981;">
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                                <div>
+                                                    <strong style="color: #374151;">Cliente:</strong> ${company ? company.name : 'No encontrado'}
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #374151;">Proyecto:</strong> ${project ? project.name : 'No encontrado'}
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #374151;">Módulo:</strong> ${module ? module.name : 'No encontrado'}
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #374151;">Tarifa Consultor:</strong> $${assignment.tarifaConsultor || 0}/hr
+                                                </div>
+                                                <div style="grid-column: span 2;">
+                                                    <strong style="color: #374151;">ID:</strong> <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${assignment.projectAssignmentId}</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+
+                        <!-- TAREAS -->
+                        ${taskAssignments.length > 0 ? `
+                            <div style="margin-bottom: 30px;">
+                                <h3 style="color: #f59e0b; border-bottom: 2px solid #f59e0b; padding-bottom: 10px; margin-bottom: 15px;">
+                                    <i class="fa-solid fa-tasks"></i> Asignaciones de Tarea (${taskAssignments.length})
+                                </h3>
+                                ${taskAssignments.map(assignment => {
+                                    const company = currentData.companies[assignment.companyId];
+                                    const module = currentData.modules[assignment.moduleId];
+                                    
+                                    return `
+                                        <div style="background: white; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; border-left: 4px solid #f59e0b;">
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                                <div>
+                                                    <strong style="color: #374151;">Cliente:</strong> ${company ? company.name : 'No encontrado'}
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #374151;">Tarea:</strong> ${assignment.taskName || 'Sin nombre'}
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #374151;">Módulo:</strong> ${module ? module.name : 'No encontrado'}
+                                                </div>
+                                                <div>
+                                                    <strong style="color: #374151;">Tarifa Consultor:</strong> $${assignment.tarifaConsultor || 0}/hr
+                                                </div>
+                                                <div style="grid-column: span 2;">
+                                                    <strong style="color: #374151;">Estado:</strong> 
+                                                    <span style="background: ${assignment.isActive ? '#10b981' : '#ef4444'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px;">
+                                                        ${assignment.isActive ? 'Activa' : 'Inactiva'}
+                                                    </span>
+                                                </div>
+                                                <div style="grid-column: span 2;">
+                                                    <strong style="color: #374151;">ID:</strong> <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-size: 11px;">${assignment.taskAssignmentId}</code>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        ` : ''}
+                    `}
+                </div>
+                <div class="modal-footer" style="display: flex; justify-content: flex-end; padding: 15px; border-top: 1px solid #e5e7eb;">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove()">
+                        <i class="fa-solid fa-times"></i> Cerrar
+                    </button>
                 </div>
             </div>
-        </div>
-    `;
-    
-    document.body.appendChild(modal);
+        `;
+
+        document.body.appendChild(modal);
+
+        console.log('✅ Modal de asignaciones mostrado correctamente');
+
+    } catch (error) {
+        console.error('❌ Error en viewUserAssignments:', error);
+        if (window.NotificationUtils) {
+            window.NotificationUtils.error('Error al ver asignaciones: ' + error.message);
+        } else {
+            alert('Error al ver asignaciones');
+        }
+    }
 }
 
 function waitForAnimationComplete(element, callback, maxWait = 2000) {

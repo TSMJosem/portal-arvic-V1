@@ -35,7 +35,7 @@ export class UserModal {
      */
     async openEdit(userId) {
         try {
-            console.log(`🎨 UserModal.openEdit(${userId})`);
+            console.log(`UserModal.openEdit(${userId})`);
 
             // Obtener datos del usuario
             const user = await this.userService.getById(userId);
@@ -52,7 +52,7 @@ export class UserModal {
             this.attachEditHandlers(userId);
 
         } catch (error) {
-            console.error('❌ Error en openEdit:', error);
+            console.error('Error en openEdit:', error);
             this.notifier.error('Error al abrir modal de edición');
         }
     }
@@ -67,7 +67,7 @@ export class UserModal {
                 <div class="modal-content" style="max-width: 500px;">
                     <div class="modal-header">
                         <h2 class="modal-title">
-                            <i class="fa-solid fa-user-edit"></i> Editar Usuario
+                            Editar Usuario          
                         </h2>
                         <button class="close" onclick="window.userModule.closeEditModal()">&times;</button>
                     </div>
@@ -82,14 +82,14 @@ export class UserModal {
                                 <input type="text" value="${user.userId}" disabled 
                                        style="background: #f5f5f5; cursor: not-allowed; color: #666;">
                                 <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 5px;">
-                                    <i class="fa-solid fa-info-circle"></i> El ID no puede modificarse
+                                   El ID no puede modificarse
                                 </small>
                             </div>
                             
                             <!-- Nombre -->
                             <div class="form-group">
                                 <label for="editUserName">
-                                    <i class="fa-solid fa-user"></i> Nombre Completo *
+                                   Nombre Completo *
                                 </label>
                                 <input type="text" 
                                        id="editUserName" 
@@ -101,7 +101,7 @@ export class UserModal {
                             <!-- Email -->
                             <div class="form-group">
                                 <label for="editUserEmail">
-                                    <i class="fa-solid fa-envelope"></i> Email
+                                   Email
                                 </label>
                                 <input type="email" 
                                        id="editUserEmail" 
@@ -112,7 +112,7 @@ export class UserModal {
                             <!-- Nueva Contraseña -->
                             <div class="form-group">
                                 <label for="editUserPassword">
-                                    <i class="fa-solid fa-key"></i> Nueva Contraseña
+                                    Nueva Contraseña
                                 </label>
                                 <div style="display: flex; gap: 8px;">
                                     <input type="text" 
@@ -133,20 +133,19 @@ export class UserModal {
                                     (cons + 4 dígitos + punto + 4 dígitos)
                                 </small>
                                 <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 3px;">
-                                    <i class="fa-solid fa-lightbulb"></i> Ejemplo: 
+                                    Ejemplo: 
                                     <code style="background: #fff3cd; padding: 2px 6px; border-radius: 3px;">cons1234.5678</code>
                                 </small>
                                 <small style="color: #666; font-size: 0.85rem; display: block; margin-top: 3px;">
-                                    <i class="fa-solid fa-lock"></i> Dejar vacío para mantener la contraseña actual
+                                    Dejar vacío para mantener la contraseña actual
                                 </small>
                                 <small style="color: #e74c3c; font-size: 0.85rem; display: block; margin-top: 5px;">
-                                    <i class="fa-solid fa-shield-halved"></i> <strong>Importante:</strong> Por seguridad, cada consultor debe tener una contraseña única
+                                    <strong>Importante:</strong> Por seguridad, cada consultor debe tener una contraseña única
                                 </small>
                             </div>
                             
                             <!-- Mensaje informativo -->
                             <div class="message message-info" style="margin-top: 20px;">
-                                <i class="fa-solid fa-info-circle"></i> 
                                 <strong>Nota:</strong> Los cambios se aplicarán inmediatamente al guardar.
                             </div>
                             
@@ -155,10 +154,10 @@ export class UserModal {
                                 <button type="button" 
                                         class="btn btn-secondary" 
                                         onclick="window.userModule.closeEditModal()">
-                                    <i class="fa-solid fa-times"></i> Cancelar
+                                    Cancelar
                                 </button>
                                 <button type="submit" class="btn btn-primary">
-                                    <i class="fa-solid fa-save"></i> Guardar Cambios
+                                    Guardar Cambios
                                 </button>
                             </div>
                         </form>
@@ -207,7 +206,7 @@ export class UserModal {
      */
     async handleEditSubmit(userId) {
         try {
-            console.log(`📤 Enviando actualización de usuario ${userId}`);
+            console.log(`Enviando actualización de usuario ${userId}`);
 
             // Capturar datos del formulario
             const formData = {
@@ -228,20 +227,20 @@ export class UserModal {
                 updateData.password = formData.password;
             }
 
-            console.log('📋 Datos a actualizar:', updateData);
+            //console.log('📋 Datos a actualizar:', updateData);
 
-            // ✅ Llamar al servicio (él valida y guarda)
+            // Llamar al servicio (él valida y guarda)
             const result = await this.userService.update(userId, updateData);
 
             // Mostrar mensaje de éxito
             if (result.passwordChanged) {
                 this.notifier.success(
-                    `✅ Usuario actualizado exitosamente.\n\n` +
-                    `🔑 Nueva contraseña: ${formData.password}\n\n` +
-                    `⚠️ IMPORTANTE: Comparta esta contraseña de forma segura con el consultor.`
+                    `Usuario actualizado exitosamente.\n\n` +
+                    `Nueva contraseña: ${formData.password}\n\n` +
+                    `IMPORTANTE: Comparta esta contraseña de forma segura con el consultor.`
                 );
             } else {
-                this.notifier.success('✅ Usuario actualizado correctamente');
+                this.notifier.success('Usuario actualizado correctamente');
             }
 
             // Cerrar modal
@@ -252,10 +251,10 @@ export class UserModal {
                 await window.loadAllData();
             }
 
-            console.log('✅ Actualización completada');
+            console.log('Actualización completada');
 
         } catch (error) {
-            console.error('❌ Error en handleEditSubmit:', error);
+            console.error('Error en handleEditSubmit:', error);
             this.notifier.error(error.message || 'Error al actualizar usuario');
         }
     }
@@ -266,7 +265,7 @@ export class UserModal {
      */
     async handleGeneratePassword(excludeUserId) {
         try {
-            console.log('🔑 Generando contraseña única...');
+            console.log('Generando contraseña única...');
 
             const password = await this.userService.generatePassword(excludeUserId);
             
@@ -277,12 +276,12 @@ export class UserModal {
             }
 
             // Feedback visual
-            this.notifier.success(`✅ Contraseña generada: ${password}`);
+            this.notifier.success(`Contraseña generada: ${password}`);
 
-            console.log('✅ Contraseña generada:', password);
+            //console.log('✅ Contraseña generada:', password);
 
         } catch (error) {
-            console.error('❌ Error generando contraseña:', error);
+            console.error('Error generando contraseña:', error);
             this.notifier.error('Error al generar contraseña');
         }
     }
@@ -304,7 +303,7 @@ export class UserModal {
      */
     async openCreate() {
         // TODO: Implementar si se necesita en el futuro
-        console.log('🚧 openCreate() - Por implementar');
+        console.log('openCreate() - Por implementar');
         this.notifier.warning('Funcionalidad en desarrollo');
     }
 }

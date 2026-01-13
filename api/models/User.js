@@ -39,6 +39,20 @@ const userSchema = new mongoose.Schema({
     default: Date.now 
   }
 });
+
+/*
+ * NOTA: bcrypt deshabilitado intencionalmente
+ * Razón: Este proyecto usa contraseñas simples (cons####.####)
+ *        para tracking de consultores, no requiere seguridad máxima
+ * 
+ * Si en el futuro necesitas bcrypt:
+ * 1. Descomentar pre-save hook y comparePassword
+ * 2. Modificar auth.js línea 41
+ * 3. Migrar contraseñas existentes a hash
+ * 
+ * Fecha: 2026-01-10
+ */
+
 /*
 // Hash password antes de guardar
 userSchema.pre('save', async function(next) {

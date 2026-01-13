@@ -27,7 +27,7 @@ import { UserModal } from './UserModal.js';
  * @returns {Object} API pública del módulo
  */
 export function initializeUserModule(database, notifier) {
-    console.log('🔧 Inicializando módulo de usuarios...');
+    console.log('Inicializando módulo de usuarios...');
 
     // Validar dependencias externas
     if (!database) {
@@ -38,19 +38,19 @@ export function initializeUserModule(database, notifier) {
     }
 
     // 1. Crear Repository (capa de datos)
-    console.log('  📦 Creando UserRepository...');
+    console.log('Creando UserRepository...');
     const userRepository = new UserRepository(database);
 
     // 2. Crear Validator (capa de validaciones)
-    console.log('  ✅ Creando UserValidator...');
+    console.log('Creando UserValidator...');
     const userValidator = new UserValidator(userRepository);
 
     // 3. Crear Service (capa de lógica de negocio)
-    console.log('  🧠 Creando UserService...');
+    console.log('Creando UserService...');
     const userService = new UserService(userRepository, userValidator);
 
     // 4. Crear Modal (capa de interfaz)
-    console.log('  🎨 Creando UserModal...');
+    console.log('Creando UserModal...');
     const userModal = new UserModal(userService, notifier);
 
     // 5. Crear API pública del módulo
@@ -88,9 +88,9 @@ export function initializeUserModule(database, notifier) {
     // 6. Exponer globalmente para compatibilidad con código legacy
     window.userModule = publicAPI;
 
-    console.log('✅ Módulo de usuarios inicializado correctamente');
-    console.log('   📌 Disponible en: window.userModule');
-    console.log('   📌 Métodos: editUser, deleteUser, closeEditModal');
+    console.log('Módulo de usuarios inicializado correctamente');
+    console.log('Disponible en: window.userModule');
+    console.log('Métodos: editUser, deleteUser, closeEditModal');
 
     // 7. Retornar API pública
     return publicAPI;
@@ -105,7 +105,7 @@ function autoInitialize() {
         // Esperar a que las dependencias estén disponibles
         const checkDependencies = () => {
             if (window.PortalDB && window.NotificationUtils) {
-                console.log('🚀 Auto-inicializando módulo de usuarios...');
+                console.log('Auto-inicializando módulo de usuarios...');
                 initializeUserModule(window.PortalDB, window.NotificationUtils);
             } else {
                 // Reintentar después de 100ms

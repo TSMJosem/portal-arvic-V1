@@ -8,7 +8,7 @@ router.post('/login', async (req, res) => {
   try {
     const { userId, password } = req.body;
 
-    console.log('🔐 Intento de login:', { userId });
+    console.log('Intento de login:', { userId });
 
     if (!userId || !password) {
       return res.status(400).json({ 
@@ -20,7 +20,7 @@ router.post('/login', async (req, res) => {
     // Buscar usuario por userId o email
     const user = await User.findOne({ 
       $or: [
-        { userId: userId },      // ✅ Cambiado de 'id' a 'userId'
+        { userId: userId },      // Cambiado de 'id' a 'userId'
         { email: userId }
       ]
     });
@@ -28,7 +28,7 @@ router.post('/login', async (req, res) => {
     console.log('Usuario encontrado:', user ? 'SÍ' : 'NO');
 
     if (!user) {
-      console.log('❌ Usuario no encontrado');
+      console.log('Usuario no encontrado');
       return res.status(401).json({ 
         success: false, 
         message: 'Usuario o contraseña incorrectos' 
@@ -37,7 +37,7 @@ router.post('/login', async (req, res) => {
 
     // Verificar si el usuario está activo
     if (!user.isActive) {
-      console.log('❌ Usuario inactivo');
+      console.log('Usuario inactivo');
       return res.status(401).json({ 
         success: false, 
         message: 'Usuario inactivo' 
@@ -45,13 +45,13 @@ router.post('/login', async (req, res) => {
     }
 
     // Verificar contraseña
-    console.log('🔍 Verificando contraseña...');
+    console.log('Verificando contraseña...');
     const isPasswordValid = password === user.password;
     
     console.log('Contraseña válida:', isPasswordValid ? 'SÍ' : 'NO');
 
     if (!isPasswordValid) {
-      console.log('❌ Contraseña incorrecta');
+      console.log('Contraseña incorrecta');
       return res.status(401).json({ 
         success: false, 
         message: 'Usuario o contraseña incorrectos' 
@@ -61,7 +61,7 @@ router.post('/login', async (req, res) => {
     // Generar token JWT
     const token = jwt.sign(
       { 
-        userId: user.userId,    // ✅ Cambiado de 'id' a 'userId'
+        userId: user.userId,    // Cambiado de 'id' a 'userId'
         email: user.email,
         role: user.role 
       },
@@ -69,21 +69,21 @@ router.post('/login', async (req, res) => {
       { expiresIn: '24h' }
     );
 
-    console.log('✅ Login exitoso');
+    console.log('Login exitoso');
 
     res.json({
       success: true,
       message: 'Login exitoso',
       token,
       user: {
-        userId: user.userId,    // ✅ Cambiado de 'id' a 'userId'
+        userId: user.userId,    // Cambiado de 'id' a 'userId'
         name: user.name,
         email: user.email,
         role: user.role
       }
     });
   } catch (error) {
-    console.error('❌ Error en login:', error);
+    console.error('Error en login:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Error en el servidor' 
@@ -106,7 +106,7 @@ router.get('/validate', async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Buscar usuario por userId
-    const user = await User.findOne({ userId: decoded.userId }).select('-password');  // ✅ Cambiado
+    const user = await User.findOne({ userId: decoded.userId }).select('-password');  // Cambiado
 
     if (!user) {
       return res.status(404).json({ 
@@ -118,7 +118,7 @@ router.get('/validate', async (req, res) => {
     res.json({
       success: true,
       user: {
-        userId: user.userId,    // ✅ Cambiado
+        userId: user.userId,    // Cambiado
         name: user.name,
         email: user.email,
         role: user.role

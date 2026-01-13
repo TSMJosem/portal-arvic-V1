@@ -127,7 +127,7 @@ export class UserValidator {
     }
 
     /**
-     * ✅ VALIDACIÓN CLAVE: Verificar que la contraseña NO sea la misma que la actual
+     * VALIDACIÓN CLAVE: Verificar que la contraseña NO sea la misma que la actual
      * Esta es una de las validaciones que estaba fallando
      * 
      * @param {string} newPassword - Nueva contraseña propuesta
@@ -135,9 +135,9 @@ export class UserValidator {
      * @returns {Object} { valid: boolean, message: string }
      */
     validatePasswordNotSameAsCurrent(newPassword, currentPassword) {
-        console.log('🔍 validatePasswordNotSameAsCurrent:');  
-        console.log('  Nueva:', newPassword); 
-        console.log('  Actual:', currentPassword);  
+        console.log('validatePasswordNotSameAsCurrent:');  
+        //console.log('  Nueva:', newPassword); 
+        //console.log('  Actual:', currentPassword);  
 
         if (!newPassword) {
             // Si no hay nueva contraseña, es válido (mantiene la actual)
@@ -146,14 +146,14 @@ export class UserValidator {
 
         if (!currentPassword) {
             // Si no hay contraseña actual (nuevo usuario), es válido
-            console.log('  ⚠️ No hay contraseña actual - se permite');
+            console.log('No hay contraseña actual - se permite');
             return { valid: true, message: '' };
         }
 
         if (newPassword.trim() === currentPassword.trim()) {
             return {
                 valid: false,
-                message: '⚠️ La contraseña ingresada es la misma que la actual.\n\n' +
+                message: 'La contraseña ingresada es la misma que la actual.\n\n' +
                         'Por favor ingrese una contraseña diferente o deje el campo vacío para mantener la actual.'
             };
         }
@@ -162,7 +162,7 @@ export class UserValidator {
     }
 
     /**
-     * ✅ VALIDACIÓN CLAVE: Verificar que la contraseña NO esté duplicada
+     * VALIDACIÓN CLAVE: Verificar que la contraseña NO esté duplicada
      * Esta es la otra validación que estaba fallando
      * 
      * @param {string} password - Contraseña a validar
@@ -178,26 +178,26 @@ export class UserValidator {
             // Obtener todas las contraseñas existentes, excluyendo el usuario actual
             const existingPasswords = await this.repository.getAllPasswords(excludeUserId);
 
-            console.log('🔍 Validando unicidad de contraseña...');
-            console.log('  Nueva contraseña:', password);
-            console.log('  Usuario excluido:', excludeUserId);
-            console.log('  Contraseñas existentes:', existingPasswords.length);
-            console.log('  📋 ARRAY COMPLETO:', existingPasswords);
+            console.log('Validando unicidad de contraseña...');
+            //console.log('Nueva contraseña:', password);
+            console.log('Usuario excluido:', excludeUserId);
+            //console.log('  Contraseñas existentes:', existingPasswords.length);
+            //console.log('  📋 ARRAY COMPLETO:', existingPasswords);
 
             if (existingPasswords.includes(password.trim())) {
                 return {
                     valid: false,
-                    message: '🚫 Esta contraseña ya está en uso por otro consultor.\n\n' +
-                            '⚠️ Por seguridad y trazabilidad, cada consultor debe tener una contraseña única.\n\n' +
+                    message: 'Esta contraseña ya está en uso por otro consultor.\n\n' +
+                            'Por seguridad y trazabilidad, cada consultor debe tener una contraseña única.\n\n' +
                             'Use el botón "Generar" para crear una nueva contraseña automáticamente.'
                 };
             }
 
-            console.log('✅ Contraseña única - validación pasada');
+            console.log('Contraseña única - validación pasada');
             return { valid: true, message: '' };
 
         } catch (error) {
-            console.error('❌ Error validando unicidad de contraseña:', error);
+            console.error('Error validando unicidad de contraseña:', error);
             return {
                 valid: false,
                 message: 'Error al validar contraseña: ' + error.message
@@ -222,7 +222,7 @@ export class UserValidator {
     }
 
     /**
-     * ✅ GENERACIÓN DE CONTRASEÑAS ÚNICAS
+     * GENERACIÓN DE CONTRASEÑAS ÚNICAS
      * Genera contraseñas que NO estén duplicadas
      * 
      * @param {string} excludeUserId - ID de usuario a excluir (opcional)
@@ -250,17 +250,17 @@ export class UserValidator {
 
             } while (existingPasswords.includes(password));
 
-            console.log('✅ Contraseña única generada:', password);
+            console.log('Contraseña única generada:');
             return password;
 
         } catch (error) {
-            console.error('❌ Error generando contraseña única:', error);
+            console.error('Error generando contraseña única:', error);
             throw new Error('Error al generar contraseña: ' + error.message);
         }
     }
 
     /**
-     * ✅ VALIDACIÓN COMPLETA para actualizar usuario
+     * VALIDACIÓN COMPLETA para actualizar usuario
      * Combina todas las validaciones necesarias
      * 
      * @param {string} userId - ID del usuario a actualizar
@@ -320,7 +320,7 @@ export class UserValidator {
     }
 
     /**
-     * ✅ VALIDACIÓN COMPLETA para crear usuario
+     * VALIDACIÓN COMPLETA para crear usuario
      * 
      * @param {Object} userData - Datos del nuevo usuario
      * @returns {Promise<Object>} { valid: boolean, message: string }

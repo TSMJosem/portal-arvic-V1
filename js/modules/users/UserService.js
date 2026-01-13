@@ -36,7 +36,7 @@ export class UserService {
         try {
             return await this.repository.getAll();
         } catch (error) {
-            console.error('❌ Error en UserService.getAll:', error);
+            console.error('Error en UserService.getAll:', error);
             throw new Error('Error al obtener usuarios');
         }
     }
@@ -49,7 +49,7 @@ export class UserService {
         try {
             return await this.repository.getActiveConsultores();
         } catch (error) {
-            console.error('❌ Error en UserService.getActiveConsultores:', error);
+            console.error('Error en UserService.getActiveConsultores:', error);
             throw new Error('Error al obtener consultores');
         }
     }
@@ -67,13 +67,13 @@ export class UserService {
 
             return await this.repository.getById(userId);
         } catch (error) {
-            console.error(`❌ Error en UserService.getById(${userId}):`, error);
+            console.error(`Error en UserService.getById(${userId}):`, error);
             throw new Error(`Error al obtener usuario ${userId}`);
         }
     }
 
     /**
-     * ✅ CREAR USUARIO - Lógica completa
+     * CREAR USUARIO - Lógica completa
      * 
      * 1. Validar datos
      * 2. Generar contraseña única si no viene
@@ -84,7 +84,7 @@ export class UserService {
      */
     async create(userData) {
         try {
-            console.log('🔧 UserService.create - Iniciando creación de usuario');
+            console.log('UserService.create - Iniciando creación de usuario');
 
             // Validar datos básicos
             const validation = await this.validator.validateCreate(userData);
@@ -94,9 +94,9 @@ export class UserService {
 
             // Si no viene contraseña, generar una única
             if (!userData.password) {
-                console.log('🔑 Generando contraseña única...');
+                console.log('Generando contraseña única...');
                 userData.password = await this.validator.generateUniquePassword();
-                console.log('✅ Contraseña generada:', userData.password);
+                console.log('Contraseña generada:');
             }
 
             // Preparar datos completos
@@ -115,7 +115,7 @@ export class UserService {
                 throw new Error(result.message || 'Error al crear usuario');
             }
 
-            console.log('✅ Usuario creado exitosamente:', result.user.userId);
+            console.log('Usuario creado exitosamente:', result.user.userId);
 
             // Devolver usuario con contraseña para mostrar al admin
             return {
@@ -125,14 +125,14 @@ export class UserService {
             };
 
         } catch (error) {
-            console.error('❌ Error en UserService.create:', error);
+            console.error('Error en UserService.create:', error);
             throw error;
         }
     }
 
     /**
-     * ✅ ACTUALIZAR USUARIO - Lógica completa con validaciones
-     * 
+     * ACTUALIZAR USUARIO - Lógica completa con validaciones
+     *
      * Este es el método que arregla tu bug de validación de contraseñas
      * 
      * 1. Obtener usuario actual
@@ -154,14 +154,14 @@ export class UserService {
                 throw new Error('Usuario no encontrado');
             }
 
-            console.log('📋 Usuario actual obtenido:', currentUser.userId);
+            console.log('Usuario actual obtenido:', currentUser.userId);
 
             if (updateData.password && updateData.password.trim() !== '') {
                 currentUser.password = await this.repository.getPasswordForValidation(userId);
-                console.log('🔐 Contraseña actual obtenida para validación');
+                console.log('Contraseña actual obtenida para validación');
             }
 
-            // 2. ✅ Validar actualización (AQUÍ se valida que no sea la misma contraseña)
+            // 2. Validar actualización (AQUÍ se valida que no sea la misma contraseña)
             const validation = await this.validator.validateUpdate(
                 userId, 
                 updateData, 
@@ -172,7 +172,7 @@ export class UserService {
                 throw new Error(validation.message);
             }
 
-            console.log('✅ Validaciones pasadas');
+            console.log('Validaciones pasadas');
 
             // 3. Preparar datos para actualización
             const dataToUpdate = {
@@ -187,7 +187,7 @@ export class UserService {
                 throw new Error(result.message || 'Error al actualizar usuario');
             }
 
-            console.log('✅ Usuario actualizado exitosamente');
+            console.log('Usuario actualizado exitosamente');
 
             return {
                 success: true,
@@ -196,20 +196,20 @@ export class UserService {
             };
 
         } catch (error) {
-            console.error(`❌ Error en UserService.update(${userId}):`, error);
+            console.error(`Error en UserService.update(${userId}):`, error);
             throw error;
         }
     }
 
     /**
-     * ✅ ELIMINAR USUARIO - Con validación
-     * 
+     * ELIMINAR USUARIO - Con validación
+     *
      * @param {string} userId - ID del usuario a eliminar
      * @returns {Promise<Object>} Resultado de la operación
      */
     async delete(userId) {
         try {
-            console.log(`🗑️ UserService.delete(${userId}) - Iniciando eliminación`);
+            console.log(`UserService.delete(${userId}) - Iniciando eliminación`);
 
             // Validar que no sea admin
             const validation = this.validator.validateDelete(userId);
@@ -230,7 +230,7 @@ export class UserService {
                 throw new Error(result.message || 'Error al eliminar usuario');
             }
 
-            console.log('✅ Usuario eliminado exitosamente');
+            console.log('Usuario eliminado exitosamente');
 
             return {
                 success: true,
@@ -238,7 +238,7 @@ export class UserService {
             };
 
         } catch (error) {
-            console.error(`❌ Error en UserService.delete(${userId}):`, error);
+            console.error(`Error en UserService.delete(${userId}):`, error);
             throw error;
         }
     }
@@ -254,7 +254,7 @@ export class UserService {
         try {
             return await this.validator.generateUniquePassword(excludeUserId);
         } catch (error) {
-            console.error('❌ Error generando contraseña:', error);
+            console.error('Error generando contraseña:', error);
             throw new Error('Error al generar contraseña');
         }
     }
@@ -268,7 +268,7 @@ export class UserService {
         try {
             return await this.repository.exists(userId);
         } catch (error) {
-            console.error(`❌ Error verificando existencia de ${userId}:`, error);
+            console.error(`Error verificando existencia de ${userId}:`, error);
             return false;
         }
     }

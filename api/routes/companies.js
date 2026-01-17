@@ -24,7 +24,11 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const data = req.body;
-    if (!data.id) data.id = `company_${Date.now()}`;
+    
+    if (!data.companyId) {
+      data.companyId = `EMP${Date.now()}`;
+    }
+    
     const company = new Company(data);
     await company.save();
     res.status(201).json({ success: true, message: 'Empresa creada', data: company });
@@ -35,8 +39,16 @@ router.post('/', async (req, res) => {
 
 router.put('/:id', async (req, res) => {
   try {
-    const company = await Company.findOneAndUpdate({ id: req.params.id }, req.body, { new: true });
-    if (!company) return res.status(404).json({ success: false, message: 'Empresa no encontrada' });
+    const company = await Company.findOneAndUpdate(
+      { companyId: req.params.id },
+      req.body,
+      { new: true }
+    );
+    
+    if (!company) {
+      return res.status(404).json({ success: false, message: 'Empresa no encontrada' });
+    }
+    
     res.json({ success: true, message: 'Empresa actualizada', data: company });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
@@ -45,7 +57,7 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const company = await Company.findOneAndDelete({ id: req.params.id });
+    const company = await Company.findOneAndDelete({ companyId: req.params.id });
     if (!company) return res.status(404).json({ success: false, message: 'Empresa no encontrada' });
     res.json({ success: true, message: 'Empresa eliminada' });
   } catch (error) {

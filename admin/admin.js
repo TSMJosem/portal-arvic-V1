@@ -338,14 +338,10 @@ function updateStats() {
     */
 }
 
-function updateSidebarCounts() {
-    console.log('🔍 updateSidebarCounts ejecutándose...');
-    console.log('📊 currentData.assignments:', Object.keys(currentData.assignments || {}).length);
-    console.log('📊 currentData.projectAssignments:', Object.keys(currentData.projectAssignments || {}).length);
-
-    const consultorUsers = Object.values(currentData.users).filter(user => 
-        user.role === 'consultor' && user.isActive !== false
-    );
+async function updateSidebarCounts() {
+    await loadCurrentData();
+    
+    const consultorUsers = Object.values(currentData.users).filter(u => u.role === 'consultor');
     const companies = Object.values(currentData.companies);
     const projects = Object.values(currentData.projects);
     const assignments = Object.values(currentData.assignments).filter(a => a.isActive !== false);
@@ -353,36 +349,23 @@ function updateSidebarCounts() {
     const supports = Object.values(currentData.supports);
     const modules = Object.values(currentData.modules);
     const reports = Object.values(currentData.reports);
-    
-    // ✅ NUEVO: Contar TAREAS activas
     const taskAssignments = Object.values(currentData.taskAssignments || {}).filter(t => t.isActive !== false);
 
-    console.log("Conteo de asignaciones de proyecto:", projectAssignments.length);
-    console.log("Asignaciones de soporte:", assignments.length);
-    console.log("📊 Tareas activas:", taskAssignments.length);
-    
-    // ✅ CORREGIDO: Incluir tareas en el total
     const totalAssignments = assignments.length + projectAssignments.length + taskAssignments.length;
 
     document.getElementById('sidebarProjectAssignmentsCount').textContent = projectAssignments.length;
 
-    // ✅ NUEVO: Contar asignaciones CON TARIFAS configuradas
-    // Incluir asignaciones de soporte, proyecto Y tareas
-    const assignmentsConTarifas = [
-        ...assignments.filter(a => a.tarifaConsultor && a.tarifaCliente),
-        ...projectAssignments.filter(a => a.tarifaConsultor && a.tarifaCliente),
-        ...taskAssignments.filter(t => t.tarifaConsultor && t.tarifaCliente)
-    ];
-    console.log("💰 Asignaciones con tarifas:", assignmentsConTarifas.length);
+    const tarifario = await window.PortalDB.getTarifario();
+    const tarifarioArray = Array.isArray(tarifario) ? tarifario : Object.values(tarifario);
+    const tarifarioCount = tarifarioArray.length;
+    console.log("💰 Tarifario cargado, conteo:", tarifarioCount);
 
-    // Calcular contadores específicos de reportes
     const pendingReports = reports.filter(r => r.status === 'Pendiente');
     const approvedReports = reports.filter(r => r.status === 'Aprobado');
     const generatedReports = typeof window.PortalDB.getGeneratedReports === 'function' 
-    ? Object.values(window.PortalDB.getGeneratedReports() || {})
-    : [];
+        ? Object.values(window.PortalDB.getGeneratedReports() || {})
+        : [];
     
-    // ✅ ACTUALIZADO: Objeto con TODOS los contadores incluyendo Tarifario y Tareas
     const sidebarElements = {
         'sidebarUsersCount': consultorUsers.length,
         'sidebarCompaniesCount': companies.length,
@@ -393,21 +376,20 @@ function updateSidebarCounts() {
         'sidebarReportsCount': pendingReports.length,
         'sidebarApprovedReportsCount': approvedReports.length,
         'sidebarGeneratedReportsCount': generatedReports.length,
-        // ✅ NUEVO: Agregar contadores faltantes
-        'sidebarTarifarioCount': assignmentsConTarifas.length,  // ← ESTE FALTABA
-        'sidebarTaskCount': taskAssignments.length  // ✅ Cambiar ID
+        'sidebarTarifarioCount': tarifarioCount,  
+        'sidebarTaskCount': taskAssignments.length
     };
 
-    // Actualizar todos los elementos del sidebar
     Object.entries(sidebarElements).forEach(([elementId, count]) => {
         const element = document.getElementById(elementId);
         if (element) {
             element.textContent = count;
-            console.log(`✅ Actualizado ${elementId}: ${count}`);
         } else {
-            console.warn(`⚠️ No se encontró elemento: ${elementId}`);
+            console.warn(`⚠️ Elemento ${elementId} no encontrado`);
         }
     });
+    
+    console.log('✅ Contadores de sidebar actualizados correctamente');
 }
 
 async function updateSupportsList() {
@@ -486,7 +468,7 @@ async function updateApprovedReportsList() {
         return;
     }
     
-    // ✅ CARGAR DATOS ANTES DE USARLOS
+    // Aseguramos de que se cargan los datos antes de usarlos
     await loadCurrentData();
     
     // Mostrar/ocultar rango personalizado
@@ -606,7 +588,6 @@ async function updateApprovedReportsList() {
         return;
     }
     
-    // ✅ NUEVA LÓGICA: Agrupar correctamente por assignmentId
     const assignmentSummary = {};
     const reportCounts = {};
     
@@ -2996,18 +2977,23 @@ async function handleCreateProject(event) {
     }
 }
 
-function deleteProject(projectId) {
+async function deleteProject(projectId) {
     if (!confirm('¿Está seguro de eliminar este proyecto? Se eliminarán también todas las asignaciones relacionadas.')) {
         return;
     }
 
-    const result = window.PortalDB.deleteProject(projectId);
-    
-    if (result.success) {
-        window.NotificationUtils.success('Proyecto eliminado correctamente');
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al eliminar proyecto: ' + result.message);
+    try {
+        const result = await window.PortalDB.deleteProject(projectId);
+
+        if (result.success) {
+            window.NotificationUtils.success('Proyecto eliminado correctamente');
+            await loadAllData();
+        } else {
+            window.NotificationUtils.error('Error: ' + result.message);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        window.NotificationUtils.error('Error al eliminar proyecto');
     }
 }
 
@@ -3056,18 +3042,23 @@ async function handleCreateSupport(event) {  // ✅ Agrega async
     }
 }
 
-function deleteSupport(supportId) {
+async function deleteSupport(supportId) {
     if (!confirm('¿Está seguro de eliminar este soporte?')) {
         return;
     }
 
-    const result = window.PortalDB.deleteSupport(supportId);
-    
-    if (result.success) {
-        window.NotificationUtils.success('Soporte eliminado correctamente');
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al eliminar soporte: ' + result.message);
+    try {
+        const result = await window.PortalDB.deleteSupport(supportId);
+
+        if (result.success) {
+            window.NotificationUtils.success('Soporte eliminado correctamente');
+            await loadAllData();
+        } else {
+            window.NotificationUtils.error('Error: ' + result.message);
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        window.NotificationUtils.error('Error al eliminar soporte');
     }
 }
 
@@ -3121,18 +3112,23 @@ async function handleCreateModule(event) {  // ✅ Agrega async
     }
 }
 
-function deleteModule(moduleId) {
+async function deleteModule(moduleId) {
     if (!confirm('¿Está seguro de eliminar este módulo?')) {
         return;
     }
 
-    const result = window.PortalDB.deleteModule(moduleId);
-    
-    if (result.success) {
-        window.NotificationUtils.success('Módulo eliminado correctamente');
-        loadAllData();
-    } else {
-        window.NotificationUtils.error('Error al eliminar módulo: ' + result.message);
+    try {
+        const result = await window.PortalDB.deleteModule(moduleId);
+
+        if (result.success) {
+            window.NotificationUtils.success('Módulo eliminado correctamente');
+            await loadAllData();
+        } else {
+            window.NotificationUtils.error('Error: ' + result.message);
+        }
+    } catch (error) {
+        console.error('❌ Error:', error);
+        window.NotificationUtils.error('Error al eliminar módulo');
     }
 }
 
@@ -7428,7 +7424,7 @@ let currentTarifarioFilter = 'all';
 /**
  * Cargar datos del tarifario
  */
-async function loadTarifario() {  // ✅ AGREGAR async
+async function loadTarifario() {
     console.log('💰 Cargando tarifario...');
 
     await loadCurrentData();
@@ -7438,19 +7434,21 @@ async function loadTarifario() {  // ✅ AGREGAR async
         return;
     }
     
-    const tarifario = await window.PortalDB.getTarifario();  // ✅ AGREGAR await
+    const tarifario = await window.PortalDB.getTarifario();
+    const tarifarioArray = Array.isArray(tarifario) ? tarifario : Object.values(tarifario);
     
-    console.log('Tarifario cargado:', Object.keys(tarifario).length, 'entradas');
+    console.log('Tarifario cargado:', tarifarioArray.length, 'entradas');
     
-    // Actualizar tablas
-    updateTarifarioTable(currentTarifarioFilter);
-    updateConsultoresTable();
-    updateTarifarioStats();
+    // Con el await esperamos a que termine las peticiones a la base de datos antes de actualizar las tablas
+    await updateTarifarioTable(currentTarifarioFilter);
+    await updateConsultoresTable();
+    await updateTarifarioStats();
     
-    // Actualizar contador en sidebar
+    // Una vez que todo cargó, actualizamos el contador en el sidebar
     const sidebarBadge = document.getElementById('sidebarTarifarioCount');
     if (sidebarBadge) {
-        sidebarBadge.textContent = Object.keys(tarifario).length;
+        sidebarBadge.textContent = tarifarioArray.length;
+        console.log('✅ Contador de tarifario actualizado:', tarifarioArray.length);
     }
 }
 
@@ -7462,11 +7460,12 @@ async function updateTarifarioTable() {
     if (!tbody) return;
     
     const tarifario = await window.PortalDB.getTarifario();
-    let tarifas = Object.values(tarifario);
+    const allTarifas = Array.isArray(tarifario) ? tarifario : Object.values(tarifario);
     
     // ✅ CORRECCIÓN: Aplicar filtro usando assignmentType (no 'tipo')
+    let tarifas = allTarifas;
     if (currentTarifarioFilter !== 'all') {
-        tarifas = tarifas.filter(t => t.assignmentType === currentTarifarioFilter);
+        tarifas = allTarifas.filter(t => t.assignmentType === currentTarifarioFilter);
     }
     
     // Actualizar contador
@@ -7573,7 +7572,7 @@ function createTarifaRow(tarifa) {
     }
     
     const tarifario = await window.PortalDB.getTarifario();  // ✅ Agregar await
-    const tarifas = Object.values(tarifario);
+    const tarifas = Array.isArray(tarifario) ? tarifario : Object.values(tarifario);
     
     // Agrupar por consultor
     const consultoresMap = {};
@@ -7666,33 +7665,54 @@ function createTarifaRow(tarifa) {
 /**
  * Actualizar estadísticas del tarifario
  */
- async function updateTarifarioStats() {
-    const tarifario = await window.PortalDB.getTarifario();
-    const tarifas = Object.values(tarifario);
+async function updateTarifarioStats() {  
+    const tarifario = await window.PortalDB.getTarifario(); 
+    const tarifas = Array.isArray(tarifario) ? tarifario : Object.values(tarifario);
     
-    // Total asignaciones
-    const totalElement = document.getElementById('totalAsignaciones');
-    if (totalElement) {
-        totalElement.textContent = tarifas.length;
-    }
+    console.log('📊 Tarifario recibido:', tarifas.length, 'entradas');
     
-    // Margen promedio
-    if (tarifas.length > 0) {
-        const sumaMargen = tarifas.reduce((sum, t) => sum + t.margen, 0);
-        const promedioMargen = sumaMargen / tarifas.length;
-        
-        const margenElement = document.getElementById('margenPromedio');
-        if (margenElement) {
-            margenElement.textContent = formatCurrency(promedioMargen);
+    // Calcular estadísticas
+    const totalAsignaciones = tarifas.length;
+    const totalConsultores = tarifas.length > 0 ? new Set(tarifas.map(t => t.consultorId || t.userId)).size : 0;
+    
+    // Sumar el margen (ya viene calculado desde la BD)
+    let totalMargen = 0;
+    tarifas.forEach(t => {
+        // Usar el campo 'margen' si existe, sino calcularlo
+        if (t.margen !== undefined && t.margen !== null) {
+            totalMargen += parseFloat(t.margen) || 0;
+        } else {
+            const consultor = parseFloat(t.costoConsultor || t.tarifaConsultor) || 0;
+            const cliente = parseFloat(t.costoCliente || t.tarifaCliente) || 0;
+            totalMargen += (cliente - consultor);
         }
+    });
+    
+    const margenPromedio = totalAsignaciones > 0 ? totalMargen / totalAsignaciones : 0;
+    
+    // Actualizar elementos individuales en el DOM
+    const totalAsignacionesEl = document.getElementById('totalAsignaciones');
+    const margenPromedioEl = document.getElementById('margenPromedio');
+    const totalConsultoresEl = document.getElementById('totalConsultores');
+    
+    if (totalAsignacionesEl) {
+        totalAsignacionesEl.textContent = totalAsignaciones;
     }
     
-    // Total consultores únicos
-    const consultoresUnicos = new Set(tarifas.map(t => t.consultorId));
-    const consultoresElement = document.getElementById('totalConsultores');
-    if (consultoresElement) {
-        consultoresElement.textContent = consultoresUnicos.size;
+    if (margenPromedioEl) {
+        margenPromedioEl.textContent = `$${margenPromedio.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     }
+    
+    if (totalConsultoresEl) {
+        totalConsultoresEl.textContent = totalConsultores;
+    }
+    
+    console.log('📊 Estadísticas de tarifario actualizadas:', {
+        totalAsignaciones,
+        totalConsultores,
+        totalMargen,
+        margenPromedio
+    });
 }
 
 /**
@@ -8153,7 +8173,7 @@ async function exportTarifarioToExcel() {
         }
         
         const tarifario = await window.PortalDB.getTarifario();
-        const tarifas = Object.values(tarifario);
+        const tarifas = Array.isArray(tarifario) ? tarifario : Object.values(tarifario);
         
         if (tarifas.length === 0) {
             window.NotificationUtils.error('No hay datos para exportar');

@@ -2,6 +2,12 @@ const express = require('express');
 const router = express.Router();
 const TaskAssignment = require('../models/TaskAssignment');
 
+const Tarifario = require('../models/Tarifario'); // ← Agregar al inicio del archivo
+const Company = require('../models/Company');
+const Support = require('../models/Support');
+const Module = require('../models/Module');
+const User = require('../models/User');
+
 // GET todas las asignaciones de tarea
 router.get('/', async (req, res) => {
   try {
@@ -30,43 +36,63 @@ router.get('/:id', async (req, res) => {
 // POST crear asignación de tarea
 router.post('/', async (req, res) => {
   try {
-    const taskAssignmentData = req.body;
+    console.log('📝 Creando asignación de tarea:', req.body);
     
-    console.log('📥 Datos recibidos para crear asignación de tarea:', taskAssignmentData);
+    // Crear asignación
+    const taskAssignment = new TaskAssignment(req.body);
+    await taskAssignment.save();
     
-    if (!taskAssignmentData.taskAssignmentId) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'El campo taskAssignmentId es requerido' 
-      });
-    }
-
-    const existingTaskAssignment = await TaskAssignment.findOne({ 
-      taskAssignmentId: taskAssignmentData.taskAssignmentId 
+    console.log('✅ Asignación de tarea creada:', taskAssignment.taskAssignmentId);
+    
+    // ✅ NUEVO: Obtener datos relacionados para tarifario
+    const [user, company, support, module] = await Promise.all([
+      User.findOne({ userId: taskAssignment.consultorId }),
+      Company.findOne({ companyId: taskAssignment.companyId }),
+      Support.findOne({ supportId: taskAssignment.linkedSupportId }),
+      Module.findOne({ moduleId: taskAssignment.moduleId })
+    ]);
+    
+    // ✅ NUEVO: Crear entrada en tarifario automáticamente
+    const margen = (taskAssignment.tarifaCliente || 0) - (taskAssignment.tarifaConsultor || 0);
+    const margenPorcentaje = taskAssignment.tarifaCliente > 0 
+      ? ((margen / taskAssignment.tarifaCliente) * 100).toFixed(2)
+      : 0;
+    
+    const tarifario = new Tarifario({
+      tarifarioId: `tarifa_${taskAssignment.taskAssignmentId}`,
+      assignmentId: taskAssignment.taskAssignmentId,
+      consultorId: taskAssignment.consultorId,
+      consultorNombre: user ? user.name : 'Desconocido',
+      companyId: taskAssignment.companyId,
+      companyName: company ? company.name : 'Desconocido',
+      supportId: taskAssignment.linkedSupportId,
+      supportName: support ? support.name : 'Soporte vinculado',
+      projectId: null,
+      projectName: null,
+      moduleId: taskAssignment.moduleId,
+      moduleName: module ? module.name : 'Desconocido',
+      costoConsultor: taskAssignment.tarifaConsultor || 0,
+      costoCliente: taskAssignment.tarifaCliente || 0,
+      margen: margen,
+      margenPorcentaje: parseFloat(margenPorcentaje),
+      tipo: 'task',
+      descripcionTarea: taskAssignment.descripcion || null,
+      isActive: true
     });
     
-    if (existingTaskAssignment) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Ya existe una asignación de tarea con ese ID' 
-      });
-    }
-
-    const taskAssignment = new TaskAssignment(taskAssignmentData);
-    await taskAssignment.save();
-
-    console.log('✅ Asignación de tarea creada:', taskAssignment.taskAssignmentId);
-
+    await tarifario.save();
+    console.log('✅ Tarifario de tarea creado:', tarifario.tarifarioId);
+    
     res.status(201).json({ 
       success: true, 
-      message: 'Asignación de tarea creada exitosamente',
+      message: 'Asignación de tarea y tarifario creados exitosamente',
       data: taskAssignment 
     });
   } catch (error) {
     console.error('❌ Error creando asignación de tarea:', error);
     res.status(400).json({ 
       success: false, 
-      message: error.message || 'Error al crear asignación de tarea' 
+      message: error.message 
     });
   }
 });

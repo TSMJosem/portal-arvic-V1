@@ -103,7 +103,7 @@ router.put('/:id', async (req, res) => {
     const updates = req.body;
     updates.updatedAt = new Date();
     
-    console.log('📝 Actualizando asignación de tarea:', req.params.id, updates);
+    console.log('Actualizando asignación de tarea:', req.params.id, updates);
     
     const taskAssignment = await TaskAssignment.findOneAndUpdate(
       { taskAssignmentId: req.params.id },
@@ -115,7 +115,7 @@ router.put('/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Asignación de tarea no encontrada' });
     }
 
-    console.log('✅ Asignación de tarea actualizada');
+    console.log('Asignación de tarea actualizada');
 
     res.json({ 
       success: true, 
@@ -123,7 +123,7 @@ router.put('/:id', async (req, res) => {
       data: taskAssignment 
     });
   } catch (error) {
-    console.error('❌ Error actualizando asignación de tarea:', error);
+    console.error('Error actualizando asignación de tarea:', error);
     res.status(400).json({ 
       success: false, 
       message: error.message || 'Error al actualizar asignación de tarea' 
@@ -146,7 +146,7 @@ router.delete('/:id', async (req, res) => {
 
     const tarifarioDeleted = await Tarifario.deleteOne({ assignmentId: req.params.id });
 
-    console.log('Resultado de eliminar la entrada del tarifario', tarifarioDeleted);
+    console.log('Resultado de eliminar la entrada del tarifario en asignación de tarea', tarifarioDeleted);
     console.log('Asignación de tarea eliminada');
     
     res.json({ 

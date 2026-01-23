@@ -141,6 +141,9 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ success: false, message: 'Asignación no encontrada' });
     }
     
+    const tarifarioDeleted = await Tarifario.deleteOne({ assignmentId: req.params.id });
+
+    console.log('Resultado de eliminar la entrada del tarifario en asignación de soporte', tarifarioDeleted)
     console.log('Asignación eliminada');
     
     res.json({ 

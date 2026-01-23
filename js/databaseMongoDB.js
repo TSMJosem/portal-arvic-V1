@@ -18,9 +18,9 @@ class PortalDatabase {
         this.token = localStorage.getItem('arvic_token') || null;
         this.prefix = 'arvic_';
         
-        console.log('✅ Sistema de Base de Datos Portal ARVIC inicializado con MongoDB');
-        console.log(`📡 Entorno: ${isDevelopment ? 'DESARROLLO' : 'PRODUCCIÓN'}`);
-        console.log('📡 API URL:', this.API_URL);
+        console.log('Sistema de Base de Datos Portal ARVIC inicializado con MongoDB');
+        console.log(`Entorno: ${isDevelopment ? 'DESARROLLO' : 'PRODUCCIÓN'}`);
+        console.log('API URL:', this.API_URL);
     }
 
     // === CONFIGURACIÓN DE HEADERS ===
@@ -944,15 +944,23 @@ class PortalDatabase {
         }
     }
 
-    async getTaskAssignment(taskId) {
+    async getTaskAssignment(taskAssignmentId) {
         try {
-            const response = await fetch(`${this.API_URL}/assignments/tasks/${taskId}`, {
-                headers: this.getHeaders()
-            });
+            const url = `${this.API_URL}/taskAssignments/${taskAssignmentId}`;
+
+            console.log('GET', url);
+
+            const response = await fetch(url, { headers: this.getHeaders() });
+
+            if (!response.ok) {
+                console.error('HTTP Error:', response.status);
+                return null;
+            }
             const data = await response.json();
+            
             return data.success ? data.data : null;
         } catch (error) {
-            console.error('❌ Error obteniendo task assignment:', error);
+            console.error('Error obteniendo task assignment:', error);
             return null;
         }
     }
@@ -996,7 +1004,7 @@ class PortalDatabase {
 
     async createTaskAssignment(assignmentData) {
         try {
-            console.log('📤 Enviando datos de asignación de tarea:', assignmentData);
+            console.log('Enviando datos de asignación de tarea:', assignmentData);
             
             const response = await fetch(`${this.API_URL}/taskAssignments`, {
                 method: 'POST',
@@ -1005,23 +1013,23 @@ class PortalDatabase {
             });
             const result = await response.json();
 
-            console.log('📥 Respuesta del servidor:', result);
+            console.log('Respuesta del servidor:', result);
             
             if (result.success) {
-                console.log('✅ Asignación de tarea creada:', result.data.taskAssignmentId);
+                console.log('Asignación de tarea creada:', result.data.taskAssignmentId);
                 return { success: true, taskAssignment: result.data };
             }
             
             return { success: false, message: result.message };
         } catch (error) {
-            console.error('❌ Error creando asignación de tarea:', error);
+            console.error('Error creando asignación de tarea:', error);
             return { success: false, message: 'Error de conexión' };
         }
     }
 
-    async updateTaskAssignment(taskId, updates) {
+    async updateTaskAssignment(taskAssignmentId, updates) {
         try {
-            const response = await fetch(`${this.API_URL}/assignments/tasks/${taskId}`, {
+            const response = await fetch(`${this.API_URL}/taskAssignments/${taskAssignmentId}`, {
                 method: 'PUT',
                 headers: this.getHeaders(),
                 body: JSON.stringify(updates)
@@ -1029,32 +1037,32 @@ class PortalDatabase {
             const result = await response.json();
             
             if (result.success) {
-                console.log('✅ Task assignment actualizada:', taskId);
+                console.log('Task assignment actualizada:', updates);
                 return { success: true, data: result.data };
             }
             
             return { success: false, message: result.message };
         } catch (error) {
-            console.error('❌ Error actualizando task assignment:', error);
+            console.error('Error actualizando task assignment:', error);
             return { success: false, message: 'Error de conexión' };
         }
     }
 
-    async deleteTaskAssignment(taskId) {
+    async deleteTaskAssignment(taskAssignmentId) {
         try {
-            const response = await fetch(`${this.API_URL}/assignments/tasks/${taskId}`, {
+            const response = await fetch(`${this.API_URL}/taskAssignments/${taskAssignmentId}`, {
                 method: 'DELETE',
                 headers: this.getHeaders()
             });
             const result = await response.json();
             
             if (result.success) {
-                console.log('✅ Task assignment eliminada:', taskId);
+                console.log('Task assignment eliminada:', taskAssignmentId);
             }
             
             return result;
         } catch (error) {
-            console.error('❌ Error eliminando task assignment:', error);
+            console.error('Error eliminando task assignment:', error);
             return { success: false, message: 'Error de conexión' };
         }
     }

@@ -134,7 +134,7 @@ router.put('/:id', async (req, res) => {
 // DELETE eliminar asignación de tarea
 router.delete('/:id', async (req, res) => {
   try {
-    console.log('🗑️ Eliminando asignación de tarea:', req.params.id);
+    console.log('Eliminando asignación de tarea:', req.params.id);
     
     const taskAssignment = await TaskAssignment.findOneAndDelete({ 
       taskAssignmentId: req.params.id 
@@ -143,18 +143,21 @@ router.delete('/:id', async (req, res) => {
     if (!taskAssignment) {
       return res.status(404).json({ success: false, message: 'Asignación de tarea no encontrada' });
     }
-    
-    console.log('✅ Asignación de tarea eliminada');
+
+    const tarifarioDeleted = await Tarifario.deleteOne({ assignmentId: req.params.id });
+
+    console.log('Resultado de eliminar la entrada del tarifario', tarifarioDeleted);
+    console.log('Asignación de tarea eliminada');
     
     res.json({ 
       success: true, 
       message: 'Asignación de tarea eliminada exitosamente' 
     });
   } catch (error) {
-    console.error('❌ Error eliminando asignación de tarea:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: error.message || 'Error al eliminar asignación de tarea' 
+    console.error('Error eliminando asignación de tarea:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Error al eliminar asignación de tarea'
     });
   }
 });

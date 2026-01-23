@@ -7506,7 +7506,6 @@ async function updateTarifarioTable() {
 function createTarifaRow(tarifa) {
     const row = document.createElement('tr');
     
-    // ✅ Determinar icono según assignmentType
     let tipoIcon = '<i class="fa-solid fa-question"></i>';
     let tipoLabel = 'Desconocido';
     
@@ -7524,7 +7523,6 @@ function createTarifaRow(tarifa) {
     const margen = parseFloat(tarifa.margen || 0);
     const margenPorcentaje = parseFloat(tarifa.margenPorcentaje || 0);
     
-    // ✅ ORDEN CORRECTO según HTML
     row.innerHTML = `
         <td>${tipoIcon} ${tipoLabel}</td>
         <td><strong>${tarifa.assignmentId || 'N/A'}</strong></td>
@@ -7532,11 +7530,21 @@ function createTarifaRow(tarifa) {
         <td>${tarifa.consultorNombre || 'Sin consultor'}</td>
         <td>${tarifa.empresaNombre || tarifa.clienteNombre || 'Sin cliente'}</td>
         <td>${tarifa.trabajoNombre || 'Sin trabajo'}</td>
-        <td class="editable-cell" data-field="costoConsultor">
+        <td class="editable-cell" 
+            data-tarifa-id="${tarifa.assignmentId}" 
+            data-field="costoConsultor"
+            onclick="editTarifaInline('${tarifa.assignmentId}', 'costoConsultor')"
+            style="cursor: pointer;">
             <span class="tarifa-value">$${parseFloat(tarifa.costoConsultor || 0).toFixed(2)}</span>
+            <i class="fa-solid fa-edit" style="opacity: 0.5; margin-left: 5px; font-size: 12px;"></i>
         </td>
-        <td class="editable-cell" data-field="costoCliente">
+        <td class="editable-cell" 
+            data-tarifa-id="${tarifa.assignmentId}" 
+            data-field="costoCliente"
+            onclick="editTarifaInline('${tarifa.assignmentId}', 'costoCliente')"
+            style="cursor: pointer;">
             <span class="tarifa-value">$${parseFloat(tarifa.costoCliente || 0).toFixed(2)}</span>
+            <i class="fa-solid fa-edit" style="opacity: 0.5; margin-left: 5px; font-size: 12px;"></i>
         </td>
         <td>
             <strong>$${margen.toFixed(2)}</strong>
@@ -7546,9 +7554,6 @@ function createTarifaRow(tarifa) {
         </td>
         <td>
             <div class="action-buttons">
-                <button class="action-btn btn-edit" onclick="editTarifaInline('${tarifa.assignmentId}')" title="Editar tarifas">
-                    <i class="fa-solid fa-edit"></i>
-                </button>
                 <button class="action-btn btn-view" onclick="viewTarifaDetails('${tarifa.assignmentId}')" title="Ver detalles">
                     <i class="fa-solid fa-eye"></i>
                 </button>
@@ -7736,45 +7741,48 @@ function filterTarifarioByType(type) {
 /**
  * Ver detalles de una tarifa
  */
- async function viewTarifaDetails(tarifaId) {
+async function viewTarifaDetails(assignmentId) {
     const tarifario = await window.PortalDB.getTarifario();
-    const tarifa = tarifario[tarifaId];
+    const tarifa = Object.values(tarifario).find(t => t.assignmentId === assignmentId);
     
     if (!tarifa) {
         window.NotificationUtils.error('Tarifa no encontrada');
+        console.error('No se encontró tarifa para assignmentId:', assignmentId);
         return;
     }
     
+    console.log('Mostrando detalles de tarifa:', tarifa);
+    
     const detalles = `
 ═══════════════════════════════════════
-💰 DETALLES DE TARIFA
+Detalles de Tarifa
 ═══════════════════════════════════════
 
-📋 ID: ${tarifa.id}
-📌 Tipo: ${tarifa.tipo.toUpperCase()}
-🔗 ID Asignación: ${tarifa.idAsignacion}
+Id: ${tarifa.tarifarioId}
+Tipo: ${tarifa.tipo.toUpperCase()}
+Id de Asignación: ${tarifa.assignmentId}
 
-👤 CONSULTOR
+Consultor
    Nombre: ${tarifa.consultorNombre}
-   ID: ${tarifa.consultorId}
+   Id: ${tarifa.consultorId}
 
-🏢 CLIENTE
-   Empresa: ${tarifa.clienteNombre}
-   ID: ${tarifa.clienteId}
+Cliente
+   Empresa: ${tarifa.clienteNombre || tarifa.empresaNombre}
+   Id: ${tarifa.clienteId}
 
-🧩 MÓDULO
-   Código: ${tarifa.modulo}
+Módulo
+   Código: ${tarifa.moduleId}
    Nombre: ${tarifa.moduloNombre}
 
-📞 TRABAJO
+Trabajo
    ${tarifa.trabajoNombre}
 
-💵 TARIFAS
+Tarifas
    Consultor: ${formatCurrency(tarifa.costoConsultor)}/hora
    Cliente:   ${formatCurrency(tarifa.costoCliente)}/hora
-   Margen:    ${formatCurrency(tarifa.margen)} (${((tarifa.margen/tarifa.costoConsultor)*100).toFixed(1)}%)
+   Margen:    ${formatCurrency(tarifa.margen)} (${tarifa.margenPorcentaje}%)
 
-📅 Fecha creación: ${window.DateUtils ? window.DateUtils.formatDate(tarifa.fechaCreacion) : tarifa.fechaCreacion}
+Fecha: ${window.DateUtils ? window.DateUtils.formatDate(tarifa.fechaCreacion) : tarifa.fechaCreacion}
     `;
     
     alert(detalles);
@@ -7783,18 +7791,20 @@ function filterTarifarioByType(type) {
 /**
  * Editar tarifa inline
  */
- async function editTarifaInline(tarifaId, campo) {
-    const element = document.querySelector(`[data-tarifa-id="${tarifaId}"][data-field="${campo}"]`);
+async function editTarifaInline(assignmentId, campo) {
+    const element = document.querySelector(`[data-tarifa-id="${assignmentId}"][data-field="${campo}"]`);
     if (!element) return;
     
     const tarifario = await window.PortalDB.getTarifario();
-    const tarifa = tarifario[tarifaId];
-    if (!tarifa) return;
+    const tarifa = Object.values(tarifario).find(t => t.assignmentId === assignmentId);
     
-    // Obtener valor actual
+    if (!tarifa) {
+        console.error('❌ Tarifa no encontrada:', assignmentId);
+        return;
+    }
+    
     const valorActual = tarifa[campo];
     
-    // Crear input
     const input = document.createElement('input');
     input.type = 'number';
     input.step = '0.01';
@@ -7803,47 +7813,63 @@ function filterTarifarioByType(type) {
     input.className = 'inline-edit-input';
     input.style.width = '100px';
     
-    // Guardar referencia al elemento original
     const originalContent = element.innerHTML;
     
-    // Reemplazar contenido
     element.innerHTML = '';
     element.appendChild(input);
     element.classList.add('editing');
     input.focus();
     input.select();
     
-    // Función para guardar
-    const guardar = () => {
+    // ✅ Bandera para evitar llamadas múltiples
+    let guardando = false;
+    
+    const guardar = async () => {  // ✅ Hacer async
+        // ✅ Prevenir ejecución múltiple
+        if (guardando) return;
+        guardando = true;
+        
         const nuevoValor = parseFloat(input.value);
         
         if (isNaN(nuevoValor) || nuevoValor < 0) {
             window.NotificationUtils.error('Valor inválido');
             element.innerHTML = originalContent;
             element.classList.remove('editing');
+            guardando = false;
             return;
         }
         
-        // Confirmar cambio
+        // ✅ Remover listeners ANTES del confirm
+        input.removeEventListener('blur', guardar);
+        input.removeEventListener('keydown', keyHandler);
+        
         const nombreCampo = campo === 'costoConsultor' ? 'Costo Consultor' : 'Costo Cliente';
         
         if (confirm(`¿Confirmar cambio de ${nombreCampo}?\n\nValor actual: ${formatCurrency(valorActual)}\nNuevo valor: ${formatCurrency(nuevoValor)}`)) {
-            saveTarifaEdit(tarifaId, campo, nuevoValor);
+            // ✅ Esperar a que termine de guardar
+            await saveTarifaEdit(tarifa.tarifarioId, campo, nuevoValor);
+            
+            // ✅ Recargar tabla para reflejar cambios
+            await loadTarifario();
         } else {
             element.innerHTML = originalContent;
             element.classList.remove('editing');
         }
+        
+        guardando = false;
     };
     
-    // Función para cancelar
     const cancelar = () => {
+        if (guardando) return;  // ✅ Prevenir cancelación mientras guarda
+        
+        input.removeEventListener('blur', guardar);
+        input.removeEventListener('keydown', keyHandler);
         element.innerHTML = originalContent;
         element.classList.remove('editing');
     };
     
-    // Eventos
-    input.addEventListener('blur', guardar);
-    input.addEventListener('keydown', (e) => {
+    // ✅ Definir handler para poder removerlo después
+    const keyHandler = (e) => {
         if (e.key === 'Enter') {
             e.preventDefault();
             guardar();
@@ -7851,7 +7877,10 @@ function filterTarifarioByType(type) {
             e.preventDefault();
             cancelar();
         }
-    });
+    };
+    
+    input.addEventListener('blur', guardar);
+    input.addEventListener('keydown', keyHandler);
 }
 
 // ===================================================================
@@ -8145,17 +8174,34 @@ function verificarTarifasAlCargar() {
 /**
  * Guardar edición de tarifa
  */
-function saveTarifaEdit(tarifaId, campo, nuevoValor) {
-    const updates = {};
-    updates[campo] = nuevoValor;
-    
-    const result = window.PortalDB.updateTarifaEntry(tarifaId, updates);
-    
-    if (result.success) {
-        window.NotificationUtils.success('Tarifa actualizada correctamente');
-        loadTarifario();
-    } else {
-        window.NotificationUtils.error('Error al actualizar tarifa: ' + result.message);
+async function saveTarifaEdit(tarifarioId, campo, nuevoValor) {
+    try {
+        const updates = {
+            [campo]: nuevoValor
+        };
+        
+        // Recalcular margen si cambió alguna tarifa
+        const tarifario = await window.PortalDB.getTarifario();
+        const tarifa = Object.values(tarifario).find(t => t.tarifarioId === tarifarioId);
+        
+        if (campo === 'costoConsultor' || campo === 'costoCliente') {
+            const consultor = campo === 'costoConsultor' ? nuevoValor : tarifa.costoConsultor;
+            const cliente = campo === 'costoCliente' ? nuevoValor : tarifa.costoCliente;
+            
+            updates.margen = cliente - consultor;
+            updates.margenPorcentaje = cliente > 0 ? ((updates.margen / cliente) * 100).toFixed(2) : 0;
+        }
+        
+        const result = await window.PortalDB.updateTarifaEntry(tarifarioId, updates);
+        
+        if (result.success) {
+            window.NotificationUtils.success('✅ Tarifa actualizada correctamente');
+        } else {
+            window.NotificationUtils.error('❌ Error: ' + result.message);
+        }
+    } catch (error) {
+        console.error('❌ Error guardando tarifa:', error);
+        window.NotificationUtils.error('❌ Error al guardar');
     }
 }
 
@@ -8184,7 +8230,7 @@ async function exportTarifarioToExcel() {
         const datosUnion = tarifas.map(t => ({
             'Tipo': t.tipo.toUpperCase(),
             'ID Asignación': t.idAsignacion,
-            'Módulo': t.modulo,
+            'Módulo': t.moduleId,
             'Nombre Módulo': t.moduloNombre,
             'Consultor ID': t.consultorId,
             'Consultor': t.consultorNombre,
@@ -8397,19 +8443,19 @@ async function renderTasksTable(tasks) {
             </td>
             <td>
                 <div class="action-buttons">
-                    <button class="btn-icon" onclick="editTask('${task.taskAssignmentId || task.taskAssignmentId}')" title="Editar">
+                    <button class="btn-icon" onclick="editTask('${task.taskAssignmentId || 'N/A'}')" title="Editar">
                         <i class="fa-solid fa-edit"></i>
                     </button>
                     ${task.isActive ? `
-                        <button class="btn-icon btn-danger" onclick="deactivateTask('${task.taskAssignmentId || task.taskAssignmentId}')" title="Desactivar">
+                        <button class="btn-icon btn-danger" onclick="deactivateTask('${task.taskAssignmentId || 'N/A'}')" title="Desactivar">
                             <i class="fa-solid fa-ban"></i>
                         </button>
                     ` : `
-                        <button class="btn-icon btn-success" onclick="reactivateTask('${task.taskAssignmentId || task.taskAssignmentId}')" title="Reactivar">
+                        <button class="btn-icon btn-success" onclick="reactivateTask('${task.taskAssignmentId || 'N/A'}')" title="Reactivar">
                             <i class="fa-solid fa-check"></i>
                         </button>
                     `}
-                    <button class="btn-icon" onclick="viewTaskDetails('${task.taskAssignmentId || task.taskAssignmentId}')" title="Ver detalles">
+                    <button class="btn-icon" onclick="viewTaskDetails('${task.taskAssignmentId || 'N/A'}')" title="Ver detalles">
                         <i class="fa-solid fa-eye"></i>
                     </button>
                 </div>
@@ -8613,9 +8659,9 @@ function closeTaskModal() {
 /**
  * Editar tarea
  */
-async function editTask(taskId) {
-    const task = await window.PortalDB.getTaskAssignment(taskId);
-    
+async function editTask(taskAssignmentId) {
+    const task = await window.PortalDB.getTaskAssignment(taskAssignmentId);
+
     if (!task) {
         window.NotificationUtils.error('Tarea no encontrada');
         return;
@@ -8627,7 +8673,7 @@ async function editTask(taskId) {
     // Llenar formulario
     document.getElementById('taskModalTitle').innerHTML = 
         '<i class="fa-solid fa-edit"></i> Editar Tarea';
-    document.getElementById('taskId').value = taskId;
+    document.getElementById('taskId').value = task.taskAssignmentId;
     document.getElementById('taskCompany').value = task.companyId;
     
     // Cargar soportes y seleccionar
@@ -8712,37 +8758,37 @@ function viewTaskDetails(taskId) {
     
     const details = `
 ═══════════════════════════════════════
-📋 DETALLES DE TAREA
+Detalles de Tarea
 ═══════════════════════════════════════
 
-ID: ${task.taskAssignmentId || task.taskAssignmentId}
-Estado: ${task.isActive ? '✅ Activa' : '❌ Inactiva'}
+Id: ${task.taskAssignmentId || task.taskAssignmentId}
+Estado: ${task.isActive ? 'Activa' : 'Inactiva'}
 
-👤 CONSULTOR
+Consultor
    ${consultor ? consultor.name : 'N/A'}
-   ID: ${task.consultorId}
+   Id: ${task.consultorId}
 
-🏢 CLIENTE
+Cliente
    ${company ? company.name : 'N/A'}
-   ID: ${task.companyId}
+   Id: ${task.companyId}
 
-🎧 SOPORTE PADRE
+Soporte Padre
    ${support ? support.name : 'N/A'}
-   ID: ${task.linkedSupportId}
+   Id: ${task.linkedSupportId}
 
-🧩 MÓDULO
+Módulo
    ${module ? module.name : 'N/A'}
-   ID: ${task.moduleId}
+   Id: ${task.moduleId}
 
-📝 DESCRIPCIÓN
+Descripción
    ${task.descripcion || 'Sin descripción'}
 
-💵 TARIFAS
+Tarifas
    Consultor: ${formatCurrency(task.tarifaConsultor)}/hora
    Cliente:   ${formatCurrency(task.tarifaCliente)}/hora
    Margen:    ${formatCurrency(margen)} (${porcentaje.toFixed(1)}%)
 
-📅 FECHAS
+Fechas
    Creada:      ${window.DateUtils ? window.DateUtils.formatDate(task.createdAt) : task.createdAt}
    Actualizada: ${window.DateUtils ? window.DateUtils.formatDate(task.updatedAt) : task.updatedAt}
 

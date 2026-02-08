@@ -1365,7 +1365,7 @@ async getTarifarios() {
                     updatedAt: tarifario.updatedAt
                 };
                 
-                tarifarios[tarifario.tarifarioId] = tarifarioMapeado;
+                tarifarios[tarifario.assignmentId] = tarifarioMapeado;
             });
             
             console.log('✅ Tarifarios mapeados:', Object.keys(tarifarios).length, 'entradas');

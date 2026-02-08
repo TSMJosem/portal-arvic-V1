@@ -1477,7 +1477,7 @@ async function approveReport(reportId) {
         });
         
         if (result.success) {
-            console.log('✅ Reporte aprobado exitosamente');
+            console.log('Reporte aprobado exitosamente');
             
             // Mostrar notificación
             if (typeof showNotification === 'function') {
@@ -1496,25 +1496,25 @@ async function approveReport(reportId) {
             }
             
         } else {
-            console.error('❌ Error aprobando reporte:', result.message);
+            console.error('Error aprobando reporte:', result.message);
             alert('Error al aprobar el reporte: ' + result.message);
         }
         
     } catch (error) {
-        console.error('❌ Error en approveReport:', error);
+        console.error('Error en approveReport:', error);
         alert('Error al aprobar el reporte');
     }
 }
 
 async function rejectReport(reportId) {
-    console.log(`❌ Rechazando reporte: ${reportId}`);
+    console.log(`Rechazando reporte: ${reportId}`);
     
     try {
         // Pedir razón del rechazo
         const reason = prompt('Por favor, indique la razón del rechazo:');
         
         if (!reason) {
-            console.log('❌ Rechazo cancelado - no se proporcionó razón');
+            console.log('Rechazo cancelado - no se proporcionó razón');
             return;
         }
         
@@ -1523,11 +1523,11 @@ async function rejectReport(reportId) {
             status: 'Rechazado',
             rejectedAt: new Date().toISOString(),
             rejectedBy: window.AuthSys?.getCurrentUser()?.userId || 'admin',
-            rejectionReason: reason
+            feedback: reason
         });
         
         if (result.success) {
-            console.log('✅ Reporte rechazado exitosamente');
+            console.log('Reporte rechazado exitosamente');
             
             // Mostrar notificación
             if (typeof showNotification === 'function') {
@@ -1546,12 +1546,12 @@ async function rejectReport(reportId) {
             }
             
         } else {
-            console.error('❌ Error rechazando reporte:', result.message);
+            console.error('Error rechazando reporte:', result.message);
             alert('Error al rechazar el reporte: ' + result.message);
         }
         
     } catch (error) {
-        console.error('❌ Error en rejectReport:', error);
+        console.error('Error en rejectReport:', error);
         alert('Error al rechazar el reporte');
     }
 }
@@ -4821,9 +4821,9 @@ console.log('✅ Reportes aprobados DESPUÉS de filtro tiempo:', approvedReports
     
     switch (reportType) {
         case 'pago-consultor-general':
-            console.log('💰 Procesando pago-consultor-general...');
+            console.log('Procesando pago-consultor-general...');
             const resultSoporte = getSoporteData(approvedReports, 'all', 'all');
-            console.log('📊 Resultado getSoporteData:', resultSoporte.length);
+            console.log('Resultado getSoporteData:', resultSoporte.length);
             return resultSoporte;
             
         case 'pago-consultor-especifico':
@@ -4945,7 +4945,7 @@ function applyTimeFilter(reports) {
 }
 
 /**
- * Obtener datos de soporte
+ * Obtener datos de reportes de soporte
  */
 function getSoporteData(reports, consultantId, supportId) {
     const soporteData = [];
@@ -5010,7 +5010,7 @@ function getSoporteData(reports, consultantId, supportId) {
         const linea = generarLineaReporteMejorada(reportWithType, 'pago-consultor');
         
         if (!linea) {
-            console.warn('⚠️ No se pudo generar línea para reporte:', report.id);
+            console.warn('No se pudo generar línea para reporte:', report.id);
             return;
         }
         
@@ -7425,12 +7425,12 @@ let currentTarifarioFilter = 'all';
  * Cargar datos del tarifario
  */
 async function loadTarifario() {
-    console.log('💰 Cargando tarifario...');
+    console.log('Cargando tarifario...');
 
     await loadCurrentData();
     
     if (!currentData || !currentData.users) {
-        console.warn('⚠️ currentData no disponible');
+        console.warn('currentData no disponible');
         return;
     }
     
@@ -7448,7 +7448,7 @@ async function loadTarifario() {
     const sidebarBadge = document.getElementById('sidebarTarifarioCount');
     if (sidebarBadge) {
         sidebarBadge.textContent = tarifarioArray.length;
-        console.log('✅ Contador de tarifario actualizado:', tarifarioArray.length);
+        console.log('Contador de tarifario actualizado:', tarifarioArray.length);
     }
 }
 
@@ -8940,13 +8940,13 @@ function generarBadgeOrigen(origen) {
 /**
  * Generar línea de reporte con nueva estructura
  */
- async function generarLineaReporteMejorada(report, tipoReporte) {
+function generarLineaReporteMejorada(report, tipoReporte) {
     // 1. Obtener tarifa del tarifario (fuente única de verdad)
-    const tarifaId = `tarifa_${report.assignmentId}`;
-    const tarifa = await window.PortalDB.getTarifario()[tarifaId];
-    
+    const tarifario = currentData.tarifario;
+    const tarifa = tarifario[report.assignmentId];
+
     if (!tarifa) {
-        console.warn('⚠️ No se encontró tarifa para:', report.assignmentId);
+        console.warn('No se encontró tarifa para:', report.assignmentId);
         return null;
     }
     
@@ -9000,8 +9000,8 @@ async function exportData() {
 }
 
 async function loadCurrentData() {
-    console.log('📊 Cargando datos actuales para reportes...');
-    
+    console.log('Cargando datos actuales para reportes...');
+
     try {
         // ✅ USAR AWAIT para esperar que las promesas se resuelvan
         currentData = {
@@ -9013,10 +9013,11 @@ async function loadCurrentData() {
             assignments: await window.PortalDB.getAssignments() || {},
             projectAssignments: await window.PortalDB.getProjectAssignments() || {},
             taskAssignments: await window.PortalDB.getTaskAssignments() || {},
-            reports: await window.PortalDB.getReports() || {}
+            reports: await window.PortalDB.getReports() || {},
+            tarifario: await window.PortalDB.getTarifario() || {}
         };
         
-        console.log('✅ Datos cargados correctamente:', {
+        console.log('Datos cargados correctamente:', {
             users: Object.keys(currentData.users).length,
             companies: Object.keys(currentData.companies).length,
             supports: Object.keys(currentData.supports).length,
@@ -9031,7 +9032,7 @@ async function loadCurrentData() {
         return currentData;
         
     } catch (error) {
-        console.error('❌ Error cargando datos:', error);
+        console.error('Error cargando datos:', error);
         // Inicializar con objetos vacíos para evitar errores
         currentData = {
             users: {},
@@ -9042,7 +9043,8 @@ async function loadCurrentData() {
             assignments: {},
             projectAssignments: {},
             taskAssignments: {},
-            reports: {}
+            reports: {},
+            tarifario: {}
         };
         return currentData;
     }

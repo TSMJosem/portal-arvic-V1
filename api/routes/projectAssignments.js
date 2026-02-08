@@ -133,7 +133,7 @@ router.put('/:id', async (req, res) => {
 // DELETE eliminar asignación de proyecto
 router.delete('/:id', async (req, res) => {
   try {
-    console.log('🗑️ Eliminando asignación de proyecto:', req.params.id);
+    console.log('Eliminando asignación de proyecto:', req.params.id);
     
     const projectAssignment = await ProjectAssignment.findOneAndDelete({ 
       projectAssignmentId: req.params.id 
@@ -142,15 +142,18 @@ router.delete('/:id', async (req, res) => {
     if (!projectAssignment) {
       return res.status(404).json({ success: false, message: 'Asignación de proyecto no encontrada' });
     }
-    
-    console.log('✅ Asignación de proyecto eliminada');
-    
+
+    const tarifarioDeleted = await Tarifario.deleteOne({ assignmentId: req.params.id });
+
+    console.log('Resultado de eliminar la entrada del tarifario en asignación de proyecto', tarifarioDeleted);
+    console.log('Asignación de proyecto eliminada');
+
     res.json({ 
       success: true, 
       message: 'Asignación de proyecto eliminada exitosamente' 
     });
   } catch (error) {
-    console.error('❌ Error eliminando asignación de proyecto:', error);
+    console.error('Error eliminando asignación de proyecto:', error);
     res.status(500).json({ 
       success: false, 
       message: error.message || 'Error al eliminar asignación de proyecto' 

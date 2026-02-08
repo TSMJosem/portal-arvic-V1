@@ -238,12 +238,12 @@ async function createAssignment() {
     }
 }
 
-function deleteProjectAssignment(assignmentId) {
+async function deleteProjectAssignment(assignmentId) {
     if (!confirm('¿Está seguro de eliminar esta asignación de proyecto?')) {
         return;
     }
     
-    const result = window.PortalDB.deleteProjectAssignment(assignmentId);
+    const result = await window.PortalDB.deleteProjectAssignment(assignmentId);
     
     if (result.success) {
         window.NotificationUtils.success('Asignación de proyecto eliminada');
@@ -253,13 +253,13 @@ function deleteProjectAssignment(assignmentId) {
     }
 }
 
-function deleteAssignment(assignmentId) {
+async function deleteAssignment(assignmentId) {
     if (!confirm('¿Está seguro de eliminar esta asignación?')) {
         return;
     }
 
-    const result = window.PortalDB.deleteAssignment(assignmentId);
-    
+    const result = await window.PortalDB.deleteAssignment(assignmentId);
+
     if (result.success) {
         window.NotificationUtils.success('Asignación eliminada correctamente');
         loadAllData();
@@ -270,7 +270,7 @@ function deleteAssignment(assignmentId) {
 
 // === CARGA Y ACTUALIZACIÓN DE DATOS ===
 async function loadAllData() {
-    console.log('🔄 Cargando todos los datos...');
+    console.log('Cargando todos los datos...');
     
     try {
         currentData.users = await window.PortalDB.getUsers() || {};
@@ -283,7 +283,7 @@ async function loadAllData() {
         currentData.projectAssignments = await window.PortalDB.getProjectAssignments() || {};
         currentData.taskAssignments = await window.PortalDB.getTaskAssignments() || {};
         
-        console.log('✅ Datos cargados:', {
+        console.log('Datos cargados:', {
             users: Object.keys(currentData.users).length,
             companies: Object.keys(currentData.companies).length,
             supports: Object.keys(currentData.supports).length,
@@ -293,16 +293,16 @@ async function loadAllData() {
         updateUI();
         
         if (currentSection === 'crear-asignacion') {
-            console.log('🔄 Actualizando dropdowns después de cargar datos...');
+            console.log('Actualizando dropdowns después de cargar datos...');
             updateDropdowns();
         }
     } catch (error) {
-        console.error('❌ Error cargando datos:', error);
+        console.error('Error cargando datos:', error);
     }
 }
 
 function updateUI() {
-    console.log('🎨 === ACTUALIZANDO UI ===');
+    console.log('=== ACTUALIZANDO UI ===');
     
     try {
         updateSidebarCounts();
@@ -311,19 +311,19 @@ function updateUI() {
         // NO llamar updateDropdowns aquí automáticamente
         // Se llamará específicamente cuando sea necesario
         
-        console.log('✅ UI actualizada correctamente');
+        console.log('UI actualizada correctamente');
     } catch (error) {
-        console.error('❌ Error actualizando UI:', error);
+        console.error('Error actualizando UI:', error);
     }
 }
 
 function updateCurrentSectionData() {
     if (!currentSection) {
-        console.log('⚠️ currentSection no definida');
+        console.log('currentSection no definida');
         return;
     }
-    
-    console.log(`📊 Actualizando datos para sección actual: ${currentSection}`);
+
+    console.log(`Actualizando datos para sección actual: ${currentSection}`);
     loadSectionData(currentSection);
 }
 
@@ -358,7 +358,7 @@ async function updateSidebarCounts() {
     const tarifario = await window.PortalDB.getTarifario();
     const tarifarioArray = Array.isArray(tarifario) ? tarifario : Object.values(tarifario);
     const tarifarioCount = tarifarioArray.length;
-    console.log("💰 Tarifario cargado, conteo:", tarifarioCount);
+    console.log("Tarifario cargado, conteo:", tarifarioCount);
 
     const pendingReports = reports.filter(r => r.status === 'Pendiente');
     const approvedReports = reports.filter(r => r.status === 'Aprobado');
@@ -385,11 +385,11 @@ async function updateSidebarCounts() {
         if (element) {
             element.textContent = count;
         } else {
-            console.warn(`⚠️ Elemento ${elementId} no encontrado`);
+            console.warn(`Elemento ${elementId} no encontrado`);
         }
     });
-    
-    console.log('✅ Contadores de sidebar actualizados correctamente');
+
+    console.log('Contadores de sidebar actualizados correctamente');
 }
 
 async function updateSupportsList() {
@@ -397,7 +397,7 @@ async function updateSupportsList() {
     const container = document.getElementById('supportsList');
 
     if (!currentData.supports) {
-        console.warn('⚠️ currentData.supports es undefined');
+        console.warn('currentData.supports es undefined');
         currentData.supports = {};
     }
     
@@ -1477,7 +1477,7 @@ async function approveReport(reportId) {
         });
         
         if (result.success) {
-            console.log('✅ Reporte aprobado exitosamente');
+            console.log('Reporte aprobado exitosamente');
             
             // Mostrar notificación
             if (typeof showNotification === 'function') {
@@ -1496,25 +1496,25 @@ async function approveReport(reportId) {
             }
             
         } else {
-            console.error('❌ Error aprobando reporte:', result.message);
+            console.error('Error aprobando reporte:', result.message);
             alert('Error al aprobar el reporte: ' + result.message);
         }
         
     } catch (error) {
-        console.error('❌ Error en approveReport:', error);
+        console.error('Error en approveReport:', error);
         alert('Error al aprobar el reporte');
     }
 }
 
 async function rejectReport(reportId) {
-    console.log(`❌ Rechazando reporte: ${reportId}`);
+    console.log(`Rechazando reporte: ${reportId}`);
     
     try {
         // Pedir razón del rechazo
         const reason = prompt('Por favor, indique la razón del rechazo:');
         
         if (!reason) {
-            console.log('❌ Rechazo cancelado - no se proporcionó razón');
+            console.log('Rechazo cancelado - no se proporcionó razón');
             return;
         }
         
@@ -1523,11 +1523,11 @@ async function rejectReport(reportId) {
             status: 'Rechazado',
             rejectedAt: new Date().toISOString(),
             rejectedBy: window.AuthSys?.getCurrentUser()?.userId || 'admin',
-            rejectionReason: reason
+            feedback: reason
         });
         
         if (result.success) {
-            console.log('✅ Reporte rechazado exitosamente');
+            console.log('Reporte rechazado exitosamente');
             
             // Mostrar notificación
             if (typeof showNotification === 'function') {
@@ -1546,12 +1546,12 @@ async function rejectReport(reportId) {
             }
             
         } else {
-            console.error('❌ Error rechazando reporte:', result.message);
+            console.error('Error rechazando reporte:', result.message);
             alert('Error al rechazar el reporte: ' + result.message);
         }
         
     } catch (error) {
-        console.error('❌ Error en rejectReport:', error);
+        console.error('Error en rejectReport:', error);
         alert('Error al rechazar el reporte');
     }
 }
@@ -4821,9 +4821,9 @@ console.log('✅ Reportes aprobados DESPUÉS de filtro tiempo:', approvedReports
     
     switch (reportType) {
         case 'pago-consultor-general':
-            console.log('💰 Procesando pago-consultor-general...');
+            console.log('Procesando pago-consultor-general...');
             const resultSoporte = getSoporteData(approvedReports, 'all', 'all');
-            console.log('📊 Resultado getSoporteData:', resultSoporte.length);
+            console.log('Resultado getSoporteData:', resultSoporte.length);
             return resultSoporte;
             
         case 'pago-consultor-especifico':
@@ -4945,7 +4945,7 @@ function applyTimeFilter(reports) {
 }
 
 /**
- * Obtener datos de soporte
+ * Obtener datos de reportes de soporte
  */
 function getSoporteData(reports, consultantId, supportId) {
     const soporteData = [];
@@ -5010,7 +5010,7 @@ function getSoporteData(reports, consultantId, supportId) {
         const linea = generarLineaReporteMejorada(reportWithType, 'pago-consultor');
         
         if (!linea) {
-            console.warn('⚠️ No se pudo generar línea para reporte:', report.id);
+            console.warn('No se pudo generar línea para reporte:', report.id);
             return;
         }
         
@@ -7425,12 +7425,12 @@ let currentTarifarioFilter = 'all';
  * Cargar datos del tarifario
  */
 async function loadTarifario() {
-    console.log('💰 Cargando tarifario...');
+    console.log('Cargando tarifario...');
 
     await loadCurrentData();
     
     if (!currentData || !currentData.users) {
-        console.warn('⚠️ currentData no disponible');
+        console.warn('currentData no disponible');
         return;
     }
     
@@ -7448,7 +7448,7 @@ async function loadTarifario() {
     const sidebarBadge = document.getElementById('sidebarTarifarioCount');
     if (sidebarBadge) {
         sidebarBadge.textContent = tarifarioArray.length;
-        console.log('✅ Contador de tarifario actualizado:', tarifarioArray.length);
+        console.log('Contador de tarifario actualizado:', tarifarioArray.length);
     }
 }
 
@@ -8699,103 +8699,129 @@ async function editTask(taskAssignmentId) {
  * Desactivar tarea
  */
 async function deactivateTask(taskId) {
-    if (!confirm('¿Estás seguro de desactivar esta tarea?')) {
+
+    if (!confirm('¿Estás seguro de desactivar esta tarea? La tarea seguirá en el historial pero no estará visible')) {
         return;
     }
     
-    const result = await window.PortalDB.deleteTaskAssignment(taskId);
-    
-    if (result.success) {
-        window.NotificationUtils.success('Tarea desactivada correctamente');
+    try {
+
+        const result = await window.PortalDB.updateTaskAssignment(taskId, { isActive: false });
         
-        // Recargar datos antes de filtrar
-        await loadAllData();
-        await filterTasks();
-    } else {
-        window.NotificationUtils.error('Error: ' + result.message);
+        if (result.success) {
+            window.NotificationUtils.success('Tarea desactivada correctamente');
+            
+            // Recargar datos antes de filtrar
+            await loadTaskAssignments();
+            await filterTasks();
+            await loadAllData();
+        
+        } else {
+            window.NotificationUtils.error('Error: ' + result.message);
+        }
+
+    } catch (error) {
+        console.error('Error al intentar desactivar la tarea:', error);
+        window.NotificationUtils.error('Error al desactivar tarea');
     }
 }
 
 /**
  * Reactivar tarea
  */
-function reactivateTask(taskId) {
-    const result = window.PortalDB.updateTaskAssignment(taskId, { isActive: true });
-    
-    if (result.success) {
-        window.NotificationUtils.success('Tarea reactivada correctamente');
-        filterTasks();
-    } else {
-        window.NotificationUtils.error('Error: ' + result.message);
+async function reactivateTask(taskId) { 
+
+    try {
+
+        console.log('Reactivando tarea:', taskId);
+        const result = await window.PortalDB.updateTaskAssignment(taskId, { isActive: true });
+
+        if (result.success) {
+            window.NotificationUtils.success('Tarea reactivada correctamente');
+            await filterTasks();
+        } else {
+            window.NotificationUtils.error('Error: ' + result.message);
+        }
+
+    } catch (error) {
+        console.error('Error:', error);
+        window.NotificationUtils.error('Error al reactivar tarea');
     }
 }
 
 /**
  * Ver detalles de tarea
  */
-function viewTaskDetails(taskId) {
-    const task = window.PortalDB.getTaskAssignment(taskId);
-    
-    if (!task) {
-        window.NotificationUtils.error('Tarea no encontrada');
-        return;
+async function viewTaskDetails(taskId) {
+
+    try {
+
+        const task = await window.PortalDB.getTaskAssignment(taskId);
+        
+        if (!task) {
+            window.NotificationUtils.error('Tarea no encontrada');
+            return;
+        }
+        
+        const currentData = {
+            users: await window.PortalDB.getUsers(),
+            companies: await window.PortalDB.getCompanies(),
+            supports: await window.PortalDB.getSupports(),
+            modules: await window.PortalDB.getModules()
+        };
+        
+        const consultor = currentData.users[task.consultorId];
+        const company = currentData.companies[task.companyId];
+        const support = currentData.supports[task.linkedSupportId];
+        const module = currentData.modules[task.moduleId];
+        
+        const margen = task.tarifaCliente - task.tarifaConsultor;
+        const porcentaje = task.tarifaConsultor > 0 ? (margen / task.tarifaConsultor) * 100 : 0;
+        
+        const details = `
+        ═══════════════════════════════════════
+        Detalles de Tarea
+        ═══════════════════════════════════════
+
+        Id: ${task.taskAssignmentId || task.taskAssignmentId}
+        Estado: ${task.isActive ? 'Activa' : 'Inactiva'}
+
+        Consultor
+        ${consultor ? consultor.name : 'N/A'}
+        Id: ${task.consultorId}
+
+        Cliente
+        ${company ? company.name : 'N/A'}
+        Id: ${task.companyId}
+
+        Soporte Padre
+        ${support ? support.name : 'N/A'}
+        Id: ${task.linkedSupportId}
+
+        Módulo
+        ${module ? module.name : 'N/A'}
+        Id: ${task.moduleId}
+
+        Descripción
+        ${task.descripcion || 'Sin descripción'}
+
+        Tarifas
+        Consultor: ${formatCurrency(task.tarifaConsultor)}/hora
+        Cliente:   ${formatCurrency(task.tarifaCliente)}/hora
+        Margen:    ${formatCurrency(margen)} (${porcentaje.toFixed(1)}%)
+
+        Fechas
+        Creada:      ${window.DateUtils ? window.DateUtils.formatDate(task.createdAt) : task.createdAt}
+        Actualizada: ${window.DateUtils ? window.DateUtils.formatDate(task.updatedAt) : task.updatedAt}
+
+        ═══════════════════════════════════════
+        `;
+        
+        alert(details);
+
+    } catch (error) {
+        window.NotificationUtils.error('Error al obtener detalles de la tarea: ' + error.message);
     }
-    
-    const currentData = {
-        users: window.PortalDB.getUsers(),
-        companies: window.PortalDB.getCompanies(),
-        supports: window.PortalDB.getSupports(),
-        modules: window.PortalDB.getModules()
-    };
-    
-    const consultor = currentData.users[task.consultorId];
-    const company = currentData.companies[task.companyId];
-    const support = currentData.supports[task.linkedSupportId];
-    const module = currentData.modules[task.moduleId];
-    
-    const margen = task.tarifaCliente - task.tarifaConsultor;
-    const porcentaje = task.tarifaConsultor > 0 ? (margen / task.tarifaConsultor) * 100 : 0;
-    
-    const details = `
-═══════════════════════════════════════
-Detalles de Tarea
-═══════════════════════════════════════
-
-Id: ${task.taskAssignmentId || task.taskAssignmentId}
-Estado: ${task.isActive ? 'Activa' : 'Inactiva'}
-
-Consultor
-   ${consultor ? consultor.name : 'N/A'}
-   Id: ${task.consultorId}
-
-Cliente
-   ${company ? company.name : 'N/A'}
-   Id: ${task.companyId}
-
-Soporte Padre
-   ${support ? support.name : 'N/A'}
-   Id: ${task.linkedSupportId}
-
-Módulo
-   ${module ? module.name : 'N/A'}
-   Id: ${task.moduleId}
-
-Descripción
-   ${task.descripcion || 'Sin descripción'}
-
-Tarifas
-   Consultor: ${formatCurrency(task.tarifaConsultor)}/hora
-   Cliente:   ${formatCurrency(task.tarifaCliente)}/hora
-   Margen:    ${formatCurrency(margen)} (${porcentaje.toFixed(1)}%)
-
-Fechas
-   Creada:      ${window.DateUtils ? window.DateUtils.formatDate(task.createdAt) : task.createdAt}
-   Actualizada: ${window.DateUtils ? window.DateUtils.formatDate(task.updatedAt) : task.updatedAt}
-
-═══════════════════════════════════════
-    `;
-    
-    alert(details);
 }
 
 // Contador de caracteres para descripción
@@ -8914,13 +8940,13 @@ function generarBadgeOrigen(origen) {
 /**
  * Generar línea de reporte con nueva estructura
  */
- async function generarLineaReporteMejorada(report, tipoReporte) {
+function generarLineaReporteMejorada(report, tipoReporte) {
     // 1. Obtener tarifa del tarifario (fuente única de verdad)
-    const tarifaId = `tarifa_${report.assignmentId}`;
-    const tarifa = await window.PortalDB.getTarifario()[tarifaId];
-    
+    const tarifario = currentData.tarifario;
+    const tarifa = tarifario[report.assignmentId];
+
     if (!tarifa) {
-        console.warn('⚠️ No se encontró tarifa para:', report.assignmentId);
+        console.warn('No se encontró tarifa para:', report.assignmentId);
         return null;
     }
     
@@ -8974,8 +9000,8 @@ async function exportData() {
 }
 
 async function loadCurrentData() {
-    console.log('📊 Cargando datos actuales para reportes...');
-    
+    console.log('Cargando datos actuales para reportes...');
+
     try {
         // ✅ USAR AWAIT para esperar que las promesas se resuelvan
         currentData = {
@@ -8987,10 +9013,11 @@ async function loadCurrentData() {
             assignments: await window.PortalDB.getAssignments() || {},
             projectAssignments: await window.PortalDB.getProjectAssignments() || {},
             taskAssignments: await window.PortalDB.getTaskAssignments() || {},
-            reports: await window.PortalDB.getReports() || {}
+            reports: await window.PortalDB.getReports() || {},
+            tarifario: await window.PortalDB.getTarifario() || {}
         };
         
-        console.log('✅ Datos cargados correctamente:', {
+        console.log('Datos cargados correctamente:', {
             users: Object.keys(currentData.users).length,
             companies: Object.keys(currentData.companies).length,
             supports: Object.keys(currentData.supports).length,
@@ -9005,7 +9032,7 @@ async function loadCurrentData() {
         return currentData;
         
     } catch (error) {
-        console.error('❌ Error cargando datos:', error);
+        console.error('Error cargando datos:', error);
         // Inicializar con objetos vacíos para evitar errores
         currentData = {
             users: {},
@@ -9016,7 +9043,8 @@ async function loadCurrentData() {
             assignments: {},
             projectAssignments: {},
             taskAssignments: {},
-            reports: {}
+            reports: {},
+            tarifario: {}
         };
         return currentData;
     }

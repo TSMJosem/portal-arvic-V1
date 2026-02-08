@@ -897,19 +897,19 @@ class PortalDatabase {
 
     async deleteProjectAssignment(assignmentId) {
         try {
-            const response = await fetch(`${this.API_URL}/assignments/projects/${assignmentId}`, {
+            const response = await fetch(`${this.API_URL}/projectAssignments/${assignmentId}`, {
                 method: 'DELETE',
                 headers: this.getHeaders()
             });
             const result = await response.json();
             
             if (result.success) {
-                console.log('✅ Asignación de proyecto eliminada:', assignmentId);
+                console.log('Asignación de proyecto eliminada:', assignmentId);
             }
             
             return result;
         } catch (error) {
-            console.error('❌ Error eliminando asignación de proyecto:', error);
+            console.error('Error eliminando asignación de proyecto:', error);
             return { success: false, message: 'Error de conexión' };
         }
     }
@@ -921,7 +921,7 @@ class PortalDatabase {
                 a.consultorId === consultorId && a.isActive
             );
         } catch (error) {
-            console.error('❌ Error obteniendo asignaciones de proyecto del usuario:', error);
+            console.error('Error obteniendo asignaciones de proyecto del usuario:', error);
             return [];
         }
     }
@@ -1365,7 +1365,7 @@ async getTarifarios() {
                     updatedAt: tarifario.updatedAt
                 };
                 
-                tarifarios[tarifario.tarifarioId] = tarifarioMapeado;
+                tarifarios[tarifario.assignmentId] = tarifarioMapeado;
             });
             
             console.log('✅ Tarifarios mapeados:', Object.keys(tarifarios).length, 'entradas');

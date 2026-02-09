@@ -4,6 +4,7 @@
  */
 
 // Variables globales
+let isUpdatingRejectedReports = false;
 let currentUser = null;
 let userAssignments = [];
 let currentAssignmentId = null;
@@ -1423,60 +1424,70 @@ async function quickResubmitReport(reportId) {  // ✅ Agregar async
 // Línea ~1148
 
 async function updateRejectedReportsSection() {
+
+    if (isUpdatingRejectedReports) {
+        console.log('Ya se está actualizando la sección de reportes rechazados');
+        return;
+    }
+    isUpdatingRejectedReports = true;
+
     try {
-        console.log('🔄 Iniciando updateRejectedReportsSection...');
+        console.log('Iniciando updateRejectedReportsSection...');
         
         const rejectedReports = await loadRejectedReports();
-        console.log('📋 Reportes rechazados cargados:', rejectedReports);
-        console.log('📊 Cantidad:', rejectedReports.length);
+        console.log('Reportes rechazados cargados:', rejectedReports);
+        console.log('Cantidad:', rejectedReports.length);
         
         const container = document.getElementById('rejectedReportsSection');
-        console.log('📦 Contenedor encontrado:', container);
+        console.log('Contenedor encontrado:', container);
         
         if (!container) {
-            console.log('⚠️ Contenedor de reportes rechazados no encontrado');
+            console.log('Contenedor de reportes rechazados no encontrado');
             return;
         }
         
         if (rejectedReports.length === 0) {
-            console.log('⚠️ No hay reportes rechazados, ocultando sección');
+            console.log('No hay reportes rechazados, ocultando sección');
             container.style.display = 'none';
             return;
         }
-        
-        console.log('✅ Mostrando sección de reportes rechazados');
+
+        console.log('Mostrando sección de reportes rechazados');
         container.style.display = 'block';
         
         const rejectedContainer = document.getElementById('rejectedReportsContainer');
-        console.log('📦 Contenedor de cards:', rejectedContainer);
-        
+        console.log('Contenedor de cards:', rejectedContainer);
+
         if (!rejectedContainer) {
-            console.log('❌ No se encontró rejectedReportsContainer');
+            console.log('No se encontró rejectedReportsContainer');
             return;
         }
         
         rejectedContainer.innerHTML = '';
-        
-        console.log('🔄 Renderizando', rejectedReports.length, 'tarjetas...');
-        
+
+        console.log('Renderizando', rejectedReports.length, 'tarjetas...');
+
         for (const report of rejectedReports) {
-            console.log('🎨 Renderizando tarjeta para:', report.reportId);
+            console.log('Renderizando tarjeta para:', report.reportId);
             const card = await renderRejectedReportCard(report);
-            console.log('✅ Tarjeta creada:', card);
+            console.log('Tarjeta creada:', card);
             rejectedContainer.appendChild(card);
         }
-        
-        console.log('✅ Todas las tarjetas renderizadas');
-        
+
+        console.log('Todas las tarjetas renderizadas');
+
         const badge = document.getElementById('rejectedCount');
         if (badge) {
             badge.textContent = rejectedReports.length;
-            console.log('✅ Badge actualizado:', rejectedReports.length);
+            console.log('Badge actualizado:', rejectedReports.length);
         }
         
     } catch (error) {
-        console.error('❌ Error en updateRejectedReportsSection:', error);
+        console.error('Error en updateRejectedReportsSection:', error);
         console.error('Stack:', error.stack);
+    } finally {
+        isUpdatingRejectedReports = false; 
+        console.log('✅ Lock liberado');
     }
 }
 

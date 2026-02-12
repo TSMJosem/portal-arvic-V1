@@ -1,16 +1,18 @@
+let dataCacheTimestamp = null;
 let currentReportFilter = 'all';
 let currentApprovedReportFilter = 'all';
+const CACHE_DURATION = 5 * 60 * 1000;
 
-// === CONFIGURACIÓN DE REPORTES ARVIC ===
+// Aquí se configuran la sección de reportes de Arvic
 const ARVIC_REPORTS = {
-    'pago-consultor-general': {
+    'pago-consultor-general': { 
         name: 'Pago Consultor Soporte (General)',
         icon: '<i class="fa-solid fa-money-bill"></i>',
         description: 'Información general de todos los soportes con cálculo de pagos para consultores',
         audience: '<i class="fa-solid fa-crown"></i> Administradores y Gerentes',
         filters: ['time', 'support'],
-        structure: ['ID Empresa', 'Consultor', 'Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
-        editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
+        structure: ['ID EMPRESA', 'CONSULTOR', 'SOPORTE', 'ORIGEN', 'MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        editableFields: ['TIEMPO', 'TARIFA'],  
         excelTitle: 'RESUMEN DE PAGO A CONSULTOR'
     },
     'pago-consultor-especifico': {
@@ -19,7 +21,7 @@ const ARVIC_REPORTS = {
         description: 'Datos de soportes de un consultor específico con filtros flexibles',
         audience: '<i class="fa-solid fa-user"></i> Consultores y Supervisores',
         filters: ['consultant', 'support', 'time'],
-        structure: ['ID Empresa', 'Consultor', 'Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        structure: ['ID EMPRESA', 'CONSULTOR', 'SOPORTE', 'ORIGEN', 'MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
         editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'PAGO A CONSULTOR'
     },
@@ -29,7 +31,7 @@ const ARVIC_REPORTS = {
         description: 'Soportes brindados a un cliente específico para transparencia de servicios',
         audience: '<i class="fa-solid fa-building"></i> Clientes y Atención al Cliente',
         filters: ['client', 'support', 'time'],
-        structure: ['Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        structure: ['SOPORTE', 'ORIGEN', 'MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
         editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'Cliente: [Nombre]'
     },
@@ -50,7 +52,7 @@ const ARVIC_REPORTS = {
         description: 'Información general de todos los proyectos con recursos asignados',
         audience: '<i class="fa-solid fa-crown"></i> Administradores y Gerentes',
         filters: ['time', 'project'],
-        structure: ['ID Empresa', 'Consultor', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        structure: ['ID EMPRESA', 'CONSULTOR', 'ORIGEN', 'MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
         editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'Proyecto: [Nombre]'
     },
@@ -60,7 +62,7 @@ const ARVIC_REPORTS = {
         description: 'Proyectos de un cliente específico con vista simplificada para presentación externa',
         audience: '<i class="fa-solid fa-building"></i> Clientes',
         filters: ['client', 'project', 'time'],
-        structure: ['Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        structure: ['ORIGEN', 'MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
         editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'Proyecto: [Nombre]'
     },
@@ -70,7 +72,7 @@ const ARVIC_REPORTS = {
         description: 'Proyectos asignados a un consultor específico para seguimiento personal',
         audience: '<i class="fa-solid fa-user"></i> Consultores',
         filters: ['consultant', 'project', 'time'],
-        structure: ['ID Empresa', 'Consultor', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
+        structure: ['ID EMPRESA', 'CONSULTOR', 'ORIGEN', 'MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL'],  // ✅ MODIFICADO
         editableFields: ['TIEMPO', 'TARIFA'],  // ✅ MODIFICADO
         excelTitle: 'Proyecto: [Nombre]'
     }
@@ -219,7 +221,8 @@ async function createAssignment() {
     
     if (result.success) {
         window.NotificationUtils.success('Asignación creada exitosamente');
-        await loadAllData();
+        await loadCurrentData(true);
+        updateUI();
 
         // Limpiar formulario
         document.getElementById('assignUser').value = '';
@@ -2258,11 +2261,11 @@ let currentSection = 'usuarios';
 
 // Inicialización
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 === INICIANDO PANEL DE ADMINISTRADOR ===');
-    
+    console.log('Iniciando Panel del Administrador');
+
     // Verificar autenticación de administrador
     if (!window.AuthSys || !window.AuthSys.requireAdmin()) {
-        console.error('❌ Fallo de autenticación');
+        console.error('Fallo de autenticación');
         return;
     }
 
@@ -2274,30 +2277,30 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Cargar datos con delay para asegurar que el DOM esté listo
         setTimeout(() => {
-            console.log('📊 Cargando datos iniciales...');
+            console.log('Cargando datos iniciales...');
             loadAllData();
         }, 300);
         
-        console.log('✅ Inicialización completada');
+        console.log('Inicialización completada');
         
     } catch (error) {
-        console.error('❌ Error durante inicialización:', error);
+        console.error('Error durante inicialización:', error);
     }
 
     // Inicializar listeners de tarifas
     initializeTarifaListeners();
     initializeProjectTarifaListeners();
     
-    console.log('✅ Listeners de tarifas inicializados');
+    console.log('Listeners de tarifas inicializados');
 
     // Verificar asignaciones sin tarifas
     verificarTarifasAlCargar();
-    
-    console.log('✅ Panel de administrador completamente inicializado');
+
+    console.log('Panel de administrador completamente inicializado');
 
 });
 
-console.log('✅ === ADMIN.JS CARGADO CON FUNCIONES MEJORADAS ===');
+console.log('Admin.js cargado, funciones mejoradas');
 
 // === INICIALIZACIÓN ===
 function initializeAdminPanel() {
@@ -2312,15 +2315,15 @@ function initializeAdminPanel() {
 }
 
 window.forceUpdateDropdowns = function() {
-    console.log('🆘 Forzando actualización de dropdowns...');
+    console.log('Forzando actualización de dropdowns...');
     updateDropdowns();
 };
 
 window.debugAdmin = function() {
-    console.log('🔍 Debug completo del admin...');
+    console.log('Debug completo del admin...');
     debugDropdowns();
-    console.log('📊 Current data:', currentData);
-    console.log('📝 Current section:', currentSection);
+    console.log('Current data:', currentData);
+    console.log('Current section:', currentSection);
 };
 
 function setupEventListeners() {
@@ -2498,7 +2501,7 @@ function updateActiveSidebarItem(activeSection) {
 }
 
 async function loadSectionData(sectionName) {
-    console.log(`📊 Cargando datos para sección: ${sectionName}`);
+    console.log(`Cargando datos para sección: ${sectionName}`);
     
     try {
         switch(sectionName) {
@@ -4042,7 +4045,7 @@ function initializeReportSelector() {
  * Seleccionar tipo de reporte nuevo
  */
 function selectNewReportType(reportType) {
-    console.log('📋 Seleccionando reporte:', reportType);
+    console.log('Seleccionando reporte:', reportType);
     
     // 1. Ocultar paneles anteriores
     const configPanel = document.getElementById('reportConfigPanel');
@@ -4072,7 +4075,7 @@ function selectNewReportType(reportType) {
     // 5. Actualizar variable global
     currentReportType = reportType;
     
-    console.log('✅ Reporte seleccionado:', ARVIC_REPORTS[reportType].name);
+    console.log('Reporte seleccionado:', ARVIC_REPORTS[reportType].name);
 }
 
 /**
@@ -4084,7 +4087,7 @@ function generateReportConfiguration(reportType) {
     
     if (!configPanel || !report) return;
     
-    console.log('🔧 Generando configuración para:', report.name);
+    console.log('Generando configuración para:', report.name);
     
     // Generar filtros según el tipo de reporte
     let filtersHTML = '';
@@ -4093,7 +4096,7 @@ function generateReportConfiguration(reportType) {
     if (report.filters.includes('time')) {
         filtersHTML += `
             <div class="form-group">
-                <label for="timeFilter"><i class="fa-solid fa-clock"></i> Período de Tiempo:</label>
+                <label for="timeFilter">Periodo de Tiempo:</label>
                 <select id="timeFilter" onchange="handleTimeFilterChange()">
                     <option value="week">Esta Semana</option>
                     <option value="month">Este Mes</option>
@@ -4108,7 +4111,7 @@ function generateReportConfiguration(reportType) {
     if (report.filters.includes('consultant')) {
         filtersHTML += `
             <div class="form-group">
-                <label for="consultantFilter"><i class="fa-solid fa-user"></i> Seleccionar Consultor: <span style="color: red;">*</span></label>
+                <label for="consultantFilter">Seleccionar Consultor: <span style="color: red;">*</span></label>
                 <select id="consultantFilter" required onchange="validateRequiredFilters()">
                     <option value="">Seleccionar consultor...</option>
                 </select>
@@ -4124,7 +4127,7 @@ if (report.filters.includes('client')) {
     
     filtersHTML += `
         <div class="form-group">
-            <label for="clientFilter"><i class="fa-solid fa-building"></i> Seleccionar Cliente: <span style="color: red;">*</span></label>
+            <label for="clientFilter">Seleccionar Cliente: <span style="color: red;">*</span></label>
             <select id="clientFilter" required onchange="${clientOnChange}">
                 <option value="">Seleccionar cliente...</option>
             </select>
@@ -4136,7 +4139,7 @@ if (report.filters.includes('client')) {
     if (report.filters.includes('support')) {
         filtersHTML += `
             <div class="form-group">
-                <label for="supportFilter"><i class="fa-solid fa-headset"></i> Filtrar por Soporte:</label>
+                <label for="supportFilter">Filtrar por Soporte:</label>
                 <select id="supportFilter">
                     <option value="all">Todos los Soportes</option>
                 </select>
@@ -4149,21 +4152,21 @@ if (report.filters.includes('project')) {
     if (reportType === 'remanente') {
         filtersHTML += `
             <div class="form-group">
-                <label for="projectFilter"><i class="fa-solid fa-folder"></i> Proyectos del Cliente:</label>
+                <label for="projectFilter">Proyectos del Cliente:</label>
                 <select id="projectFilter" onchange="validateRequiredFilters()">
                     <option value="">Seleccionar cliente primero...</option>
                     <option value="ninguno">Sin proyectos</option>
                     <option value="todos">Todos los proyectos</option>
                 </select>
                 <small style="color: #666; font-size: 0.875rem;">
-                    <i class="fa-solid fa-lightbulb"></i> Primero selecciona un cliente para ver sus proyectos
+                    Primero selecciona un cliente para ver sus proyectos
                 </small>
             </div>
         `;
     } else {
         filtersHTML += `
             <div class="form-group">
-                <label for="projectFilter"><i class="fa-solid fa-folder"></i> Filtrar por Proyecto:</label>
+                <label for="projectFilter">Filtrar por Proyecto:</label>
                 <select id="projectFilter">
                     <option value="all">Todos los Proyectos</option>
                 </select>
@@ -4176,13 +4179,13 @@ if (report.filters.includes('project')) {
         if (reportType === 'remanente') {
             filtersHTML += `
                 <div class="form-group">
-                    <label for="supportTypeFilter"><i class="fa-solid fa-headset"></i> Soporte Específico: <span style="color: red;">*</span></label>
+                    <label for="supportTypeFilter">Soporte Específico: <span style="color: red;">*</span></label>
                     <select id="supportTypeFilter" required onchange="validateRequiredFilters()">
                         <option value="">Seleccionar soporte específico...</option>
                     </select>
                 </div>
             <div class="form-group">
-                <label for="monthFilter"><i class="fa-solid fa-calendar"></i> Mes de Análisis: <span style="color: red;">*</span></label>
+                <label for="monthFilter">Mes de Análisis: <span style="color: red;">*</span></label>
                 <select id="monthFilter" required onchange="validateRequiredFilters()">
                     <option value="">Seleccionar mes...</option>
                 </select>
@@ -4196,11 +4199,11 @@ if (report.filters.includes('project')) {
         customDateRangeHTML = `
             <div class="form-row" id="customDateRange" style="display: none;">
                 <div class="form-group">
-                    <label for="startDate"><i class="fa-solid fa-calendar"></i> Fecha Inicio:</label>
+                    <label for="startDate">Fecha Inicio:</label>
                     <input type="date" id="startDate">
                 </div>
                 <div class="form-group">
-                    <label for="endDate"><i class="fa-solid fa-calendar"></i> Fecha Fin:</label>
+                    <label for="endDate">Fecha Fin:</label>
                     <input type="date" id="endDate">
                 </div>
             </div>
@@ -4215,8 +4218,8 @@ if (report.filters.includes('project')) {
         </div>
 
         <div class="warning-message">
-            <strong><i class="fa-solid fa-chart-pie"></i> Estructura del Reporte:</strong> ${report.structure.join(' | ')}<br>
-            <strong><i class="fa-solid fa-pencil"></i> Campos Editables:</strong> ${report.editableFields.join(', ')} (modificables en vista previa)
+            <strong>Estructura del Reporte:</strong> ${report.structure.join(' | ')}<br>
+            <strong>Campos Editables:</strong> ${report.editableFields.join(', ')} (modificables en vista previa)
         </div>
 
         <div class="config-form">
@@ -4227,16 +4230,16 @@ if (report.filters.includes('project')) {
             
             <div class="actions-row">
                 <button class="btn btn-secondary" onclick="resetReportFilters()">
-                    <i class="fa-solid fa-rotate-left"></i> Limpiar Filtros
+                    Limpiar Filtros
                 </button>
                 <button class="btn btn-primary" onclick="generateReportPreview()" id="previewBtn" disabled>
-                    <i class="fa-solid fa-eye"></i> Vista Previa
+                    Vista Previa
                 </button>
                 <button class="btn btn-primary" onclick="generateFinalReport()" id="generateBtn" disabled>
-                    <i class="fa-solid fa-file-excel"></i> Generar Excel
+                    Generar Excel
                 </button>
                 <button class="btn btn-info" onclick="exportCurrentReportToPDF()" id="exportPDFBtn" disabled>
-                    <i class="fa-solid fa-file-pdf"></i> Exportar PDF
+                    Exportar PDF
                 </button>
             </div>
         </div>
@@ -4255,7 +4258,7 @@ if (report.filters.includes('project')) {
  * Poblar dropdowns con datos del sistema
  */
 function populateFilterDropdowns(reportType) {
-    console.log('📊 Poblando filtros para:', reportType);
+    console.log('Poblando filtros para:', reportType);
     
     // Poblar consultor
     const consultantFilter = document.getElementById('consultantFilter');
@@ -4607,7 +4610,7 @@ function resetReportGenerator() {
  * Limpiar solo vista previa y filtros (mantiene tipo de reporte seleccionado)
  */
 function clearPreviewAndFilters() {
-    console.log('🧹 Limpiando vista previa y filtros (manteniendo tipo seleccionado)...');
+    console.log('Limpiando vista previa y filtros (manteniendo tipo seleccionado)...');
     
     // 1. Ocultar panel de configuración (pero no limpiar el tipo)
     const configPanel = document.getElementById('reportConfigPanel');
@@ -4649,13 +4652,13 @@ function clearPreviewAndFilters() {
     // 6. Revalidar
     validateRequiredFilters();
     
-    console.log('✅ Vista previa y filtros limpiados (tipo de reporte mantenido)');
+    console.log('Vista previa y filtros limpiados (tipo de reporte mantenido)');
 }
 
 // === FUNCIÓN ADICIONAL: Verificar datos antes de generar vista previa ===
 function verifyDataBeforePreview() {
-    console.log('🔍 Verificando datos antes de generar vista previa...');
-    
+    console.log('Verificando datos antes de generar vista previa...');
+
     const dataChecks = {
         reports: Object.keys(currentData.reports || {}).length,
         users: Object.keys(currentData.users || {}).length,
@@ -4664,17 +4667,17 @@ function verifyDataBeforePreview() {
         supports: Object.keys(currentData.supports || {}).length,
         modules: Object.keys(currentData.modules || {}).length
     };
-    
-    console.log('📊 Estado de datos:', dataChecks);
+
+    console.log('Estado de datos:', dataChecks);
     
     // Verificar si hay reportes aprobados
     const approvedReports = Object.values(currentData.reports || {})
         .filter(r => r.status === 'Aprobado');
     
-    console.log('✅ Reportes aprobados encontrados:', approvedReports.length);
+    console.log('Reportes aprobados encontrados:', approvedReports.length);
     
     if (approvedReports.length === 0) {
-        console.warn('⚠️ No hay reportes aprobados disponibles');
+        console.warn('No hay reportes aprobados disponibles');
         return false;
     }
     
@@ -4685,13 +4688,13 @@ function verifyDataBeforePreview() {
  * Generar vista previa con datos reales y tabla editable
  */
 function generateReportPreview() {
-    console.log('👁️ Generando vista previa para:', currentReportType);
+    console.log('Generando vista previa para:', currentReportType);
     
     const report = ARVIC_REPORTS[currentReportType];
     const previewPanel = document.getElementById('reportPreviewPanel');
     
     if (!previewPanel || !report) {
-        console.error('❌ Panel de vista previa o configuración no encontrada');
+        console.error('Panel de vista previa o configuración no encontrada');
         return;
     }
     
@@ -4699,7 +4702,7 @@ function generateReportPreview() {
 
         // 🆕 VERIFICACIÓN: Asegurar que los datos están cargados
         if (!verifyDataBeforePreview()) {
-            console.log('🔄 Recargando datos debido a verificación fallida...');
+            console.log('Recargando datos debido a verificación fallida...');
             
             // Forzar recarga de datos
             currentData.reports = window.PortalDB.getReports() || {};
@@ -4746,7 +4749,7 @@ function generateReportPreview() {
         window.NotificationUtils.success(`Vista previa generada: ${currentReportData.length} registros`);
         
     } catch (error) {
-        console.error('❌ Error generando vista previa:', error);
+        console.error('Error generando vista previa:', error);
         window.NotificationUtils.error('Error al generar vista previa: ' + error.message);
     }
 }
@@ -4755,19 +4758,18 @@ function generateReportPreview() {
  * Obtener datos según el tipo de reporte y filtros aplicados - CON DIAGNÓSTICO
  */
 function getReportDataByType(reportType) {
-    console.log('📊 === DIAGNÓSTICO COMPLETO getReportDataByType ===');
-    console.log('🎯 Tipo de reporte:', reportType);
+    console.log('getReportDataByType - Tipo de reporte solicitado:', reportType);
     
     // Obtener reportes aprobados
     const allReports = Object.values(currentData.reports || {});
-    console.log('📋 Total de reportes en sistema:', allReports.length);
-    
+    console.log('Total de reportes en sistema:', allReports.length);
+
     let approvedReports = allReports.filter(r => r.status === 'Aprobado');
-    console.log('✅ Reportes aprobados antes de filtro tiempo:', approvedReports.length);
-    
+    console.log('Reportes aprobados antes de filtro tiempo:', approvedReports.length);
+
     // Mostrar algunos reportes de ejemplo
     if (approvedReports.length > 0) {
-        console.log('📄 Ejemplo de reporte aprobado:', {
+        console.log('Ejemplo de reporte aprobado:', {
             id: approvedReports[0].id,
             userId: approvedReports[0].userId,
             assignmentId: approvedReports[0].assignmentId,
@@ -4779,7 +4781,7 @@ function getReportDataByType(reportType) {
     
     // Verificar filtro de tiempo ANTES de aplicarlo
     const timeFilter = document.getElementById('timeFilter');
-    console.log('⏰ Filtro de tiempo actual:', timeFilter ? timeFilter.value : 'NO ENCONTRADO');
+    console.log('Filtro de tiempo actual:', timeFilter ? timeFilter.value : 'NO ENCONTRADO');
     
     if (reportType === 'remanente') {
     const monthKey = document.getElementById('monthFilter')?.value;
@@ -4798,24 +4800,24 @@ function getReportDataByType(reportType) {
             return reportYear === targetYear && reportMonth === targetMonth;
         });
         
-        console.log(`📅 Reportes filtrados por mes ${monthKey}:`, approvedReports.length);
+        console.log(`Reportes filtrados por mes ${monthKey}:`, approvedReports.length);
     }
 } else {
     // Aplicar filtro de tiempo normal para otros tipos de reporte
     approvedReports = applyTimeFilter(approvedReports);
 }
-console.log('✅ Reportes aprobados DESPUÉS de filtro tiempo:', approvedReports.length);
-    
+console.log('Reportes aprobados DESPUÉS de filtro tiempo:', approvedReports.length);
+
     // Si no hay reportes después del filtro de tiempo, es probable que sea el problema
     if (approvedReports.length === 0) {
-        console.error('❌ NO HAY REPORTES DESPUÉS DEL FILTRO DE TIEMPO');
-        console.log('💡 Esto indica que todos los reportes son más antiguos que el periodo seleccionado');
-        console.log('💡 Cambie el filtro de tiempo a "Todas las fechas" o "Personalizado"');
+        console.error('NO HAY REPORTES DESPUÉS DEL FILTRO DE TIEMPO');
+        console.log('Esto indica que todos los reportes son más antiguos que el periodo seleccionado');
+        console.log('Cambie el filtro de tiempo a "Todas las fechas" o "Personalizado"');
         return [];
     }
     
     // Verificar datos de asignaciones
-    console.log('🔗 Datos de asignaciones disponibles:');
+    console.log('Datos de asignaciones disponibles:');
     console.log('   - Asignaciones normales:', Object.keys(currentData.assignments || {}).length);
     console.log('   - Asignaciones de proyecto:', Object.keys(currentData.projectAssignments || {}).length);
     
@@ -5867,37 +5869,30 @@ function generateStandardTable(report) {
             let isEditable = report.editableFields.includes(header);
             
             switch (header) {
-                case 'ID Empresa':
+                case 'ID EMPRESA':
                     cellContent = row.idEmpresa || 'N/A';
                     break;
-                case 'Consultor':
+                case 'CONSULTOR':
                     cellContent = row.consultor || 'N/A';
                     break;
-                case 'Soporte':
+                case 'SOPORTE':
                     cellContent = row.soporte || 'N/A';
                     break;
-                // ⭐ NUEVO: Columna Origen
-                case 'Origen':
+                case 'ORIGEN':
                     const origenBadge = generarBadgeOrigen(row.origen || 'N/A');
                     cellContent = origenBadge;
                     break;
-                // ⭐ NUEVO: Columna Detalle
-                case 'Detalle':
-                    cellContent = `<div class="detalle-cell">${row.detalle || 'N/A'}</div>`;
-                    break;
-                case 'Modulo':
+                case 'MÓDULO':
                     cellContent = row.modulo || 'N/A';
                     break;
                 case 'TIEMPO':
-                    cellContent = `<input type="number" class="editable-input" value="${row.editedTime}" 
-                                         step="0.1" min="0" max="24" 
+                    cellContent = `<input type="number" class="editable-input" value="${row.editedTime}"
+                                         step="0.1" min="0" max="24"
                                          onchange="updateRowCalculation(${index}, 'time', this.value)">`;
                     break;
-                // ⭐ MODIFICADO: Sin "de Modulo"
                 case 'TARIFA':
-                case 'TARIFA de Modulo': // Mantener compatibilidad con reportes viejos
-                    cellContent = `<input type="number" class="editable-input" value="${row.editedTariff}" 
-                                         step="50" min="100" max="2000" 
+                    cellContent = `<input type="number" class="editable-input" value="${row.editedTariff}"
+                                         step="50" min="100" max="2000"
                                          onchange="updateRowCalculation(${index}, 'tariff', this.value)">`;
                     break;
                 case 'TOTAL':
@@ -6538,11 +6533,11 @@ function generateFinalReport() {
 }
 
 /**
- * Generar Excel para Pago Consultor General
+ * Generar Excel para Pago Consultor General con todos los consultores y sus soportes
  */
 
 function generatePagoGeneralExcel() {
-    console.log('💰 Generando Excel - Pago Consultor General');
+    console.log('Generando Excel - Pago Consultor General');
     
     const wb = XLSX.utils.book_new();
     const wsData = [];
@@ -6553,8 +6548,8 @@ function generatePagoGeneralExcel() {
     // Fila 2: Espacio
     wsData.push(['', '', '', '', '', '', '', '']);
     
-    // Fila 3: Headers (✅ NUEVOS HEADERS)
-    wsData.push(['ID Empresa', 'Consultor', 'Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL']);
+    // Fila 3: Headers
+    wsData.push(['ID EMPRESA', 'CONSULTOR', 'SOPORTE', 'ORIGEN', 'MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL']);
     
     // Filas de datos
     let totalHours = 0;
@@ -6566,7 +6561,7 @@ function generatePagoGeneralExcel() {
             row.consultor || 'N/A',
             row.soporte || 'N/A',
             row.origen || 'N/A',                    // ✅ NUEVO
-            row.detalle || 'N/A',                   // ✅ NUEVO
+            row.modulo || 'N/A',                   // ✅ NUEVO
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -6596,13 +6591,13 @@ function generatePagoGeneralExcel() {
     const fileName = `Pago_Consultor_General_${timestamp}.xlsx`;
     
     XLSX.writeFile(wb, fileName);
-    console.log('✅ Excel generado:', fileName);
+    console.log('Excel generado:', fileName);
 }
 /**
- * Generar Excel para Pago Consultor Específico
+ * Generar Excel para Pago Consultor Específico por Soporte con su/sus soporte/s
  */
 function generatePagoConsultorExcel() {
-    console.log('👤 Generando Excel - Pago Consultor Específico');
+    console.log('Generando Excel - Pago Consultor Específico');
     
     const consultantName = document.getElementById('consultantFilter')?.selectedOptions[0]?.text || 'Consultor';
     
@@ -6618,9 +6613,9 @@ function generatePagoConsultorExcel() {
     // Fila 3: Espacio
     wsData.push(['', '', '', '', '', '', '', '']);
     
-    // Fila 4: Headers (✅ NUEVOS)
-    wsData.push(['ID Empresa', 'Consultor', 'Soporte', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL']);
-    
+    // Fila 4: Headers 
+    wsData.push(['ID EMPRESA', 'CONSULTOR', 'SOPORTE', 'ORIGEN', 'MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL']);
+
     // Datos y totales
     let totalHours = 0;
     let totalAmount = 0;
@@ -6666,7 +6661,7 @@ function generatePagoConsultorExcel() {
  * Generar Excel para Cliente Soporte (vista simplificada)
  */
 function generateClienteSoporteExcel() {
-    console.log('📞 Generando Excel - Cliente Soporte');
+    console.log('Generando Excel - Cliente Soporte');
     
     const clientName = document.getElementById('clientFilter')?.selectedOptions[0]?.text || 'Cliente';
     
@@ -6680,8 +6675,8 @@ function generateClienteSoporteExcel() {
     wsData.push(['', '', '', '', '']);
     
     // Fila 3: Headers (estructura simplificada - sin ID Empresa ni Consultor)
-    wsData.push(['Soporte', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
-    
+    wsData.push(['SOPORTE', 'MÓDULO', 'TIEMPO', 'TARIFA MÓDULO', 'TOTAL']);
+
     // Datos
     let totalHours = 0;
     let totalAmount = 0;
@@ -6780,7 +6775,7 @@ function generateRemanenteExcel() {
         for (let i = 1; i <= weekStructure.totalWeeks; i++) {
             const daysInWeek = weekStructure.distribution[i - 1] || 7;
             headerRow1.push(`SEMANA ${i} (${daysInWeek}d)`, '', '', '');
-            headerRow2.push('MODULO', 'TIEMPO', 'TARIFA', 'TOTAL');
+            headerRow2.push('MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL');
         }
         
         wsData.push(headerRow1);
@@ -6845,7 +6840,7 @@ function generateRemanenteExcel() {
         wsData.push([]);
         
         // Headers de proyectos
-        wsData.push(['Proyecto', 'Módulo', 'Total Horas', 'Tarifa', 'Total']);
+        wsData.push(['PROYECTO', 'MÓDULO', 'TOTAL HORAS', 'TARIFA', 'TOTAL']);
         
         // Datos de proyectos
         let projectTotalHours = 0;
@@ -6930,7 +6925,7 @@ function generateProyectoGeneralExcel() {
     
     wsData.push(['', '', 'Proyecto: General', '', '', '']);
     wsData.push(['', '', '', '', '', '']);
-    wsData.push(['ID Empresa', 'Consultor', 'Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
+    wsData.push(['ID EMPRESA', 'CONSULTOR', 'MÓDULO', 'TIEMPO', 'TARIFA MÓDULO', 'TOTAL']);
     
     let totalHours = 0;
     let totalAmount = 0;
@@ -6980,8 +6975,8 @@ function generateProyectoClienteExcel() {
     
     wsData.push(['', `Proyecto: ${clientName}`, '', '']);
     wsData.push(['', '', '', '']);
-    wsData.push(['Modulo', 'TIEMPO', 'TARIFA de Modulo', 'TOTAL']);
-    
+    wsData.push(['MÓDULO', 'TIEMPO', 'TARIFA MÓDULO', 'TOTAL']);
+
     let totalHours = 0;
     let totalAmount = 0;
     
@@ -7019,8 +7014,8 @@ function generateProyectoClienteExcel() {
  * Generar Excel para Proyecto Consultor
  */
 function generateProyectoConsultorExcel() {
-    console.log('👤 Generando Excel - Proyecto Consultor');
-    
+    console.log('Generando Excel - Proyecto Consultor');
+
     const consultantName = document.getElementById('consultantFilter')?.selectedOptions[0]?.text || 'Consultor';
     
     const wb = XLSX.utils.book_new();
@@ -7028,8 +7023,8 @@ function generateProyectoConsultorExcel() {
     
     wsData.push(['', '', '', `Proyecto: ${consultantName}`, '', '', '']);
     wsData.push(['', '', '', '', '', '', '']);
-    wsData.push(['ID Empresa', 'Consultor', 'Origen', 'Detalle', 'TIEMPO', 'TARIFA', 'TOTAL']);
-    
+    wsData.push(['ID EMPRESA', 'CONSULTOR', 'ORIGEN', 'MÓDULO', 'TIEMPO', 'TARIFA', 'TOTAL']);
+
     let totalHours = 0;
     let totalAmount = 0;
     
@@ -7038,7 +7033,7 @@ function generateProyectoConsultorExcel() {
             row.idEmpresa || 'N/A',
             row.consultor || 'N/A',
             row.origen || 'N/A',                    // ✅ NUEVO
-            row.detalle || 'N/A',                   // ✅ NUEVO
+            row.modulo || 'N/A',                   // ✅ NUEVO
             parseFloat(row.editedTime || 0),
             parseFloat(row.editedTariff || 0),
             parseFloat(row.editedTotal || 0)
@@ -8963,8 +8958,8 @@ function generarLineaReporteMejorada(report, tipoReporte) {
         consultorId: tarifa.consultorId,
         consultorNombre: tarifa.consultorNombre,
         trabajoNombre: tarifa.trabajoNombre,
-        origen: report.assignmentType.toUpperCase(),  // ✅ NUEVO
-        detalle: detalle,                              // ✅ NUEVO
+        origen: report.assignmentType.toUpperCase(),  // ✅ NUEVO //Aquí es donde obtengo el origen del reporte (soporte, tarea o proyecto) en mayúsculas
+        detalle: detalle,                              // ✅ NUEVO 
         moduloNombre: tarifa.moduloNombre,
         descripcionTarea: tarifa.descripcionTarea || null,
         horas: report.hours,
@@ -8994,16 +8989,25 @@ async function exportData() {
         
         window.NotificationUtils.success('Datos exportados exitosamente');
     } catch (error) {
-        console.error('❌ Error exportando:', error);
+        console.error('Error exportando:', error);
         window.NotificationUtils.error('Error al exportar datos');
     }
 }
 
-async function loadCurrentData() {
+async function loadCurrentData(forceReload = false) {
+    const now = Date.now();
+
+    if (!forceReload && currentData && dataCacheTimestamp) {
+        if (now - dataCacheTimestamp < CACHE_DURATION) {
+            console.log('Usando datos en caché');
+            return currentData;
+        }
+    }
+
     console.log('Cargando datos actuales para reportes...');
 
     try {
-        // ✅ USAR AWAIT para esperar que las promesas se resuelvan
+        // USAR AWAIT para esperar que las promesas se resuelvan
         currentData = {
             users: await window.PortalDB.getUsers() || {},
             companies: await window.PortalDB.getCompanies() || {},
@@ -9017,6 +9021,8 @@ async function loadCurrentData() {
             tarifario: await window.PortalDB.getTarifario() || {}
         };
         
+        dataCacheTimestamp = now;
+
         console.log('Datos cargados correctamente:', {
             users: Object.keys(currentData.users).length,
             companies: Object.keys(currentData.companies).length,
@@ -9065,10 +9071,10 @@ async function importData() {
             reader.onload = async (event) => {
                 try {
                     const data = JSON.parse(event.target.result);
-                    console.log('📥 Datos a importar:', data);
+                    console.log('Datos a importar:', data);
                     window.NotificationUtils.warning('Función de importación en desarrollo');
                 } catch (error) {
-                    console.error('❌ Error parseando archivo:', error);
+                    console.error('Error parseando archivo:', error);
                     window.NotificationUtils.error('Error: Archivo JSON inválido');
                 }
             };
@@ -9077,7 +9083,7 @@ async function importData() {
         
         input.click();
     } catch (error) {
-        console.error('❌ Error en importación:', error);
+        console.error('Error en importación:', error);
         window.NotificationUtils.error('Error al importar datos');
     }
 }

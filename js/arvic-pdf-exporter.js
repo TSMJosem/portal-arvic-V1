@@ -502,8 +502,8 @@ class ARVICPDFExporter {
             case 'pago-consultor-general':
             case 'pago-consultor-especifico':
                 return [
-                    tableWidth * 0.08, tableWidth * 0.15, tableWidth * 0.25, 
-                    tableWidth * 0.20, tableWidth * 0.10, tableWidth * 0.10, tableWidth * 0.12
+                    tableWidth * 0.08, tableWidth * 0.13, tableWidth * 0.15,
+                    tableWidth * 0.10, tableWidth * 0.18, tableWidth * 0.10, tableWidth * 0.10, tableWidth * 0.16
                 ];
                 
             case 'cliente-soporte':

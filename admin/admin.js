@@ -1996,7 +1996,7 @@ function updateReportsListWithFilter() {
     // Renderizar reportes filtrados
     if (filteredReports.length === 0) {
         const emptyMessage = getEmptyStateMessage(currentReportFilter);
-        const colspan = currentReportFilter === 'proyecto' ? '10' : '9';
+        const colspan = '10'; // Se modificó a 9 a 10 para incluir la columna de descripción
         
         reportsTableBody.innerHTML = `
             <tr>
@@ -2156,60 +2156,34 @@ function createReportTableRow(report) {
     }
     
     const row = document.createElement('tr');
-    
-    // Determinar si es proyecto para ajustar columnas
-    const isProject = report.assignmentType === 'project';
-    
-    if (isProject) {
-        row.innerHTML = `
-            <td><span class="consultant-id">${user.userId}</span></td>
-            <td><span class="consultant-name">${user.name}</span></td>
-            <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
-            <td><span class="project-name">${asignacionContent}</span></td>
-            <td>${module ? module.name : 'Sin módulo'}</td>
-            <td><small style="color: #666;">${report.description || report.title || 'Sin descripción'}</small></td>  <!-- ⭐ AGREGAR -->
-            <td><span class="hours-badge">${report.hours || 0} hrs</span></td>
-            <td>${window.DateUtils ? window.DateUtils.formatDate(report.createdAt) : new Date(report.createdAt).toLocaleDateString()}</td>
-            <td><span class="status-badge status-pending">Pendiente</span></td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
-                        <i class="fa-solid fa-eye"></i> Ver
-                    </button>
-                    <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
-                        <i class="fa-solid fa-check"></i> Aprobar
-                    </button>
-                    <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
-                        <i class="fa-solid fa-xmark"></i> Rechazar
-                    </button>
-                </div>
-            </td>
-        `;
-    } else {
-        row.innerHTML = `
-            <td><span class="consultant-id">${user.userId}</span></td>
-            <td><span class="consultant-name">${user.name}</span></td>
-            <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
-            <td><span class="project-name">${asignacionContent}</span></td>
-            <td>${module ? module.name : 'Sin módulo'}</td>
-            <td><span class="hours-badge">${report.hours || 0} hrs</span></td>
-            <td>${window.DateUtils ? window.DateUtils.formatDate(report.createdAt) : new Date(report.createdAt).toLocaleDateString()}</td>
-            <td><span class="status-badge status-pending">Pendiente</span></td>
-            <td>
-                <div class="action-buttons">
-                    <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
-                        <i class="fa-solid fa-eye"></i> Ver
-                    </button>
-                    <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
-                        <i class="fa-solid fa-check"></i> Aprobar
-                    </button>
-                    <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
-                        <i class="fa-solid fa-xmark"></i> Rechazar
-                    </button>
-                </div>
-            </td>
-        `;
-    }
+
+    // Columna de descripción unificada para todos los tipos de reporte
+    const descripcionContent = report.description || report.title || 'Sin descripción';
+
+    row.innerHTML = `
+        <td><span class="consultant-id">${user.userId}</span></td>
+        <td><span class="consultant-name">${user.name}</span></td>
+        <td><span class="company-name">${company ? company.name : 'Sin asignación'}</span></td>
+        <td><span class="project-name">${asignacionContent}</span></td>
+        <td>${module ? module.name : 'Sin módulo'}</td>
+        <td><small style="color: #666;">${descripcionContent}</small></td>
+        <td><span class="hours-badge">${report.hours || 0} hrs</span></td>
+        <td>${window.DateUtils ? window.DateUtils.formatDate(report.createdAt) : new Date(report.createdAt).toLocaleDateString()}</td>
+        <td><span class="status-badge status-pending">Pendiente</span></td>
+        <td>
+            <div class="action-buttons">
+                <button class="action-btn btn-view" onclick="viewReport('${report.id}')" title="Ver detalles">
+                    <i class="fa-solid fa-eye"></i> Ver
+                </button>
+                <button class="action-btn btn-approve" onclick="approveReport('${report.id}')" title="Aprobar reporte">
+                    <i class="fa-solid fa-check"></i> Aprobar
+                </button>
+                <button class="action-btn btn-reject" onclick="rejectReport('${report.id}')" title="Rechazar reporte">
+                    <i class="fa-solid fa-xmark"></i> Rechazar
+                </button>
+            </div>
+        </td>
+    `;
     
     return row;
 }

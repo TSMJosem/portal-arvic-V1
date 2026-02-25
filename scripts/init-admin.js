@@ -16,19 +16,19 @@ const User = mongoose.model('User', userSchema);
 
 async function createAdmin() {
   try {
-    console.log('🔄 Conectando a MongoDB...');
+    console.log('Conectando a MongoDB...');
     await mongoose.connect(process.env.MONGODB_URI);
-    console.log('✅ Conectado a MongoDB');
+    console.log('Conectado a MongoDB');
 
     // Verificar si ya existe admin
     const existingAdmin = await User.findOne({ id: 'admin' });
     if (existingAdmin) {
-      console.log('⚠️  Usuario admin ya existe');
+      console.log('Usuario admin ya existe');
       await mongoose.disconnect();
       process.exit(0);
     }
 
-    console.log('🔄 Creando usuario admin...');
+    console.log('Creando usuario admin...');
     const hashedPassword = await bcrypt.hash('hperez1402.', 10);
     
     const admin = new User({
@@ -42,16 +42,16 @@ async function createAdmin() {
     });
 
     await admin.save();
-    console.log('✅ Usuario admin creado exitosamente');
-    console.log('📧 Email: admin@arvic.com');
-    console.log('🔑 ID: admin');
-    console.log('🔐 Password: hperez1402.');
-    
+    console.log('Usuario admin creado exitosamente');
+    console.log('Email: admin@arvic.com');
+    console.log('ID: admin');
+    console.log('Password: hperez1402.');
+
     await mongoose.disconnect();
-    console.log('✅ Desconectado de MongoDB');
+    console.log('Desconectado de MongoDB');
     process.exit(0);
   } catch (error) {
-    console.error('❌ Error:', error.message);
+    console.error('Error:', error.message);
     process.exit(1);
   }
 }

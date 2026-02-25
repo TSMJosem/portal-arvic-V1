@@ -11,7 +11,7 @@ class PortalDatabase {
             : '/api';
         
         this.token = localStorage.getItem('arvic_token') || null;
-        console.log('✅ Sistema de Base de Datos conectado al API:', this.API_URL);
+        console.log('Sistema de Base de Datos conectado al API:', this.API_URL);
     }
 
     // === CONFIGURACIÓN DE HEADERS ===

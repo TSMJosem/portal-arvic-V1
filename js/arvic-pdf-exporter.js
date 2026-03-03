@@ -25,13 +25,13 @@ const ARVIC_LOGO_URL = '../images/Logo-Grupo-IT-Arvic-22.png';
  */
 const PDF_CONFIG = {
     margin: 20,
-    headerHeight: 95,       // Más espacio para header completo con metadata
+    headerHeight: 68,       // Espacio real del header: logo+título(30)+subtítulo(40)+línea(48)+metadata(52-60)
     logoSize: 40,
     titleFontSize: 18,
     subtitleFontSize: 12,
-    headerFontSize: 10,
-    dataFontSize: 10,       // Aumentado de 9 a 10
-    metadataFontSize: 9,    // Aumentado de 8 a 9
+    headerFontSize: 9,
+    dataFontSize: 9,
+    metadataFontSize: 9,
     lineHeight: 14,         // Aumentado de 12 a 14
     pageFormat: 'a4',
     orientation: 'landscape'
@@ -501,9 +501,11 @@ class ARVICPDFExporter {
         switch (reportType) {
             case 'pago-consultor-general':
             case 'pago-consultor-especifico':
+                // Columnas: ID EMPRESA | CONSULTOR | SOPORTE | ORIGEN | MÓDULO | TIEMPO | TARIFA | TOTAL
+                // MÓDULO muestra solo el código SAP (FI, MM, SD...) → columna muy estrecha
                 return [
-                    tableWidth * 0.08, tableWidth * 0.13, tableWidth * 0.15,
-                    tableWidth * 0.10, tableWidth * 0.18, tableWidth * 0.10, tableWidth * 0.10, tableWidth * 0.16
+                    tableWidth * 0.10, tableWidth * 0.20, tableWidth * 0.19,
+                    tableWidth * 0.10, tableWidth * 0.07, tableWidth * 0.09, tableWidth * 0.11, tableWidth * 0.11
                 ];
                 
             case 'cliente-soporte':
@@ -611,6 +613,9 @@ drawTableHeaders(doc, headers, columnWidths, y) {
             let headerText = header.toString();
             if (headerText === 'TARIFA de Modulo') {
                 headerText = 'TARIFA';
+            }
+            if (headerText === 'ID EMPRESA') {
+                headerText = 'CLIENTE';
             }
             
             const textWidth = doc.getTextWidth(headerText);
@@ -738,13 +743,16 @@ drawDataRow(doc, row, headers, columnWidths, y, rowIndex) {
                 header.toLowerCase().includes('tiempo')) {
                 doc.text(String(cellValue), currentX + cellWidth / 2, textY, { align: 'center' });
             } else {
-                // Truncar texto si es muy largo
+                // Truncar texto midiendo el ancho real en mm (jsPDF usa mm como unidad)
                 let displayText = String(cellValue);
-                const maxLength = Math.floor(cellWidth / 2.5);
-                if (displayText.length > maxLength) {
-                    displayText = displayText.substring(0, maxLength - 3) + '...';
+                const maxTextWidth = cellWidth - 4; // 2 mm de padding a cada lado
+                if (doc.getTextWidth(displayText) > maxTextWidth) {
+                    while (displayText.length > 1 && doc.getTextWidth(displayText + '...') > maxTextWidth) {
+                        displayText = displayText.slice(0, -1);
+                    }
+                    displayText += '...';
                 }
-                doc.text(displayText, currentX + 2, textY);
+                doc.text(displayText, currentX + cellWidth / 2, textY, { align: 'center' });
             }
             
             currentX += cellWidth;
@@ -839,9 +847,9 @@ getCellValue(row, header) {
         return '$0.00';
     }
     
-    // ✅ ID EMPRESA
+    // ✅ ID EMPRESA → muestra nombre de empresa si está disponible
     if (headerLower.includes('id') && headerLower.includes('empresa')) {
-        return row.idEmpresa || row.companyId || '';
+        return row.empresa || row.idEmpresa || row.companyId || '';
     }
     
     // ✅ CONSULTOR
@@ -864,9 +872,13 @@ getCellValue(row, header) {
         return row.detalle || row.detail || '';
     }
     
-    // ✅ MÓDULO
+    // ✅ MÓDULO — solo el código SAP (ej: "FI - Contabilidad Financiera" → "FI")
     if (headerLower.includes('módulo') || headerLower.includes('modulo')) {
-        return row.modulo || row.module || '';
+        const moduleName = row.modulo || row.module || '';
+        if (moduleName && moduleName.includes(' - ')) {
+            return moduleName.split(' - ')[0].trim();
+        }
+        return moduleName;
     }
     
     // Búsqueda genérica

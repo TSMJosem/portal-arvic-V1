@@ -4996,6 +4996,7 @@ function getSoporteData(reports, consultantId, supportId) {
         soporteData.push({
             reportId: report.id,
             idEmpresa: assignment.companyId,
+            empresa: company?.name || assignment.companyId,
             consultor: linea.consultorNombre,
             soporte: support?.name || 'Sin soporte',
             origen: linea.origen,                    // ✅ NUEVO
@@ -5524,6 +5525,7 @@ function getProyectoData(reports, consultantId, projectId) {
         proyectoData.push({
             reportId: report.id,
             idEmpresa: projectAssignment.companyId,
+            empresa: company?.name || projectAssignment.companyId,
             consultor: linea.consultorNombre,
             origen: linea.origen,                    // ✅ NUEVO
             detalle: linea.detalle,                  // ✅ NUEVO
@@ -5600,6 +5602,7 @@ function getConsultantProyectoData(reports, consultantId, projectId) {
         consultantData.push({
             reportId: report.id,
             idEmpresa: projectAssignment.companyId,
+            empresa: company?.name || projectAssignment.companyId,
             consultor: linea.consultorNombre,
             origen: linea.origen,                    // ✅ NUEVO
             detalle: linea.detalle,                  // ✅ NUEVO

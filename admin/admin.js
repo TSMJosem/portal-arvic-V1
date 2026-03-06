@@ -403,9 +403,9 @@ async function updateSupportsList() {
         console.warn('currentData.supports es undefined');
         currentData.supports = {};
     }
-    
+
     const supports = Object.values(currentData.supports);
-    
+
     if (supports.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
@@ -416,43 +416,58 @@ async function updateSupportsList() {
         `;
         return;
     }
-    
+
     container.innerHTML = '';
     supports.forEach(support => {
         const supportDiv = document.createElement('div');
         supportDiv.className = 'item hover-lift';
-        
-        // Colores por prioridad
-        const priorityColors = {
-            'Baja': '#95a5a6',
-            'Media': '#f39c12',
-            'Alta': '#e74c3c',
-            'Crítica': '#8e44ad'
-        };
-        
-        // Colores por tipo
-        const typeColors = {
-            'Técnico': '#3498db',
-            'Funcional': '#2ecc71',
-            'Configuración': '#f39c12',
-            'Mantenimiento': '#9b59b6',
-            'Otros': '#95a5a6'
-        };
-        
+
+        const assignedConsultors = Object.values(currentData.assignments || {}).filter(a =>
+            a.supportId === support.supportId && a.isActive !== false
+        );
+
         supportDiv.innerHTML = `
-            <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${support.supportId}</span>
-                    <strong>${support.name}</strong>
+            <div style="display: flex; flex-direction: column; gap: 0; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding-bottom: 16px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="item-id">${support.supportId}</span>
+                        <strong style="font-size: 1rem;">${support.name}</strong>
+                        ${assignedConsultors.length > 0
+                            ? `<span class="custom-badge badge-info">ACTIVO</span>`
+                            : `<span class="custom-badge badge-warning">SIN ASIGNAR</span>`}
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-primary" onclick="editSupport('${support.supportId}')" title="Editar soporte">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteSupport('${support.supportId}')" title="Eliminar soporte">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
-                <small style="color: #666;">
-                    <i class="fa-solid fa-calendar"></i> Creado: ${window.DateUtils.formatDate(support.createdAt)}
-                    ${support.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(support.description, 60)}` : ''}
-                </small>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 20px; margin: 0 -20px 0 -20px;
+                            border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                    <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                        Consultores asignados: <strong>${assignedConsultors.length}</strong>
+                    </small>
+                    <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                        ${support.description ? `<i class="fa-solid fa-file-alt" style="color:#6b7280;"></i> ${window.TextUtils.truncate(support.description, 50)}` : '<span style="color:#9ca3af;">Sin descripción</span>'}
+                    </small>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 20px; margin: 0 -20px -20px -20px;
+                            border-top: 1px solid #e5e7eb; background: #ffffff;">
+                    <small style="color: #666; font-weight: 500; font-size: 0.75rem;">
+                        <i class="fa-solid fa-calendar" style="color: #10b981;"></i>
+                        ${window.DateUtils.formatDate(support.createdAt)}
+                    </small>
+                    <small style="color: transparent; font-size: 0.75rem;">—</small>
+                </div>
             </div>
-            <button class="delete-btn" onclick="deleteSupport('${support.supportId}')" title="Eliminar soporte">
-                <i class="fa-solid fa-trash"></i>
-            </button>
         `;
         container.appendChild(supportDiv);
     });
@@ -739,12 +754,12 @@ async function updateCompaniesList() {
     const container = document.getElementById('companiesList');
     const companies = Object.values(currentData.companies);
 
-    const validCompanies = companies.filter(company => 
-        company.companyId && 
+    const validCompanies = companies.filter(company =>
+        company.companyId &&
         company.companyId !== 'undefined'
     );
-    
-    if (companies.length === 0) {
+
+    if (validCompanies.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
                 <div class="empty-state-icon"><i class="fa-solid fa-building"></i></div>
@@ -754,25 +769,60 @@ async function updateCompaniesList() {
         `;
         return;
     }
-    
+
     container.innerHTML = '';
-    companies.forEach(company => {
+    validCompanies.forEach(company => {
         const companyDiv = document.createElement('div');
         companyDiv.className = 'item hover-lift';
+
+        const assignedCount = Object.values(currentData.assignments || {}).filter(a =>
+            a.companyId === company.companyId && a.isActive !== false
+        ).length + Object.values(currentData.projectAssignments || {}).filter(a =>
+            a.companyId === company.companyId && a.isActive !== false
+        ).length;
+
         companyDiv.innerHTML = `
-            <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${company.companyId}</span>
-                    <strong>${company.name}</strong>
+            <div style="display: flex; flex-direction: column; gap: 0; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding-bottom: 16px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="item-id">${company.companyId}</span>
+                        <strong style="font-size: 1rem;">${company.name}</strong>
+                        ${assignedCount > 0
+                            ? `<span class="custom-badge badge-info">CLIENTE ACTIVO</span><span class="custom-badge badge-primary">${assignedCount}</span>`
+                            : `<span class="custom-badge badge-warning">SIN ASIGNACIONES</span>`}
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-primary" onclick="editCompany('${company.companyId}')" title="Editar empresa">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteCompany('${company.companyId}')" title="Eliminar empresa">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
-                <small style="color: #666;">
-                    <i class="fa-solid fa-calendar"></i> Registrada: ${window.DateUtils.formatDate(company.createdAt)}
-                    ${company.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(company.description, 60)}` : ''}
-                </small>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 20px; margin: 0 -20px 0 -20px;
+                            border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                    <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                        Asignaciones activas: <strong>${assignedCount}</strong>
+                    </small>
+                    <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                        ${company.description ? `<i class="fa-solid fa-file-alt" style="color:#6b7280;"></i> ${window.TextUtils.truncate(company.description, 50)}` : '<span style="color:#9ca3af;">Sin descripción</span>'}
+                    </small>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 20px; margin: 0 -20px -20px -20px;
+                            border-top: 1px solid #e5e7eb; background: #ffffff;">
+                    <small style="color: #666; font-weight: 500; font-size: 0.75rem;">
+                        <i class="fa-solid fa-calendar" style="color: #10b981;"></i>
+                        ${window.DateUtils.formatDate(company.createdAt)}
+                    </small>
+                    <small style="color: transparent; font-size: 0.75rem;">—</small>
+                </div>
             </div>
-            <button class="delete-btn" onclick="deleteCompany('${company.companyId}')" title="Eliminar empresa">
-                <i class="fa-solid fa-trash"></i>
-            </button>
         `;
         container.appendChild(companyDiv);
     });
@@ -782,38 +832,71 @@ async function updateProjectsList() {
     await loadCurrentData();
     const container = document.getElementById('projectsList');
     const projects = Object.values(currentData.projects);
-    
+
     if (projects.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-icon"><i class="fa-solid fa-folder-open"></i></div>
                 <div class="empty-state-title">No hay proyectos</div>
                 <div class="empty-state-desc">Cree el primer proyecto</div>
             </div>
         `;
         return;
     }
-    
+
     container.innerHTML = '';
     projects.forEach(project => {
         const projectDiv = document.createElement('div');
         projectDiv.className = 'item hover-lift';
-        
+
+        const assignedConsultors = Object.values(currentData.projectAssignments || {}).filter(a =>
+            a.projectId === project.projectId && a.isActive !== false
+        );
+
         projectDiv.innerHTML = `
-            <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${project.projectId}</span>
-                    <strong>${project.name}</strong>
-                    <!-- <i class="fa-solid fa-check"></i> Sin badge de status -->
+            <div style="display: flex; flex-direction: column; gap: 0; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding-bottom: 16px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="item-id">${project.projectId}</span>
+                        <strong style="font-size: 1rem;">${project.name}</strong>
+                        ${assignedConsultors.length > 1
+                            ? `<span class="custom-badge badge-info">MÚLTIPLE</span><span class="custom-badge badge-primary">${assignedConsultors.length}</span>`
+                            : assignedConsultors.length === 1
+                            ? `<span class="custom-badge badge-success">EN CURSO</span><span class="custom-badge badge-primary">1</span>`
+                            : `<span class="custom-badge badge-warning">SIN ASIGNAR</span>`}
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-primary" onclick="editProject('${project.projectId}')" title="Editar proyecto">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteProject('${project.projectId}')" title="Eliminar proyecto">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
-                <small style="color: #666;">
-                    <i class="fa-solid fa-calendar"></i> Creado: ${window.DateUtils.formatDate(project.createdAt)}
-                    ${project.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(project.description, 60)}` : ''}
-                </small>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 20px; margin: 0 -20px 0 -20px;
+                            border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                    <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                        Consultores: <strong>${assignedConsultors.length}</strong>
+                    </small>
+                    <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                        ${project.description ? `<i class="fa-solid fa-file-alt" style="color:#6b7280;"></i> ${window.TextUtils.truncate(project.description, 50)}` : '<span style="color:#9ca3af;">Sin descripción</span>'}
+                    </small>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 20px; margin: 0 -20px -20px -20px;
+                            border-top: 1px solid #e5e7eb; background: #ffffff;">
+                    <small style="color: #666; font-weight: 500; font-size: 0.75rem;">
+                        <i class="fa-solid fa-calendar" style="color: #10b981;"></i>
+                        ${window.DateUtils.formatDate(project.createdAt)}
+                    </small>
+                    <small style="color: transparent; font-size: 0.75rem;">—</small>
+                </div>
             </div>
-            <button class="delete-btn" onclick="deleteProject('${project.projectId}')" title="Eliminar proyecto">
-                <i class="fa-solid fa-trash"></i>
-            </button>
         `;
         container.appendChild(projectDiv);
     });
@@ -883,37 +966,71 @@ async function updateModulesList() {
     await loadCurrentData();
     const container = document.getElementById('modulesList');
     const modules = Object.values(currentData.modules);
-    
+
     if (modules.length === 0) {
         container.innerHTML = `
             <div class="empty-state">
-                <div class="empty-state-icon">🧩</div>
+                <div class="empty-state-icon"><i class="fa-solid fa-puzzle-piece"></i></div>
                 <div class="empty-state-title">No hay módulos</div>
                 <div class="empty-state-desc">Cree el primer módulo</div>
             </div>
         `;
         return;
     }
-    
+
     container.innerHTML = '';
     modules.forEach(module => {
         const moduleDiv = document.createElement('div');
         moduleDiv.className = 'item hover-lift';
-        
+
+        const usageCount = Object.values(currentData.assignments || {}).filter(a =>
+            a.moduleId === module.moduleId && a.isActive !== false
+        ).length + Object.values(currentData.projectAssignments || {}).filter(a =>
+            a.moduleId === module.moduleId && a.isActive !== false
+        ).length;
+
         moduleDiv.innerHTML = `
-            <div>
-                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 5px;">
-                    <span class="item-id">${module.moduleId}</span>
-                    <strong>${module.name}</strong>
+            <div style="display: flex; flex-direction: column; gap: 0; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding-bottom: 16px; margin-bottom: 12px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="item-id">${module.moduleId}</span>
+                        <strong style="font-size: 1rem;">${module.name}</strong>
+                        ${usageCount > 0
+                            ? `<span class="custom-badge badge-info">EN USO</span><span class="custom-badge badge-primary">${usageCount}</span>`
+                            : `<span class="custom-badge badge-warning">SIN USAR</span>`}
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-sm btn-primary" onclick="editModule('${module.moduleId}')" title="Editar módulo">
+                            <i class="fa-solid fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteModule('${module.moduleId}')" title="Eliminar módulo">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
                 </div>
-                <small style="color: #666;">
-                    <i class="fa-solid fa-calendar"></i> Creado: ${window.DateUtils.formatDate(module.createdAt)}
-                    ${module.description ? `<br><i class="fa-solid fa-file-alt"></i> ${window.TextUtils.truncate(module.description, 60)}` : ''}
-                </small>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 20px; margin: 0 -20px 0 -20px;
+                            border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                    <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                        Asignaciones activas: <strong>${usageCount}</strong>
+                    </small>
+                    <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                        ${module.description ? `<i class="fa-solid fa-file-alt" style="color:#6b7280;"></i> ${window.TextUtils.truncate(module.description, 50)}` : '<span style="color:#9ca3af;">Sin descripción</span>'}
+                    </small>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center;
+                            padding: 12px 20px; margin: 0 -20px -20px -20px;
+                            border-top: 1px solid #e5e7eb; background: #ffffff;">
+                    <small style="color: #666; font-weight: 500; font-size: 0.75rem;">
+                        <i class="fa-solid fa-calendar" style="color: #10b981;"></i>
+                        ${window.DateUtils.formatDate(module.createdAt)}
+                    </small>
+                    <small style="color: transparent; font-size: 0.75rem;">—</small>
+                </div>
             </div>
-            <button class="delete-btn" onclick="deleteModule('${module.moduleId}')" title="Eliminar módulo">
-                <i class="fa-solid fa-trash"></i>
-            </button>
         `;
         container.appendChild(moduleDiv);
     });
@@ -1149,118 +1266,111 @@ async function updateAssignmentsList() {
         
         allAssignments.forEach(assignment => {
             const assignmentDiv = document.createElement('div');
-            
-            // ✅ FIX: Obtener el ID correcto según el tipo
-            let assignmentId;
-            let displayId;
-            
+            assignmentDiv.className = 'item hover-lift';
+
+            let assignmentId, displayId, consultor, company, workName, moduleName, typeLabel, typeIcon, typeBadgeClass, deleteHandler, editHandler;
+
             if (assignment.assignmentType === 'support') {
                 assignmentId = assignment.assignmentId;
                 displayId = assignmentId ? assignmentId.slice(-6) : 'N/A';
-                
-                assignmentDiv.className = 'assignment-card';
-                
                 const user = currentData.users[assignment.userId];
-                const company = currentData.companies[assignment.companyId];
                 const support = currentData.supports[assignment.supportId];
-                const module = currentData.modules[assignment.moduleId];
-                
-                assignmentDiv.innerHTML = `
-                    <div class="assignment-header">
-                        <h3><i class="fa-solid fa-phone"></i> Soporte: ${support?.name || 'No encontrado'}</h3>
-                        <span class="assignment-id">${displayId}</span>
-                    </div>
-                    
-                    <div class="assignment-details">
-                        <p><strong><i class="fa-solid fa-user"></i> Consultor:</strong> ${user?.name || 'No asignado'} (${assignment.userId || 'N/A'})</p>
-                        <p><strong><i class="fa-solid fa-building"></i> Cliente:</strong> ${company?.name || 'No asignado'}</p>
-                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No asignado'}</p>
-                        <p><strong><i class="fa-solid fa-dollar-sign"></i> Tarifas:</strong> 
-                            Consultor: $${assignment.tarifaConsultor || 0}/hr | 
-                            Cliente: $${assignment.tarifaCliente || 0}/hr
-                        </p>
-                    </div>
-                    
-                    <div class="assignment-actions">
-                        <button class="btn btn-danger btn-sm" onclick="deleteAssignment('${assignmentId}')">
-                            <i class="fa-solid fa-trash"></i> Eliminar
-                        </button>
-                    </div>
-                `;
-                
+                const mod = currentData.modules[assignment.moduleId];
+                company = currentData.companies[assignment.companyId];
+                consultor = user;
+                workName = support?.name || 'No encontrado';
+                moduleName = mod?.name || 'No asignado';
+                typeLabel = 'SOPORTE';
+                typeIcon = 'fa-headset';
+                typeBadgeClass = 'badge-info';
+                deleteHandler = `deleteAssignment('${assignmentId}')`;
+                editHandler = null;
+
             } else if (assignment.assignmentType === 'project') {
                 assignmentId = assignment.projectAssignmentId;
                 displayId = assignmentId ? assignmentId.slice(-6) : 'N/A';
-                
-                assignmentDiv.className = 'project-assignment-card';
-                
-                const consultor = currentData.users[assignment.consultorId];
-                const company = currentData.companies[assignment.companyId];
+                const user = currentData.users[assignment.consultorId];
                 const project = currentData.projects[assignment.projectId];
-                const module = currentData.modules[assignment.moduleId];
-                
-                assignmentDiv.innerHTML = `
-                    <div class="assignment-header">
-                        <h3><i class="fa-solid fa-bullseye"></i> Proyecto: ${project?.name || 'No encontrado'}</h3>
-                        <span class="assignment-id">${displayId}</span>
-                    </div>
-                    
-                    <div class="assignment-details">
-                        <p><strong><i class="fa-solid fa-user"></i> Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId || 'N/A'})</p>
-                        <p><strong><i class="fa-solid fa-building"></i> Cliente:</strong> ${company?.name || 'No asignado'}</p>
-                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No asignado'}</p>
-                        <p><strong><i class="fa-solid fa-dollar-sign"></i> Tarifas:</strong> 
-                            Consultor: $${assignment.tarifaConsultor || 0}/hr | 
-                            Cliente: $${assignment.tarifaCliente || 0}/hr
-                        </p>
-                    </div>
-                    
-                    <div class="assignment-actions">
-                        <button class="btn btn-danger btn-sm" onclick="deleteProjectAssignment('${assignmentId}')">
-                            <i class="fa-solid fa-trash"></i> Eliminar
-                        </button>
-                    </div>
-                `;
-                
+                const mod = currentData.modules[assignment.moduleId];
+                company = currentData.companies[assignment.companyId];
+                consultor = user;
+                workName = project?.name || 'No encontrado';
+                moduleName = mod?.name || 'No asignado';
+                typeLabel = 'PROYECTO';
+                typeIcon = 'fa-folder-open';
+                typeBadgeClass = 'badge-success';
+                deleteHandler = `deleteProjectAssignment('${assignmentId}')`;
+                editHandler = null;
+
             } else if (assignment.assignmentType === 'task') {
                 assignmentId = assignment.taskAssignmentId;
                 displayId = assignmentId ? assignmentId.slice(-6) : 'N/A';
-                
-                assignmentDiv.className = 'task-assignment-card';
-                
-                const consultor = currentData.users[assignment.consultorId];
-                const company = currentData.companies[assignment.companyId];
+                const user = currentData.users[assignment.consultorId];
                 const support = currentData.supports[assignment.linkedSupportId];
-                const module = currentData.modules[assignment.moduleId];
-                
-                assignmentDiv.innerHTML = `
-                    <div class="assignment-header">
-                        <h3><i class="fa-solid fa-tasks"></i> Tarea: ${assignment.descripcion ? assignment.descripcion.substring(0, 50) + '...' : 'Sin descripción'}</h3>
-                        <span class="assignment-id">${displayId}</span>
-                    </div>
-                    
-                    <div class="assignment-details">
-                        <p><strong><i class="fa-solid fa-user"></i> Consultor:</strong> ${consultor?.name || 'No asignado'} (${assignment.consultorId || 'N/A'})</p>
-                        <p><strong><i class="fa-solid fa-building"></i> Cliente:</strong> ${company?.name || 'No asignado'}</p>
-                        <p><strong><i class="fa-solid fa-headset"></i> Soporte Vinculado:</strong> ${support?.name || 'No vinculado'}</p>
-                        <p><strong><i class="fa-solid fa-puzzle-piece"></i> Módulo:</strong> ${module?.name || 'No asignado'}</p>
-                        <p><strong><i class="fa-solid fa-dollar-sign"></i> Tarifas:</strong> 
-                            Consultor: $${assignment.tarifaConsultor || 0}/hr | 
-                            Cliente: $${assignment.tarifaCliente || 0}/hr
-                        </p>
-                    </div>
-                    
-                    <div class="assignment-actions">
-                        <button class="btn btn-sm btn-primary" onclick="editTask('${assignmentId}')">
-                            <i class="fa-solid fa-edit"></i> Editar
-                        </button>
-                        <button class="btn btn-danger btn-sm" onclick="deactivateTask('${assignmentId}')">
-                            <i class="fa-solid fa-trash"></i> Desactivar
-                        </button>
-                    </div>
-                `;
+                const mod = currentData.modules[assignment.moduleId];
+                company = currentData.companies[assignment.companyId];
+                consultor = user;
+                workName = assignment.descripcion ? window.TextUtils.truncate(assignment.descripcion, 40) : 'Sin descripción';
+                moduleName = mod?.name || 'No asignado';
+                typeLabel = 'TAREA';
+                typeIcon = 'fa-tasks';
+                typeBadgeClass = 'badge-warning';
+                deleteHandler = `deactivateTask('${assignmentId}')`;
+                editHandler = `editTask('${assignmentId}')`;
             }
-            
+
+            const margen = ((assignment.tarifaCliente || 0) - (assignment.tarifaConsultor || 0)).toFixed(2);
+
+            assignmentDiv.innerHTML = `
+                <div style="display: flex; flex-direction: column; gap: 0; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;
+                                padding-bottom: 16px; margin-bottom: 12px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="custom-badge ${typeBadgeClass}" style="font-size:0.7rem;">
+                                <i class="fa-solid ${typeIcon}"></i> ${typeLabel}
+                            </span>
+                            <strong style="font-size: 1rem;">${workName}</strong>
+                            <span class="item-id" style="font-size:0.7rem;">${displayId}</span>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            ${editHandler ? `<button class="btn btn-sm btn-primary" onclick="${editHandler}" title="Editar"><i class="fa-solid fa-edit"></i></button>` : ''}
+                            <button class="btn btn-sm btn-danger" onclick="${deleteHandler}" title="Eliminar">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;
+                                padding: 12px 20px; margin: 0 -20px 0 -20px;
+                                border-top: 1px solid #e5e7eb; background: #f9fafb;">
+                        <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                            <i class="fa-solid fa-user" style="color:#3b82f6;"></i>
+                            ${consultor?.name || 'No asignado'} <span style="color:#9ca3af;">(${assignment.userId || assignment.consultorId || 'N/A'})</span>
+                        </small>
+                        <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                            <i class="fa-solid fa-building" style="color:#6b7280;"></i> ${company?.name || 'No asignado'}
+                        </small>
+                        <small style="color: #555; font-weight: 500; font-size: 0.8rem;">
+                            <i class="fa-solid fa-puzzle-piece" style="color:#8b5cf6;"></i> ${moduleName}
+                        </small>
+                    </div>
+
+                    <div style="display: flex; justify-content: space-between; align-items: center;
+                                padding: 12px 20px; margin: 0 -20px -20px -20px;
+                                border-top: 1px solid #e5e7eb; background: #ffffff;">
+                        <small style="color: #666; font-size: 0.75rem;">
+                            <i class="fa-solid fa-user-tie" style="color:#10b981;"></i> Consultor: <strong>$${assignment.tarifaConsultor || 0}/hr</strong>
+                        </small>
+                        <small style="color: #666; font-size: 0.75rem;">
+                            <i class="fa-solid fa-building" style="color:#3b82f6;"></i> Cliente: <strong>$${assignment.tarifaCliente || 0}/hr</strong>
+                        </small>
+                        <small style="color: #666; font-size: 0.75rem;">
+                            Margen: <strong style="color:${parseFloat(margen) >= 0 ? '#10b981' : '#ef4444'};">$${margen}/hr</strong>
+                        </small>
+                    </div>
+                </div>
+            `;
+
             container.appendChild(assignmentDiv);
         });
     }
@@ -3107,6 +3217,25 @@ async function deleteModule(moduleId) {
         console.error('❌ Error:', error);
         window.NotificationUtils.error('Error al eliminar módulo');
     }
+}
+
+// ============================================================
+// FUNCIONES DE EDICIÓN — Empresa, Proyecto, Soporte, Módulo
+// ============================================================
+function editCompany(companyId) {
+    alert(`Editar empresa ${companyId}\n\n(Funcionalidad en desarrollo)`);
+}
+
+function editProject(projectId) {
+    alert(`Editar proyecto ${projectId}\n\n(Funcionalidad en desarrollo)`);
+}
+
+function editSupport(supportId) {
+    alert(`Editar soporte ${supportId}\n\n(Funcionalidad en desarrollo)`);
+}
+
+function editModule(moduleId) {
+    alert(`Editar módulo ${moduleId}\n\n(Funcionalidad en desarrollo)`);
 }
 
 // Nueva función para ver detalles del reporte

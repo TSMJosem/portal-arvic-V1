@@ -37,7 +37,7 @@ body {
 /* 4. CONTENIDO PRINCIPAL SIN SCROLL */
 .admin-content {
     background: var(--gray-50);
-    height: calc(100vh - 80px) !important; /* ← Altura fija */
+    height: calc(100vh - 70px) !important; /* ← Altura fija */
     overflow: hidden !important; /* ← Sin scroll */
     flex: 1;
 }
@@ -58,8 +58,12 @@ body {
 
 /* ============================================
    IMPORTANTE: CONTAINER TAMBIÉN SIN SCROLL
+   El admin ocupa el 100% — anula el max-width/centrado de shared.css
    ============================================ */
-.container {
+.admin-layout .container {
+    max-width: 100%;
+    margin: 0;
+    padding: 0;
     height: 100%;
     overflow: hidden;
 }
@@ -86,9 +90,11 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--spacing-lg) var(--spacing-xl);
-    max-width: 1400px;
+    padding: 0 var(--spacing-xl);
+    height: 70px;
+    max-width: 100%;
     margin: 0 auto;
+    gap: var(--spacing-lg);
 }
 
 /* Logo en header del admin */
@@ -99,8 +105,8 @@ body {
 }
 
 .admin-logo-svg {
-    height: 50px; /* Altura fija para el header */
-    width: auto;   /* Ancho automático */
+    height: 46px;
+    width: auto;
     filter: brightness(1.1) drop-shadow(0 2px 8px rgba(255, 255, 255, 0.1));
     transition: transform 0.3s ease;
 }
@@ -109,44 +115,163 @@ body {
     transform: scale(1.05);
 }
 
-/* Información del usuario en header */
-.user-info {
+/* ==========================================
+   BOTONES DE NAVEGACIÓN (lado derecho, junto al usuario)
+   ========================================== */
+.nav-actions {
     display: flex;
     align-items: center;
-    gap: var(--spacing-lg);
+    gap: var(--spacing-xs);
     margin-left: auto;
 }
 
-#adminUserName {
-    font-size: 0.875rem;
-    color: var(--gray-200);
-    font-weight: 500;
-    padding: var(--spacing-sm) var(--spacing-md);
-    background: rgba(255, 255, 255, 0.1);
+.nav-action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: rgba(255, 255, 255, 0.75);
+    cursor: pointer;
+    padding: 8px 14px;
     border-radius: var(--border-radius-md);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.2s ease;
+    font-family: var(--font-primary);
+    min-width: 64px;
 }
 
-.user-info .btn-danger {
-    background: linear-gradient(135deg, var(--accent-color) 0%, #b91c1c 100%);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: var(--shadow-sm);
-    text-transform: uppercase;
-    letter-spacing: 0.025em;
+.nav-action-btn i {
+    font-size: 1.25rem;
+}
+
+.nav-action-btn span {
+    font-size: 0.6rem;
     font-weight: 600;
-    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
 }
 
-.user-info .btn-danger:hover {
-    background: linear-gradient(135deg, #b91c1c 0%, #991b1b 100%);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-md);
+.nav-action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+/* Badge de notificación */
+.notify-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notify-dot {
+    position: absolute;
+    top: -3px;
+    right: -4px;
+    width: 8px;
+    height: 8px;
+    background: var(--success-color, #22c55e);
+    border-radius: 50%;
+    border: 1.5px solid var(--gray-900);
+}
+
+/* ==========================================
+   SECCIÓN DE USUARIO (DERECHA)
+   ========================================== */
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-shrink: 0;
+}
+
+/* Avatar circular */
+.user-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1rem;
+}
+
+.avatar-settings-badge {
+    position: absolute;
+    bottom: -2px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background: var(--gray-600);
+    border-radius: 50%;
+    border: 1.5px solid var(--gray-900);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 0.55rem;
+}
+
+/* Nombre y rol */
+.user-details {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+}
+
+.user-name {
+    font-size: 0.875rem;
+    color: white;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+.user-role {
+    font-size: 0.65rem;
+    color: rgba(255, 255, 255, 0.55);
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+/* Botón de logout */
+.btn-logout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--border-radius-md);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.btn-logout:hover {
+    background: rgba(220, 38, 38, 0.35);
+    border-color: rgba(220, 38, 38, 0.5);
+    color: white;
+    transform: translateX(2px);
 }
 
 /* Contenido principal del admin */
 .admin-content {
     background: var(--gray-50);
-    min-height: calc(100vh - 80px);
+    min-height: calc(100vh - 70px);
 }
 
 /* Layout con sidebar */
@@ -157,7 +282,7 @@ body {
     border-radius: 0;
     box-shadow: none;
     overflow: hidden;
-    min-height: calc(100vh - 80px);
+    min-height: calc(100vh - 70px);
     margin-top: 0;
 }
 
@@ -732,17 +857,28 @@ body {
     
     /* Header responsive */
     .admin-header .navbar {
-        flex-direction: column;
-        gap: var(--spacing-lg);
-        text-align: center;
-        padding: var(--spacing-lg);
-    }
-    
-    .user-info {
-        margin-left: 0;
-        justify-content: center;
-        width: 100%;
         flex-wrap: wrap;
+        height: auto;
+        padding: var(--spacing-md) var(--spacing-lg);
+        gap: var(--spacing-md);
+    }
+
+    .nav-actions {
+        gap: 0;
+        margin-left: auto;
+    }
+
+    .nav-action-btn {
+        padding: 6px 10px;
+        min-width: 52px;
+    }
+
+    .nav-action-btn span {
+        font-size: 0.55rem;
+    }
+
+    .user-details .user-role {
+        display: none;
     }
 }
 
@@ -750,28 +886,31 @@ body {
     .admin-main-content {
         padding: var(--spacing-md);
     }
-    
+
     .section-title {
         font-size: 1.5rem;
     }
-    
+
     .modal-content {
         padding: 0;
         margin: var(--spacing-md);
     }
-    
+
     .modal-body {
         padding: var(--spacing-lg);
     }
-    
-    .user-info {
-        flex-direction: column;
-        gap: var(--spacing-md);
+
+    .nav-actions {
+        gap: 0;
     }
-    
-    .user-info .btn-danger {
-        width: 100%;
-        text-align: center;
+
+    .nav-action-btn span {
+        display: none;
+    }
+
+    .nav-action-btn {
+        min-width: 40px;
+        padding: 8px;
     }
 }
 
@@ -2670,7 +2809,7 @@ body {
 
 /* OVERRIDE: Scroll independiente */
 .admin-layout-wrapper {
-    height: calc(100vh - 80px) !important;
+    height: calc(100vh - 70px) !important;
 }
 
 .admin-sidebar,

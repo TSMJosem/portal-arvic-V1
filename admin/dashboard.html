@@ -15,12 +15,51 @@
 <body class="admin-layout">
     <header class="admin-header">
         <nav class="navbar">
+            <!-- Logo -->
             <div class="logo">
                 <img src="../images/Logo Grupo IT Arvic 33.svg" alt="Grupo It Arvic" class="admin-logo-svg">
             </div>
+
+            <!-- Centro: botones de navegación -->
+            <div class="nav-actions">
+                <button class="nav-action-btn" title="Soporte">
+                    <i class="fa-solid fa-headset"></i>
+                    <span>SOPORTE</span>
+                </button>
+                <button class="nav-action-btn" title="Chat">
+                    <i class="fa-solid fa-comments"></i>
+                    <span>CHAT</span>
+                </button>
+                <button class="nav-action-btn nav-action-btn--notify" title="Notificaciones">
+                    <span class="notify-wrapper">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notify-dot"></span>
+                    </span>
+                    <span>NOTIFICACIONES</span>
+                </button>
+                <button class="nav-action-btn" title="Ayuda">
+                    <i class="fa-solid fa-circle-question"></i>
+                    <span>AYUDA</span>
+                </button>
+            </div>
+
+            <!-- Derecha: perfil de usuario + logout -->
             <div class="user-info">
-                <span id="adminUserName">Hector Pérez</span>
-                <button class="btn btn-danger" onclick="logout()">Cerrar Sesión</button>
+                <div class="user-avatar-wrapper">
+                    <div class="user-avatar">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="avatar-settings-badge">
+                        <i class="fa-solid fa-gear"></i>
+                    </div>
+                </div>
+                <div class="user-details">
+                    <span class="user-name" id="adminUserName">Héctor Pérez</span>
+                    <span class="user-role">ADMINISTRADOR</span>
+                </div>
+                <button class="btn-logout" onclick="logout()" title="Cerrar Sesión">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
             </div>
         </nav>
     </header>

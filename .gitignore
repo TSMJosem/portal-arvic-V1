@@ -69,3 +69,7 @@ coverage/
 .vercel
 api/scripts/cleanIndexes.js
 api/scripts/ScriptsDePrueba.js
+README.md
+scripts/test-reportes.js
+scripts/init-admin.js
+docs/ANALISIS_DE_REQUERIMIENTOS.md

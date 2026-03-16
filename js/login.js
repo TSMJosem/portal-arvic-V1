@@ -170,7 +170,7 @@ function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     if (errorDiv) {
         errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
+        errorDiv.style.display = 'flex';
         errorDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         
         // Auto-hide después de 5 segundos
@@ -184,7 +184,7 @@ function showSuccess(message) {
     const successDiv = document.getElementById('successMessage');
     if (successDiv) {
         successDiv.textContent = message;
-        successDiv.style.display = 'block';
+        successDiv.style.display = 'flex';
         successDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 }
@@ -308,6 +308,7 @@ function setupForgotPassword() {
         sendRecoveryBtn.addEventListener('click', handleForgotPassword);
     }
 
+    // Enter key en el campo de email
     if (recoveryEmailInput) {
         recoveryEmailInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter') {
@@ -324,25 +325,31 @@ function toggleForgotPasswordView(showForgot) {
     const forgotForm = document.getElementById('forgotPasswordForm');
 
     if (showForgot) {
+        // Ocultar login, mostrar recuperación
         loginForm.style.display = 'none';
         forgotSection.style.display = 'none';
         forgotForm.style.display = 'block';
         hideMessages();
 
+        // Focus en email
         const emailInput = document.getElementById('recoveryEmail');
         if (emailInput) emailInput.focus();
 
+        // Cambiar texto de bienvenida
         const welcomeText = document.querySelector('.welcome-text');
         if (welcomeText) welcomeText.textContent = 'Recuperar Contraseña';
     } else {
+        // Mostrar login, ocultar recuperación
         loginForm.style.display = 'block';
         forgotSection.style.display = 'block';
         forgotForm.style.display = 'none';
         hideMessages();
 
+        // Restaurar texto de bienvenida
         const welcomeText = document.querySelector('.welcome-text');
         if (welcomeText) welcomeText.textContent = 'Bienvenido al Portal de Gestión';
 
+        // Focus en usuario
         const userIdInput = document.getElementById('userId');
         if (userIdInput) userIdInput.focus();
     }
@@ -360,6 +367,7 @@ async function handleForgotPassword() {
         return;
     }
 
+    // Validación básica de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
         showError('Ingrese un correo electrónico válido.');
@@ -367,6 +375,7 @@ async function handleForgotPassword() {
         return;
     }
 
+    // Estado de carga
     sendBtn.classList.add('loading');
     sendBtn.disabled = true;
     sendBtn.innerHTML = '<span>Enviando...</span>';
@@ -388,6 +397,7 @@ async function handleForgotPassword() {
 
         if (data.success) {
             showSuccess(data.message || 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.');
+            // Limpiar campo
             document.getElementById('recoveryEmail').value = '';
         } else {
             showError(data.message || 'Error al enviar el correo.');
@@ -397,6 +407,7 @@ async function handleForgotPassword() {
         console.error('Error en recuperación:', error);
         showError('Error de conexión. Intente nuevamente.');
     } finally {
+        // Restaurar botón
         sendBtn.classList.remove('loading');
         sendBtn.disabled = false;
         sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Enlace de Recuperación';

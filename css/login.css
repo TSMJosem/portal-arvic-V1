@@ -7,8 +7,9 @@ body {
     align-items: center;
     justify-content: center;
     margin: 0;
+    padding: 20px;
     position: relative;
-    overflow: hidden;
+    overflow-y: auto;
 }
 
 /* Patrón de fondo corporativo */
@@ -34,9 +35,9 @@ body::before {
     box-shadow: 
         0 25px 50px -12px rgba(0, 0, 0, 0.25),
         0 0 0 1px rgba(255, 255, 255, 0.1);
-    padding: var(--spacing-2xl);
+    padding: var(--spacing-xl) var(--spacing-2xl);
     width: 100%;
-    max-width: 480px;
+    max-width: 440px;
     text-align: center;
     animation: loginFadeIn 0.8s ease;
     position: relative;
@@ -57,7 +58,7 @@ body::before {
 
 /* Sección del logo mejorada */
 .logo-svg-complete {
-    width: 160px; /* Ajusta según tu logo */
+    width: 120px; /* Más compacto */
     height: auto;
     filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.15));
     transition: transform 0.3s ease;
@@ -73,8 +74,8 @@ body::before {
 }
 
 .logo-section {
-    margin-bottom: var(--spacing-2xl);
-    padding-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
     border-bottom: 1px solid var(--gray-200);
 }
 
@@ -86,16 +87,16 @@ body::before {
 /* Título de bienvenida */
 .welcome-text {
     color: var(--gray-600);
-    margin-bottom: var(--spacing-2xl);
-    font-size: 1.125rem;
+    margin-bottom: var(--spacing-md);
+    font-size: 1rem;
     font-weight: 500;
-    line-height: 1.5;
+    line-height: 1.4;
 }
 
 /* Estilos de formulario refinados */
 .form-group {
     text-align: left;
-    margin-bottom: var(--spacing-lg);
+    margin-bottom: var(--spacing-md);
 }
 
 .form-group label {
@@ -143,13 +144,13 @@ body::before {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
     color: white;
     border: none;
-    padding: var(--spacing-lg) var(--spacing-xl);
+    padding: var(--spacing-md) var(--spacing-lg);
     border-radius: var(--border-radius-md);
-    font-size: 1rem;
+    font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
     transition: var(--transition-normal);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-sm);
     position: relative;
     overflow: hidden;
     text-transform: uppercase;
@@ -239,7 +240,6 @@ body::before {
         var(--shadow-md);
     animation: shakeError 0.5s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
     align-items: center;
     gap: var(--spacing-sm);
 }
@@ -268,7 +268,6 @@ body::before {
         var(--shadow-md);
     animation: successPulse 0.6s ease;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
     align-items: center;
     gap: var(--spacing-sm);
 }
@@ -668,5 +667,9 @@ body::before {
     .password-strength {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .strength-text {
+        text-align: center;
     }
 }

@@ -11,8 +11,8 @@ const transporter = nodemailer.createTransport({
 
 // Verificar conexión al iniciar
 transporter.verify()
-  .then(() => console.log('Servidor de email conectado (Gmail)'))
-  .catch(err => console.error('Error conectando email:', err.message));
+  .then(() => console.log('✅ Servidor de email conectado (Gmail)'))
+  .catch(err => console.error('❌ Error conectando email:', err.message));
 
 /**
  * Envía un email de recuperación de contraseña

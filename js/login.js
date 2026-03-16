@@ -277,7 +277,131 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!window.AuthSys.isAuthenticated()) {
         loadLastUser();
     }
+
+    // === RECUPERACIÓN DE CONTRASEÑA ===
+    setupForgotPassword();
 });
+
+// === SISTEMA DE RECUPERACIÓN DE CONTRASEÑA ===
+
+function setupForgotPassword() {
+    const forgotLink = document.getElementById('forgotPasswordLink');
+    const backToLoginLink = document.getElementById('backToLoginLink');
+    const sendRecoveryBtn = document.getElementById('sendRecoveryBtn');
+    const recoveryEmailInput = document.getElementById('recoveryEmail');
+
+    if (forgotLink) {
+        forgotLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleForgotPasswordView(true);
+        });
+    }
+
+    if (backToLoginLink) {
+        backToLoginLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            toggleForgotPasswordView(false);
+        });
+    }
+
+    if (sendRecoveryBtn) {
+        sendRecoveryBtn.addEventListener('click', handleForgotPassword);
+    }
+
+    if (recoveryEmailInput) {
+        recoveryEmailInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleForgotPassword();
+            }
+        });
+    }
+}
+
+function toggleForgotPasswordView(showForgot) {
+    const loginForm = document.getElementById('loginForm');
+    const forgotSection = document.getElementById('forgotPasswordSection');
+    const forgotForm = document.getElementById('forgotPasswordForm');
+
+    if (showForgot) {
+        loginForm.style.display = 'none';
+        forgotSection.style.display = 'none';
+        forgotForm.style.display = 'block';
+        hideMessages();
+
+        const emailInput = document.getElementById('recoveryEmail');
+        if (emailInput) emailInput.focus();
+
+        const welcomeText = document.querySelector('.welcome-text');
+        if (welcomeText) welcomeText.textContent = 'Recuperar Contraseña';
+    } else {
+        loginForm.style.display = 'block';
+        forgotSection.style.display = 'block';
+        forgotForm.style.display = 'none';
+        hideMessages();
+
+        const welcomeText = document.querySelector('.welcome-text');
+        if (welcomeText) welcomeText.textContent = 'Bienvenido al Portal de Gestión';
+
+        const userIdInput = document.getElementById('userId');
+        if (userIdInput) userIdInput.focus();
+    }
+}
+
+async function handleForgotPassword() {
+    const email = document.getElementById('recoveryEmail').value.trim();
+    const sendBtn = document.getElementById('sendRecoveryBtn');
+
+    hideMessages();
+
+    if (!email) {
+        showError('Ingrese su correo electrónico.');
+        document.getElementById('recoveryEmail').focus();
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        showError('Ingrese un correo electrónico válido.');
+        document.getElementById('recoveryEmail').focus();
+        return;
+    }
+
+    sendBtn.classList.add('loading');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span>Enviando...</span>';
+
+    try {
+        const isDevelopment = window.location.hostname === 'localhost' || 
+                             window.location.hostname === '127.0.0.1';
+        const API_URL = isDevelopment 
+            ? 'http://localhost:3000/api'
+            : `${window.location.origin}/api`;
+
+        const response = await fetch(`${API_URL}/auth/forgot-password`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showSuccess(data.message || 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.');
+            document.getElementById('recoveryEmail').value = '';
+        } else {
+            showError(data.message || 'Error al enviar el correo.');
+        }
+
+    } catch (error) {
+        console.error('Error en recuperación:', error);
+        showError('Error de conexión. Intente nuevamente.');
+    } finally {
+        sendBtn.classList.remove('loading');
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Enviar Enlace de Recuperación';
+    }
+}
 
 // === MANEJO DE ERRORES GLOBALES ===
 

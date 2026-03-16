@@ -2,6 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const notificationsRoutes = require('./routes/notifications');
 // Configurar dotenv para buscar el .env en la raíz del proyecto
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const User = require('./models/User');
@@ -40,6 +41,7 @@ app.use('/js', express.static(path.join(__dirname, '..', 'js')));
 app.use('/images', express.static(path.join(__dirname, '..', 'images')));
 app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
 app.use('/consultor', express.static(path.join(__dirname, '..', 'consultor')));
+app.use('/api/notifications', notificationsRoutes);
 
 // Conectar a MongoDB
 mongoose.connect(process.env.MONGODB_URI, {
@@ -142,6 +144,10 @@ app.get('/admin/dashboard', (req, res) => {
 
 app.get('/consultor/dashboard', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'consultor', 'dashboard.html'));
+});
+
+app.get('/reset-password', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'reset-password.html'));
 });
 
 // Manejo de errores

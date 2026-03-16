@@ -1,3 +1,4 @@
+// Portal ARVIC - Users Module
 /**
  * index.js
  * 

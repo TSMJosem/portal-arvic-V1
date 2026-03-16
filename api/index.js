@@ -1,4 +1,4 @@
-// api/index.js
+// api/index.js - Servidor Express para el Portal ARVIC
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');

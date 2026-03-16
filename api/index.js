@@ -2,7 +2,6 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-const notificationsRoutes = require('./routes/notifications');
 // Configurar dotenv para buscar el .env en la raíz del proyecto
 require('dotenv').config({ path: path.join(__dirname, '..', '.env') });
 const User = require('./models/User');
@@ -41,13 +40,9 @@ app.use('/js', express.static(path.join(__dirname, '..', 'js')));
 app.use('/images', express.static(path.join(__dirname, '..', 'images')));
 app.use('/admin', express.static(path.join(__dirname, '..', 'admin')));
 app.use('/consultor', express.static(path.join(__dirname, '..', 'consultor')));
-app.use('/api/notifications', notificationsRoutes);
 
 // Conectar a MongoDB
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(process.env.MONGODB_URI)
 .then(() => console.log('✅ MongoDB conectado'))
 .catch(err => console.error('❌ Error de conexión MongoDB:', err));
 
@@ -103,6 +98,7 @@ const projectAssignmentsRoutes = require('./routes/projectAssignments');
 const taskAssignmentsRoutes = require('./routes/taskAssignments');  // ✅ NUEVO
 const reportsRoutes = require('./routes/reports');
 const tarifarioRoutes = require('./routes/tarifario');
+const notificationsRoutes = require('./routes/notifications');
 
 // Usar rutas
 app.use('/api/auth', authRoutes);
@@ -116,6 +112,7 @@ app.use('/api/projectAssignments', projectAssignmentsRoutes);  // ✅ NUEVO
 app.use('/api/taskAssignments', taskAssignmentsRoutes);  // ✅ NUEVO
 app.use('/api/reports', reportsRoutes);
 app.use('/api/tarifario', tarifarioRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {

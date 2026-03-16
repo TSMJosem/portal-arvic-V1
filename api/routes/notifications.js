@@ -10,7 +10,7 @@ router.get('/user/:userId', async (req, res) => {
       .limit(50);
     res.json({ success: true, data: notifications });
   } catch (error) {
-    console.error('Error obteniendo notificaciones:', error);
+    console.error('❌ Error obteniendo notificaciones:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -24,7 +24,7 @@ router.get('/user/:userId/unread-count', async (req, res) => {
     });
     res.json({ success: true, count });
   } catch (error) {
-    console.error('Error contando notificaciones:', error);
+    console.error('❌ Error contando notificaciones:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
@@ -47,7 +47,7 @@ router.post('/', async (req, res) => {
       data: notification 
     });
   } catch (error) {
-    console.error('Error creando notificación:', error);
+    console.error('❌ Error creando notificación:', error);
     res.status(400).json({ success: false, message: error.message });
   }
 });
@@ -67,7 +67,7 @@ router.put('/:id/read', async (req, res) => {
 
     res.json({ success: true, data: notification });
   } catch (error) {
-    console.error('Error marcando notificación:', error);
+    console.error('❌ Error marcando notificación:', error);
     res.status(400).json({ success: false, message: error.message });
   }
 });
@@ -85,7 +85,7 @@ router.put('/user/:userId/read-all', async (req, res) => {
       message: `${result.modifiedCount} notificaciones marcadas como leídas` 
     });
   } catch (error) {
-    console.error('Error marcando notificaciones:', error);
+    console.error('❌ Error marcando notificaciones:', error);
     res.status(400).json({ success: false, message: error.message });
   }
 });
@@ -101,7 +101,7 @@ router.delete('/:id', async (req, res) => {
     
     res.json({ success: true, message: 'Notificación eliminada' });
   } catch (error) {
-    console.error('Error eliminando notificación:', error);
+    console.error('❌ Error eliminando notificación:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
